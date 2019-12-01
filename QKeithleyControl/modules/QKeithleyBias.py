@@ -7,7 +7,9 @@ import threading
 # Import d_plot and keithley driver
 import drivers.keithley_2400
 
-import modules.QDynamicPlot 
+# Import widgets
+import widgets.QDynamicPlot 
+import widgets.QUnitSelector
 
 # Import QT backends
 import sys
@@ -113,41 +115,72 @@ class QKeithleyBias(QWidget):
 		# Voltage mode adjust lables and limits
 		if self.mode.currentText() == "Voltage":
 
-			self.cmpl_label.setText("Compliance (A)")
-			self.cmpl.setMinimum(0.0)
-			self.cmpl.setMaximum(1.0)
-			self.cmpl.setValue(0.1)
+			# Bias spinbox (voltage mode)
+			self.bias_config={
+				"unit" 		: "V",
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Bias Level",
+				"limit"		: 20.0,
+				"signed"	: True,
+				"default"	: 0.0
+			} 
+			self.bias.update_config(self.bias_config)
 
-			self.bias_label.setText("Bias Level (V)")
-			self.bias.setMinimum(-20.0)
-			self.bias.setMaximum(20.0)
-			self.bias.setSingleStep(0.1)
-			self.bias.setValue(0.0)
+			# Compliance Spinbox
+			self.cmpl_config={
+				"unit" 		: "A", 
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Compliance",
+				"limit"		: 1.0, 
+				"signed"	: False,
+				"default"	: 0.1
+			} 
+			self.cmpl.update_config(self.cmpl_config)
 
-			self.keithley.current_cmp(self.cmpl.value())
+			# Send commands to keithley
 			self.keithley.voltage_src()
+			self.keithley.set_voltage(self.bias.value())
+			self.keithley.current_cmp(self.cmpl.value())			
 
+			# Update plot axes and refresh
 			self.plot.set_axes_labels("Time (s)", "Current (A)")
 			self.plot.refresh_axes()
 
 		# Current mode adjust lables and limits
 		if self.mode.currentText() == "Current":
-	
-			self.cmpl_label.setText("Compliance (V)")
-			self.cmpl.setMinimum(0.0)
-			self.cmpl.setMaximum(20.0)
-			self.cmpl.setValue(1.0)
 
+			# Bias spinbox (current mode)
+			self.bias_config={
+				"unit" 		: "A", 
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Bias Level",
+				"limit"		: 1.0,
+				"signed"	: True,
+				"default" 	: 0.0
+			} 
+			self.bias.update_config(self.bias_config)
 
-			self.bias_label.setText("Bias Level (A)")
-			self.bias.setMinimum(-20.0)
-			self.bias.setMaximum(20.0)
-			self.bias.setSingleStep(0.001)
-			self.bias.setValue(0.0)
+			# Compliance Spinbox
+			self.cmpl_config={
+				"unit" 		: "V", 
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Compliance",
+				"limit"		: 20.0,
+				"signed"	: False,
+				"default"	: 1.0
+			} 
+			self.cmpl.update_config(self.cmpl_config)
 
-			self.keithley.voltage_cmp(self.cmpl.value())
+			# Send commands to keithley
 			self.keithley.current_src()
+			self.keithley.voltage_cmp(self.cmpl.value())
+			self.keithley.set_current(self.bias.value())
 
+			# Update plot axes and refresh
 			self.plot.set_axes_labels("Time (s)", "Voltage (V)")
 			self.plot.refresh_axes()
 
@@ -196,23 +229,31 @@ class QKeithleyBias(QWidget):
 		self.mode.addItems(["Voltage", "Current"])	
 		self.mode.currentTextChanged.connect(self._update_bias_control)
 
-		# Compliance Spinbox
-		self.cmpl_label = QLabel("Compliance (A)")
-		self.cmpl = QDoubleSpinBox()
-		self.cmpl.setDecimals(3)
-		self.cmpl.setMinimum(0.0)
-		self.cmpl.setMaximum(1.0)
-		self.cmpl.setSingleStep(0.001)
-		self.cmpl.setValue(0.1)
 
-		# Level 
-		self.bias_label = QLabel("Voltage (V)")
-		self.bias = QDoubleSpinBox()
-		self.bias.setDecimals(3)
-		self.bias.setMinimum(0.0)
-		self.bias.setMaximum(1.0)
-		self.bias.setSingleStep(0.1)
-		self.bias.setValue(0.0)
+		# Configuration for bias level unit box
+		self.bias_config={
+			"unit" 		: "V", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Bias Level",
+			"limit"		: 20.0, 
+			"signed"	: True,
+			"default"	: 1.0
+		} 
+		self.bias = widgets.QUnitSelector.QUnitSelector(self.bias_config)
+
+
+		# Compliance Spinbox
+		self.cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: 0.1
+		} 
+		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
 
 		# Delay
 		self.delay_label = QLabel("Interval (s)")
@@ -233,16 +274,14 @@ class QKeithleyBias(QWidget):
 
 		# Spacer
 		self.ctl_layout.addStretch(1)
-		
+	
 		# Add remaining controls to layout
 		self.ctl_layout.addWidget(self.mode_label)
 		self.ctl_layout.addWidget(self.mode)
-		self.ctl_layout.addWidget(self.bias_label)
 		self.ctl_layout.addWidget(self.bias)
+		self.ctl_layout.addWidget(self.cmpl)
 		self.ctl_layout.addWidget(self.delay_label)
 		self.ctl_layout.addWidget(self.delay)
-		self.ctl_layout.addWidget(self.cmpl_label)
-		self.ctl_layout.addWidget(self.cmpl)
 		self.ctl_layout.addWidget(self.update_button)
 
 		return self.ctl_layout
@@ -324,7 +363,6 @@ class QKeithleyBias(QWidget):
 				})
 
 			# Turn output OFF
-			self.bias.setValue(0.0)
 			self.keithley.set_voltage(0.0)
 			self.keithley.output_off()	
 
@@ -332,7 +370,7 @@ class QKeithleyBias(QWidget):
 	def _gen_bias_plot(self): 		
 
 		# Create QDynamicPlot Object
-		self.plot = modules.QDynamicPlot.QDynamicPlot(self)
+		self.plot = widgets.QDynamicPlot.QDynamicPlot(self)
 		self.plot.set_axes_labels("Time (s)", "Current (A)")
 		self.plot.add_axes()
 

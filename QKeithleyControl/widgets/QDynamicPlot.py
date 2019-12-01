@@ -9,17 +9,20 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 
-class QDynamicPlot:
+class QDynamicPlot(QWidget):
 
 	# Note that from the main app, we must pass the pointer of the app 
 	# instance to dynamic plotdynamic_plot.dynamic_plot(self)
 	def __init__(self, _app_instance):
 
+		# Inherits QWidget
+		QWidget.__init__(self)
+
 		self.layout = QVBoxLayout()
 
 		# Create a figure object
 		self.figure = plt.figure()
-
+		
 		# this is the Canvas Widget that displays the `figure`
 		# it takes the `figure` instance as a parameter to __init__
 		self.canvas = FigureCanvas(self.figure)
@@ -60,7 +63,7 @@ class QDynamicPlot:
 		if self.ylabel is not None:
 			self.ax.set_ylabel(self.ylabel)
 
-
+		plt.tight_layout()	
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
@@ -73,6 +76,7 @@ class QDynamicPlot:
 		if self.ylabel is not None:
 			self.ax.set_ylabel(self.ylabel)
 
+		plt.tight_layout()	
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
@@ -94,6 +98,7 @@ class QDynamicPlot:
 		self.ax.relim()
 		self.ax.autoscale_view()
 	
+		plt.tight_layout()	
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 

@@ -5,7 +5,7 @@ import numpy as np
 
 # Import d_plot and keithley driver
 import drivers.keithley_2400
-import modules.QDynamicPlot 
+import widgets.QDynamicPlot 
 
 # Import QT backends
 import sys
@@ -222,7 +222,7 @@ class QKeithleySweep(QWidget):
 	def _gen_sweep_plot(self): 		
 
 		# Create QDynamicPlot Object
-		self.plot = modules.QDynamicPlot.QDynamicPlot(self)
+		self.plot = widgets.QDynamicPlot.QDynamicPlot(self)
 		self.plot.set_axes_labels("Voltage (V)", "Current (A)")
 		self.plot.add_axes()
 

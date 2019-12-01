@@ -11,7 +11,6 @@ import modules.QKeithleyConfig
 import modules.QKeithleySweep 
 import modules.QKeithleyBias
 
-
 # Import QT backends
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel
@@ -57,7 +56,7 @@ class QKeithleyControl(QMainWindow):
 		if q.text() == "Configuration":
 			self.ui_stack.setCurrentIndex(0)
 
-		if q.text() == "Sweep Mode": 
+		if q.text() == "IV-Sweep Control": 
 			
 			# Get Keithley handle
 			self.keithley=self.ui_config._get_keithley_handle()
@@ -72,7 +71,7 @@ class QKeithleyControl(QMainWindow):
 				self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
 				self.ui_stack.setCurrentIndex(0)
 
-		if q.text() == "Bias Mode": 		
+		if q.text() == "IV-Bias Control": 		
 
 			# Get Keithley handle
 			self.keithley=self.ui_config._get_keithley_handle()
