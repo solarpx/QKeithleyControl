@@ -64,6 +64,7 @@ class QDynamicPlot(QWidget):
 			self.ax.set_ylabel(self.ylabel)
 
 		plt.tight_layout()	
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
@@ -77,6 +78,7 @@ class QDynamicPlot(QWidget):
 			self.ax.set_ylabel(self.ylabel)
 
 		plt.tight_layout()	
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))		
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
@@ -97,8 +99,9 @@ class QDynamicPlot(QWidget):
 		h.set_ydata(np.append(h.get_ydata(), y_value))
 		self.ax.relim()
 		self.ax.autoscale_view()
-	
+		
 		plt.tight_layout()	
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
