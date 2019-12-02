@@ -1,7 +1,7 @@
 # QKeithleyControl
 QKeithleyControl is a user interface designed for automation of common laboratory measurement routines using Keithley 2400 
-sourcemeters. The software offers three operational modes to interact with the Keithely: A configuration mode, IV-bias mode, 
-and IV-Sweep mode. The program flow is designed to be intuitive, allowing for users to easily configure and operate laboratory
+sourcemeters. The software offers three operational modes to interact with the Keithely: **configuration mode**, **IV-bias mode**, 
+and **IV-Sweep mode**. The program flow is designed to be intuitive, allowing for users to easily configure and operate laboratory
 hardware. 
 
 ### Hardware Configuration
