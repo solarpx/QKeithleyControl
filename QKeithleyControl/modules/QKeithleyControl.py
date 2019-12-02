@@ -53,10 +53,13 @@ class QKeithleyControl(QMainWindow):
 		
 		# Instantiate super
 		super(QKeithleyControl, self).__init__(*args, **kwargs)
-		self.setWindowTitle("Keithley 2400 Control")
 
 		# Application handle
 		self.app = _application
+		self.version = '1.0'
+		
+		# Window Title
+		self.setWindowTitle("QKeithleyControl (v%s)"%self.version)
 
 		# Generate main menu and toplevel widget. We will 
 		# Render our controls into self.toplevel on menu selection
@@ -125,7 +128,7 @@ class QKeithleyControl(QMainWindow):
 		self.menu_bar = self.menuBar()
 		
 		# Add a selector menu items
-		self.menu_selector = self.menu_bar.addMenu('Measurement Setup')
+		self.menu_selector = self.menu_bar.addMenu('Select Measurement')
 
 		# Add some various modes. These will generate windows in main layout
 		self.menu_config = QAction("Hardware Config",self)

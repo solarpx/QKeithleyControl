@@ -231,12 +231,12 @@ class QKeithleyBias(QWidget):
 		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
 
 		# Delay
-		self.delay_label = QLabel("Interval (s)")
+		self.delay_label = QLabel("Measurement Interval (s)")
 		self.delay = QDoubleSpinBox()
 		self.delay.setDecimals(3)
 		self.delay.setMinimum(0.0)
-		self.delay.setMaximum(1.0)
-		self.delay.setSingleStep(0.01)
+		self.delay.setMaximum(600.0)
+		self.delay.setSingleStep(0.1)
 		self.delay.setValue(0.1)
 
 		# Update 

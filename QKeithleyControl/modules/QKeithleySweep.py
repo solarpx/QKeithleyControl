@@ -139,6 +139,15 @@ class QKeithleySweep(QWidget):
 		self.npts.setValue(11)
 
 		# Hysteresis
+		self.delay_label = QLabel("Measurement Interval (s)")
+		self.delay = QDoubleSpinBox()
+		self.delay.setDecimals(3)
+		self.delay.setMinimum(0.0)
+		self.delay.setMaximum(600.0)
+		self.delay.setSingleStep(0.1)
+		self.delay.setValue(0.1)
+
+		# Hysteresis
 		self.hist = QCheckBox("Hysteresis Mode")
 
 		# Measure button
@@ -158,6 +167,8 @@ class QKeithleySweep(QWidget):
 		self.ctl_layout.addWidget(self.cmpl)
 		self.ctl_layout.addWidget(self.npts_label)
 		self.ctl_layout.addWidget(self.npts)
+		self.ctl_layout.addWidget(self.delay_label)
+		self.ctl_layout.addWidget(self.delay)
 		self.ctl_layout.addWidget(self.hist)
 		self.ctl_layout.addWidget(self.config_button)
 
@@ -301,8 +312,9 @@ class QKeithleySweep(QWidget):
 			voltage, current = [],[]
 			handle = self.plot.add_handle()
 
-			# Disable measurement button to avoid double click
+			# Disable measurement and save buttons to avoid double click
 			self.meas_button.setEnabled(False)
+			self.save_button.setEnabled(False)
 
 			# Sweep Voltage Mode
 			if self.mode.currentText() == "Voltage":
@@ -320,12 +332,16 @@ class QKeithleySweep(QWidget):
 					voltage.append(float(_buffer[0]))
 					current.append(float(_buffer[1]))
 
+					# Update plot
 					self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+
+					# Measurement Interval
+					if self.delay.value() != 0: 
+						time.sleep(self.delay.value())
 
 				self._data.append({ 
 					'V': voltage, 
 					'I' : current, 
-					'R' : np.gradient(voltage, current), 
 					'P' : np.multiply(voltage, current)
 				})
 				self.keithley.set_voltage(0.0)
@@ -346,13 +362,17 @@ class QKeithleySweep(QWidget):
 					# Extract data from buffer
 					voltage.append(float(_buffer[0]))
 					current.append(float(_buffer[1]))
-
+	
+					# Update plot
 					self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+
+					# Measurement Interval
+					if self.delay.value() != 0: 
+						time.sleep(self.delay.value())
 
 				self._data.append({ 
 					'V': voltage, 
 					'I' : current, 
-					'R' : np.gradient(voltage, current), 
 					'P' : np.multiply(voltage, current)
 				})
 				self.keithley.set_current(0.0)
@@ -360,6 +380,7 @@ class QKeithleySweep(QWidget):
 
 			# Disable measurement button to avoid double click
 			self.meas_button.setEnabled(True)
+			self.save_button.setEnabled(True)
 
 		# Show warning message if sweep not configured
 		else: 
