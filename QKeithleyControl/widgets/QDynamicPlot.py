@@ -76,31 +76,42 @@ class QDynamicPlot(QWidget):
 		self.ylabel = None
 
 		# List of handles of plot into 
+		self.hlist = []
+
+		# External handle for dialog answer
+		self.msg_clear = None
+	# Expose refresh axes
+	def refresh_axes(self):
+		
+		# Only ask to redraw if there is data present
+		if self.hlist != []:
+
+			msg = QMessageBox()
+			self.msg_clear = msg.question(self, 'QDynamicPlot', "Clear all measurement data?", QMessageBox.Yes | QMessageBox.No)
+			if self.msg_clear == QMessageBox.Yes:
+				self._refresh_axes()		
+	
+		else:
+			self._refresh_axes()		
+
+	# Internal method to clear axes		
+	def _refresh_axes(self):
+
+		self.figure.clear()
 		self.hlist=[]
 
-	# Add and refresh axes
-	def refresh_axes(self):
+		# Add axes and set axes labels
+		self.ax = self.figure.add_subplot(111)	
+		if self.xlabel is not None:
+			self.ax.set_xlabel(self.xlabel)
 
-		msg    = QMessageBox()
-		_clear = msg.question(self, 'QDynamicPlot', "Clear all measurement data?", QMessageBox.Yes | QMessageBox.No)
+		if self.ylabel is not None:
+			self.ax.set_ylabel(self.ylabel)
 
-		if _clear == QMessageBox.Yes:
-
-			self.figure.clear()
-			self.hlist=[]
-
-			# Add axes and set axes labels
-			self.ax = self.figure.add_subplot(111)	
-			if self.xlabel is not None:
-				self.ax.set_xlabel(self.xlabel)
-
-			if self.ylabel is not None:
-				self.ax.set_ylabel(self.ylabel)
-
-			plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-			plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
-			self.figure.canvas.draw()
-			self.figure.canvas.flush_events()
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
+		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
+		self.figure.canvas.draw()
+		self.figure.canvas.flush_events()
 
 	# Add axes object to widget and draw figure
 	def add_axes(self):	

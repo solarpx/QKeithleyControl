@@ -94,81 +94,108 @@ class QKeithleyBias(QWidget):
 	# Update bias control selectors
 	def _update_bias_control(self):
 
-		# Voltage mode adjust lables and limits
-		if self.mode.currentText() == "Voltage":
+		# Call refresh axes to engage dialogue
+		self.plot.refresh_axes()
 
-			# Bias spinbox (voltage mode)
-			self.bias_config={
-				"unit" 		: "V",
-				"min"		: "u",
-				"max"		: "",
-				"label"		: "Bias Level",
-				"limit"		: 20.0,
-				"signed"	: True,
-				"default"	: 0.0
-			} 
-			self.bias.update_config(self.bias_config)
+		# If answer is no, then revert state
+		if self.plot.msg_clear == QMessageBox.No:
 
-			# Compliance Spinbox
-			self.cmpl_config={
-				"unit" 		: "A", 
-				"min"		: "u",
-				"max"		: "",
-				"label"		: "Compliance",
-				"limit"		: 1.0, 
-				"signed"	: False,
-				"default"	: 0.1
-			} 
-			self.cmpl.update_config(self.cmpl_config)
+			# Revert back to current mode. Note we need to block signals on 
+			# the QComboBox object so setCurrentIndex does not fire an unwanted
+			# currentTextChanged signal creating unwanted recursive call in 
+			# the self._update_bias_control function.
+			if self.mode.currentText() == "Voltage":
 
-			# Send commands to keithley
-			self.keithley.voltage_src()
-			self.keithley.set_voltage(self.bias.value())
-			self.keithley.current_cmp(self.cmpl.value())			
+				self.mode.blockSignals(True)
+				self.mode.setCurrentIndex(1)
+				self.mode.blockSignals(False)
+				return
 
-			# Update plot axes and refresh
-			self.plot.set_axes_labels("Time (s)", "Current (A)")
-			self.plot.refresh_axes()
+			# Revert back to voltage Mode
+			if self.mode.currentText() == "Current":
+				self.mode.blockSignals(True)
+				self.mode.setCurrentIndex(0)
+				self.mode.blockSignals(False)
+				return
 
-		# Current mode adjust lables and limits
-		if self.mode.currentText() == "Current":
+		# If answer is yes, then clear and update controls
+		else:
 
-			# Bias spinbox (current mode)
-			self.bias_config={
-				"unit" 		: "A", 
-				"min"		: "u",
-				"max"		: "",
-				"label"		: "Bias Level",
-				"limit"		: 1.0,
-				"signed"	: True,
-				"default" 	: 0.0
-			} 
-			self.bias.update_config(self.bias_config)
+			# Voltage mode adjust lables and limits
+			if self.mode.currentText() == "Voltage":
 
-			# Compliance Spinbox
-			self.cmpl_config={
-				"unit" 		: "V", 
-				"min"		: "u",
-				"max"		: "",
-				"label"		: "Compliance",
-				"limit"		: 20.0,
-				"signed"	: False,
-				"default"	: 1.0
-			} 
-			self.cmpl.update_config(self.cmpl_config)
+				# Bias spinbox (voltage mode)
+				self.bias_config={
+					"unit" 		: "V",
+					"min"		: "u",
+					"max"		: "",
+					"label"		: "Bias Level",
+					"limit"		: 20.0,
+					"signed"	: True,
+					"default"	: 0.0
+				} 
+				self.bias.update_config(self.bias_config)
 
-			# Send commands to keithley
-			self.keithley.current_src()
-			self.keithley.voltage_cmp(self.cmpl.value())
-			self.keithley.set_current(self.bias.value())
+				# Compliance Spinbox
+				self.cmpl_config={
+					"unit" 		: "A", 
+					"min"		: "u",
+					"max"		: "",
+					"label"		: "Compliance",
+					"limit"		: 1.0, 
+					"signed"	: False,
+					"default"	: 0.1
+				} 
+				self.cmpl.update_config(self.cmpl_config)
 
-			# Update plot axes and refresh
-			self.plot.set_axes_labels("Time (s)", "Voltage (V)")
-			self.plot.refresh_axes()
+				# Send commands to keithley
+				self.keithley.voltage_src()
+				self.keithley.set_voltage(self.bias.value())
+				self.keithley.current_cmp(self.cmpl.value())			
 
-		# Enforce data/plot consistency
-		if self.plot.hlist == []:
-			self._data = []	
+				# Update plot axes and refresh
+				self.plot.set_axes_labels("Time (s)", "Current (A)")
+				self.plot._refresh_axes() # Here we call the internal method (no dialogue)
+
+			# Current mode adjust lables and limits
+			if self.mode.currentText() == "Current":
+
+				# Bias spinbox (current mode)
+				self.bias_config={
+					"unit" 		: "A", 
+					"min"		: "u",
+					"max"		: "",
+					"label"		: "Bias Level",
+					"limit"		: 1.0,
+					"signed"	: True,
+					"default" 	: 0.0
+				} 
+				self.bias.update_config(self.bias_config)
+
+				# Compliance Spinbox
+				self.cmpl_config={
+					"unit" 		: "V", 
+					"min"		: "u",
+					"max"		: "",
+					"label"		: "Compliance",
+					"limit"		: 20.0,
+					"signed"	: False,
+					"default"	: 1.0
+				} 
+				self.cmpl.update_config(self.cmpl_config)
+
+				# Send commands to keithley
+				self.keithley.current_src()
+				self.keithley.voltage_cmp(self.cmpl.value())
+				self.keithley.set_current(self.bias.value())
+
+				# Update plot axes and refresh
+				self.plot.set_axes_labels("Time (s)", "Voltage (V)")
+				self.plot._refresh_axes() # Here we call the internal method (no dialogue)
+
+			# Enforce data/plot consistency
+			if self.plot.hlist == []:
+				self._data = []	
 
 	# Generate bias control
 	def _gen_bias_control(self):
