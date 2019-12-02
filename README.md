@@ -1,16 +1,16 @@
 # QKeithleyControl
 QKeithleyControl is a user interface designed for automation of common laboratory measurement routines using Keithley 2400 
-sourcemeters. The software offers three operational modes to interact with the Keithely: **configuration mode**, **IV-bias mode**, 
-and **IV-Sweep mode**. The program flow is designed to be intuitive, allowing for users to easily configure and operate laboratory
-hardware. 
+sourcemeters. The software offers three operational modes to interact with the Keithely: **hardware configuration mode**, **IV-bias mode**, and **IV-Sweep mode**. The program flow is designed to be intuitive, allowing for users to easily configure and operate laboratory hardware. 
 
 # Hardware Configuration
 When first running the program, the user will first be greeted with basic hardware configuration options as shown in the screenshot 
-below. 
+below. To initialize your Keithley sourcemeter, simply enter the GPIB address and click on **Initialize Keithley GPIB**. 
 
 ![QKeithleyControl_Config](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_Config.png)
 
-This page allows the user to configure essential hardware globals for insturment operation. 
+After initialization, this page allows the user to configure essential hardware globals for insturment operation. Note that 
+configuration parameters cannot be modified prior to initialization. The configuration page allows one to modify the following
+system level parameters.
 
 Control          | Input              | Comment  
 ------------     | -------------      | -------------
@@ -21,19 +21,17 @@ Integration Time | `0.01-10.0`        | Specified in *Power Line Cycles*(PLCs). 
 
 # IV-Bias Mode
 
-IV bias mode allows one to use the Keithley as a **voltage source** or a **current source**. Voltage source or current source mode
-operation can be selected in the dropdown menu in the left panel. To operate the sourcemeter, select the level and corresponding compliance value in the configuration panel and click **Change Bias** followed by **Output**. Be sure to set a corresponding current(voltage) compliance level when operating in voltage(current) source mode respectively. The **compliance level** determines 
-the maximum amount of current(voltage) to apply when operating the sourcementer in voltage(current) source mode.
+IV bias mode allows one to use the Keithley as a **voltage source** or a **current source**. To enter IV-Bias mode, use the 
+**IV-Bias Control** option in the **Select Measurement** menu. To operate the sourcemeter, select the level and corresponding compliance value in the configuration panel and click **Change Bias** followed by **Output**. Be sure to set a corresponding current(voltage) compliance level when operating in voltage(current) source mode respectively. The **compliance level** determines the maximum amount of current(voltage) to apply when operating the sourcementer in voltage(current) source mode. Voltage source or current source mode operation can be selected in the dropdown menu in the configuration panel.
 
 ### IV-Bias Controls
 ![QKeithleyControl_IVBias](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_IVBias.PNG)
 
 ### IV-Bias Operation
-The **Output** button reflects the state of the output on the insturment. When operating, it is possible to dynamically change '
+The **Output** button reflects the state of the output on the insturment. When operating, it is possible to dynamically change
 the output level without turning off the output. The plot shows the corresponding measured value as a function of time for the 
 bias applied. To update a bias level and compliance, simply edit the corresponding values and click on **Change Bias**. The 
-**delay** parameter allows one to control the time between individual sense samples. When set to zero, the delay will reflect
-the insuturment integration time assinged in **configuration** along with software runtime. In order to protect the unit, the 
+**Measurement Interval** parameter allows one to control the time between individual sense samples. When set to zero, the delay will reflect the insuturment integration time assinged in **Configuration** along with software runtime. In order to protect the unit, the 
 following `20W` hard limits are placed on bias mode operation.
 
 Mode             | Limit              | Compliance  
@@ -60,9 +58,33 @@ t			V		I		P
 
 # IV-Sweep Mode
 
+Operation of the sourcemeter in sweep mode is similar to bias mode operation. Sweep mode allows one to specify a **start value**,
+**stop value** and the **number of points** to sweep. *QKeithleyControl* also offers a **Hysteresis Mode** which will configure the 
+sweep to go from start value to stop value to start value in a forward sweep followed reverse sweep. It is also possible to set a 
+time delay parameter between sweep measurement points of up to ten minutes. 
+
+### IV-Sweep Controls
 ![QKeithleyControl_IVSweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_IVSweep.PNG)
 
-
+### IV-Sweep Operation
+To create a sweep, enter your desired sweep parameters and select **Configure Sweep**. After this, click **Measure Sweep** to 
+acquire data from your device under test. Note that in sweep mode, it is always possible to abort measurements by clicking 
+the red **Abort Sweep** button mid measurement. In case of measurements with long measurement intervals, your measurement will 
+terminate after the next data point has been collected. In order to save data traces, click on **Save Traces**. Note that it is
+not possible to save data while measurements are underway. Below is shown an extract of data produced via an IV-Sweep mode measurement.
+Note that the data format is identical to that of the IV-Bias mode measurement
+```
+*sweep
+t			V		I		P		
+0.23992514610290527	0.0	-1.417286e-11	-0.0	
+0.5734109878540039	0.1	2.78345e-08	2.7834500000000004e-09	
+0.8965251445770264	0.2	2.281799e-07	4.5635980000000006e-08	
+1.3736143112182617	0.3	1.483972e-06	4.4519159999999996e-07	
+1.6928954124450684	0.4	1.002846e-05	4.011384e-06	
+2.1475539207458496	0.5	6.955527e-05	3.4777635e-05	
+2.59263277053833	0.6	0.0003307777	0.00019846662	
+```
+ 
  
 # Installation
 
