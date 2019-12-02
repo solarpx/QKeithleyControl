@@ -14,14 +14,15 @@ class QUnitSelector(QWidget):
 		QWidget.__init__(self)
 		self._base = collections.OrderedDict({"G" : 1e9, "M" : 1e6, "k" : 1e3, "": 1, "m" : 1e-3, "u" : 1e-6, "n" : 1e-9 })
 			 
-		# Unit configuration dictionary
-		#
+		# QUnitSelector configuration dictionary example
 		# {
-		#	"unit" 	: "V", 
-		#	"min"	: "n",
-		#	"max"	: "",
-		#	"label"	: "Bias Level",
-		#	"limit"	: 20
+		#		"unit" 		: "V",
+		#		"min"		: "u",
+		#		"max"		: "",
+		#		"label"		: "Bias Level",
+		#		"limit"		: 20.0,
+		#		"signed"	: True,
+		#		"default"	: 0.0
 		# } 
 		self.config = config
 		self._gen_unit_range()
@@ -127,4 +128,3 @@ class QUnitSelector(QWidget):
 	# Wrapper for value method
 	def value(self):
 		return float( self._units[ self.unit.currentText() ] * self.unit_value.value() )
-

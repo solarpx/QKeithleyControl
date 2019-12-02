@@ -56,38 +56,55 @@ class QKeithleySweep(QWidget):
 
 		self.ctl_layout = QVBoxLayout()
 
+		# Save data button
+		self.meas_button = QPushButton("Measure")
+		self.meas_button.clicked.connect(self._exec_sweep_measurement)
+
+		# Save traces 
+		self.save_button = QPushButton("Save Traces")
+		self.save_button.clicked.connect(self._save_traces)	
+
 		# Current/Voltage Sweep Mode 
 		self.mode_label = QLabel("Sweep Mode")
 		self.mode = QComboBox()
 		self.mode.addItems(["Voltage", "Current"])
 		self.mode.currentTextChanged.connect(self._update_sweep_control)
 
+		# Sweep Start
+		self.start_config={
+			"unit" 		: "V",
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Sweep Start (V)",
+			"limit"		: 20.0,
+			"signed"	: True,
+			"default"	: 0.0
+		} 
+		self.start = widgets.QUnitSelector.QUnitSelector(self.start_config)
+
+		# Sweep Stop
+		self.stop_config={
+			"unit" 		: "V",
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Sweep Start (V)",
+			"limit"		: 20.0,
+			"signed"	: True,
+			"default"	: 1.0
+		} 
+		self.stop = widgets.QUnitSelector.QUnitSelector(self.stop_config)
+
 		# Compliance Spinbox
-		self.cmpl_label = QLabel("Compliance (A)")
-		self.cmpl = QDoubleSpinBox()
-		self.cmpl.setDecimals(3)
-		self.cmpl.setMinimum(0.0)
-		self.cmpl.setMaximum(1.0)
-		self.cmpl.setSingleStep(0.01)
-		self.cmpl.setValue(0.1)
-
-		# Start Spinbox
-		self.start_label = QLabel("Sweep Start (V)")
-		self.start = QDoubleSpinBox()
-		self.start.setDecimals(3)
-		self.start.setMinimum(-20.0)
-		self.start.setMaximum(20.0)
-		self.start.setSingleStep(0.1)
-		self.start.setValue(0.0)
-
-		# Stop Spinbox
-		self.stop_label = QLabel("Sweep Stop (V)")
-		self.stop = QDoubleSpinBox()
-		self.stop.setDecimals(3)
-		self.stop.setMinimum(-20.0)
-		self.stop.setMaximum(20.0)
-		self.stop.setSingleStep(0.1)
-		self.stop.setValue(1.0)
+		self.cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance (A)",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: 0.1
+		} 
+		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
 
 		# Step Spinbox
 		self.npts_label = QLabel("Number of Points")
@@ -100,16 +117,8 @@ class QKeithleySweep(QWidget):
 		self.hist = QCheckBox("Hysteresis Mode")
 
 		# Measure button
-		self.submit = QPushButton("Configure Measurement")
-		self.submit.clicked.connect(self._config_sweep_measurement)
-
-		# Save data button
-		self.meas_button = QPushButton("Measure")
-		self.meas_button.clicked.connect(self._exec_sweep_measurement)
-
-		# Save traces 
-		self.save_button = QPushButton("Save Traces")
-		self.save_button.clicked.connect(self._save_traces)	
+		self.config_button = QPushButton("Configure Sweep")
+		self.config_button.clicked.connect(self._config_sweep_measurement)
 
 		# Measurement Button
 		self.ctl_layout.addWidget(self.meas_button)
@@ -119,104 +128,97 @@ class QKeithleySweep(QWidget):
 		# Add buttons to box
 		self.ctl_layout.addWidget(self.mode_label)
 		self.ctl_layout.addWidget(self.mode)
-		self.ctl_layout.addWidget(self.cmpl_label)
-		self.ctl_layout.addWidget(self.cmpl)
-		self.ctl_layout.addWidget(self.start_label)
 		self.ctl_layout.addWidget(self.start)
-		self.ctl_layout.addWidget(self.stop_label)
 		self.ctl_layout.addWidget(self.stop)
+		self.ctl_layout.addWidget(self.cmpl)
 		self.ctl_layout.addWidget(self.npts_label)
 		self.ctl_layout.addWidget(self.npts)
 		self.ctl_layout.addWidget(self.hist)
-		self.ctl_layout.addWidget(self.submit)
+		self.ctl_layout.addWidget(self.config_button)
 
 		# Return the layout
 		return self.ctl_layout
-
-	def _save_traces(self):
-
-		# Enforce data/plot consistency
-		if self.plot.hlist == []:
-			self._data = []
-
-		# Only save if data exists
-		if self._data != []:
-
-			dialog = QFileDialog(self)
-			dialog.setFileMode(QFileDialog.AnyFile)
-			dialog.setViewMode(QFileDialog.Detail)
-			filenames = []
-
-			if dialog.exec_():
-				filenames = dialog.selectedFiles()
-				f = open(filenames[0], 'w+')	
-
-				with f:
-				
-					for _m in self._data: 
-
-						# Write data header
-						f.write("*sweep\n")
-						for key in _m.keys():
-							f.write("%s\t\t"%str(key))
-						f.write("\n")
-								
-						# Write data values
-						for i,_ in enumerate(_m[list(_m.keys())[0]]):
-							for key in _m.keys():
-								f.write("%s\t"%str(_m[key][i]))
-							f.write("\n")
-
-						f.write("\n\n")
-
-				f.close()
-
-		# Warning box in case of no data
-		else:		
-
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("No measurement data")
-			msg.setWindowTitle("Sweep Info")
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
-
 
 	# Sweep control dynamic update
 	def _update_sweep_control(self):
 
 		# Voltage mode adjust lables and limits
 		if self.mode.currentText() == "Voltage":
-			self.cmpl_label.setText("Compliance (A)")
-			self.cmpl.setMinimum(0.0)
-			self.cmpl.setMaximum(1.0)
 
-			self.start_label.setText("Sweep Start (V)")
-			self.start.setMinimum(-20.0)
-			self.start.setMaximum(20.0)
-			self.start.setValue(0.0)
+			# Sweep Start
+			self.start_config={
+				"unit" 		: "V",
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Sweep Start (V)",
+				"limit"		: 20.0,
+				"signed"	: True,
+				"default"	: 0.0
+			} 
+			self.start.update_config(self.start_config)
 
-			self.stop_label.setText("Sweep Stop (V)")
-			self.stop.setMinimum(-20.0)
-			self.stop.setMaximum(20.0)
-			self.stop.setValue(1.0)
+			# Sweep Stop
+			self.stop_config={
+				"unit" 		: "V",
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Sweep Start (V)",
+				"limit"		: 20.0,
+				"signed"	: True,
+				"default"	: 1.0
+			} 
+			self.stop.update_config(self.stop_config)
+
+			# Compliance Spinbox
+			self.cmpl_config={
+				"unit" 		: "A", 
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Compliance (A)",
+				"limit"		: 1.0, 
+				"signed"	: False,
+				"default"	: 0.1
+			} 
+			self.cmpl.update_config(self.cmpl_config)
 
 		# Current mode adjust lables and limits
 		if self.mode.currentText() == "Current":
 			
-			self.cmpl_label.setText("Compliance (V)")
-			self.cmpl.setMinimum(0.0)
-			self.cmpl.setMaximum(20.0)
-			
-			self.start_label.setText("Sweep Start (A)")
-			self.start.setMinimum(-1.0)
-			self.start.setMaximum(1.0)
-			self.start.setValue(0.0)
+			# Sweep Start
+			self.start_config={
+				"unit" 		: "A",
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Sweep Start (A)",
+				"limit"		: 1.0,
+				"signed"	: True,
+				"default"	: 0.0
+			} 
+			self.start.update_config(self.start_config)
 
-			self.stop_label.setText("Sweep Stop (A)")
-			self.stop.setMinimum(-1.0)
-			self.stop.setMaximum(1.0)
-			self.stop.setValue(0.1)
+			# Sweep Stop
+			self.stop_config={
+				"unit" 		: "A",
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Sweep Stop (A)",
+				"limit"		: 1.0,
+				"signed"	: True,
+				"default"	: 0.1
+			} 
+			self.stop.update_config(self.stop_config)
+
+			# Compliance Spinbox
+			self.cmpl_config={
+				"unit" 		: "V", 
+				"min"		: "u",
+				"max"		: "",
+				"label"		: "Compliance (V)",
+				"limit"		: 20, 
+				"signed"	: False,
+				"default"	: 1.0
+			} 
+			self.cmpl.update_config(self.cmpl_config)
 
 	# Dynamic Plotting Capability
 	def _gen_sweep_plot(self): 		
@@ -261,7 +263,6 @@ class QKeithleySweep(QWidget):
 		msg.setWindowTitle("Sweep Info")
 		msg.setStandardButtons(QMessageBox.Ok)
 		msg.exec_()
-
 
 	# Execute Sweep Measurement
 	def _exec_sweep_measurement(self):
@@ -340,6 +341,63 @@ class QKeithleySweep(QWidget):
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Warning)
 			msg.setText("Sweep not configured")
+			msg.setWindowTitle("Sweep Info")
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()
+
+	# Method to save data traces
+	def _save_traces(self):
+
+		# Enforce data/plot consistency
+		if self.plot.hlist == []:
+			self._data = []
+
+		# Only save if data exists
+		if self._data != []:
+
+			dialog = QFileDialog(self)
+			dialog.setFileMode(QFileDialog.AnyFile)
+			dialog.setViewMode(QFileDialog.Detail)
+			filenames = []
+
+			if dialog.exec_():
+				filenames = dialog.selectedFiles()
+				f = open(filenames[0], 'w+')	
+
+				with f:
+				
+					for _m in self._data: 
+
+						# Write data header
+						f.write("*sweep\n")
+						for key in _m.keys():
+							f.write("%s\t\t"%str(key))
+						f.write("\n")
+								
+						# Write data values
+						for i,_ in enumerate(_m[list(_m.keys())[0]]):
+							for key in _m.keys():
+								f.write("%s\t"%str(_m[key][i]))
+							f.write("\n")
+
+						f.write("\n\n")
+
+				f.close()
+
+			# Message box to indicate successful save
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Information)
+			msg.setText("Sweep Data Saved")
+			msg.setWindowTitle("Sweep Info")
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()		
+
+		# Warning box in case of no data
+		else:		
+
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Warning)
+			msg.setText("No measurement data")
 			msg.setWindowTitle("Sweep Info")
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()

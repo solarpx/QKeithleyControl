@@ -44,57 +44,7 @@ class QKeithleyBias(QWidget):
 	# Set visa insturment handle for keithley
 	def _set_keithley_handle(self, keithley):
 		self.keithley=keithley
-
-
-	# Sace traces method (same as sweep control)	
-	def _save_traces(self):
-
-		# Enforce data/plot consistency
-		if self.plot.hlist == []:
-			self._data = []
-
-		# Only save if data exists
-		if self._data != []:
-
-			dialog = QFileDialog(self)
-			dialog.setFileMode(QFileDialog.AnyFile)
-			dialog.setViewMode(QFileDialog.Detail)
-			filenames = []
-
-			if dialog.exec_():
-				filenames = dialog.selectedFiles()
-				f = open(filenames[0], 'w+')	
-
-				with f:
-				
-					for _m in self._data: 
-
-						# Write data header
-						f.write("*bias\n")
-						for key in _m.keys():
-							f.write("%s\t\t"%str(key))
-						f.write("\n")
-								
-						# Write data values
-						for i,_ in enumerate(_m[list(_m.keys())[0]]):
-							for key in _m.keys():
-								f.write("%s\t"%str(_m[key][i]))
-							f.write("\n")
-
-						f.write("\n\n")
-
-				f.close()
-
-		# Warning box in case of no data
-		else:		
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("No measurement data")
-			msg.setWindowTitle("Sweep Info")
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()	
-
-
+	
 	# Update bias values 
 	def _update_bias(self):
 
@@ -238,7 +188,7 @@ class QKeithleyBias(QWidget):
 			"label"		: "Bias Level",
 			"limit"		: 20.0, 
 			"signed"	: True,
-			"default"	: 1.0
+			"default"	: 0.0
 		} 
 		self.bias = widgets.QUnitSelector.QUnitSelector(self.bias_config)
 
@@ -287,7 +237,7 @@ class QKeithleyBias(QWidget):
 		return self.ctl_layout
 
 	# Measurement thread
-	def _exec_measuremet(self):	
+	def _exec_output_thread(self):	
 
 		# Voltage and current arrays
 		self._time, self._voltage, self._current = [],[],[]
@@ -331,7 +281,7 @@ class QKeithleyBias(QWidget):
 			self.keithley.output_on()
 
 			# Create execution thread for measurement
-			self.thread = threading.Thread(target=self._exec_measuremet, args=())
+			self.thread = threading.Thread(target=self._exec_output_thread, args=())
 			self.thread.daemon = True						# Daemonize thread
 			self.thread.start()         					# Start the execution
 			self.thread_running = True
@@ -363,7 +313,6 @@ class QKeithleyBias(QWidget):
 				})
 
 			# Turn output OFF
-			self.keithley.set_voltage(0.0)
 			self.keithley.output_off()	
 
 	# Dynamic Plotting Capability
@@ -377,3 +326,51 @@ class QKeithleyBias(QWidget):
 		# Alias plot layout and return layout
 		self.plt_layout = self.plot.layout
 		return self.plt_layout
+
+	# Sace traces method (same as sweep control)	
+	def _save_traces(self):
+
+		# Enforce data/plot consistency
+		if self.plot.hlist == []:
+			self._data = []
+
+		# Only save if data exists
+		if self._data != []:
+
+			dialog = QFileDialog(self)
+			dialog.setFileMode(QFileDialog.AnyFile)
+			dialog.setViewMode(QFileDialog.Detail)
+			filenames = []
+
+			if dialog.exec_():
+				filenames = dialog.selectedFiles()
+				f = open(filenames[0], 'w+')	
+
+				with f:
+				
+					for _m in self._data: 
+
+						# Write data header
+						f.write("*bias\n")
+						for key in _m.keys():
+							f.write("%s\t\t"%str(key))
+						f.write("\n")
+								
+						# Write data values
+						for i,_ in enumerate(_m[list(_m.keys())[0]]):
+							for key in _m.keys():
+								f.write("%s\t"%str(_m[key][i]))
+							f.write("\n")
+
+						f.write("\n\n")
+
+				f.close()
+
+		# Warning box in case of no data
+		else:		
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Warning)
+			msg.setText("No measurement data")
+			msg.setWindowTitle("Sweep Info")
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()
