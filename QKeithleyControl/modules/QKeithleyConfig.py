@@ -36,7 +36,6 @@ import sys
 from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QLabel,  QSizePolicy
 from PyQt5.QtCore import Qt, QSize
 
-
 # Container class to construct sweep measurement widget
 class QKeithleyConfig(QWidget):
 

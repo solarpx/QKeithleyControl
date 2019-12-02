@@ -41,6 +41,7 @@ import os
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QMessageBox
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 
 # Import matplotlibQT backends
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -59,9 +60,11 @@ class QKeithleyControl(QMainWindow):
 		self.app = _application
 		self.version = '1.0'
 		
-		# Window Title
+		# Window title and python icon
+		self.icon = os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico")		
 		self.setWindowTitle("QKeithleyControl (v%s)"%self.version)
-		
+		self.setWindowIcon(QIcon(self.icon))
+
 		# Generate main menu and toplevel widget. We will 
 		# Render our controls into self.toplevel on menu selection
 		self._gen_menu()		
@@ -96,6 +99,7 @@ class QKeithleyControl(QMainWindow):
 
 			# If Keitheley handle is initialized, pass to bias widget. 
 			if self.keithley is not None:
+				self.keithley.reset()
 				self.ui_bias._set_keithley_handle(self.keithley)
 				self.ui_stack.setCurrentIndex(1)
 
@@ -111,6 +115,7 @@ class QKeithleyControl(QMainWindow):
 
 			# If Keitheley handle is initialized, pass to sweep widget. 
 			if self.keithley is not None:
+				self.keithley.reset()
 				self.ui_sweep._set_keithley_handle(self.keithley)
 				self.ui_stack.setCurrentIndex(2)
 
