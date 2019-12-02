@@ -37,6 +37,7 @@ import modules.QKeithleySweep
 import modules.QKeithleyBias
 
 # Import QT backends
+import os
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QMessageBox
 from PyQt5.QtCore import Qt
@@ -60,7 +61,7 @@ class QKeithleyControl(QMainWindow):
 		
 		# Window Title
 		self.setWindowTitle("QKeithleyControl (v%s)"%self.version)
-
+		
 		# Generate main menu and toplevel widget. We will 
 		# Render our controls into self.toplevel on menu selection
 		self._gen_menu()		

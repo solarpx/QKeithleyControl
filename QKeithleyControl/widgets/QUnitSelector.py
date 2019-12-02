@@ -27,7 +27,7 @@ import numpy as np
 import collections
 
 # Import QT backends
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel,QSizePolicy
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QSizePolicy
 from PyQt5.QtCore import Qt, QSize
 
 # Unit selector widget
@@ -107,7 +107,7 @@ class QUnitSelector(QWidget):
 		# Level Spinbox
 		self.unit_value = QDoubleSpinBox()
 		self.unit_value.setDecimals(3)
-		self.unit_value.setSingleStep(0.001)
+		self.unit_value.setSingleStep(0.1)
 		self._update_unit_limits()
 		self.unit_value.setValue(self.config["default"])
 

@@ -83,6 +83,13 @@ class QKeithleyBias(QWidget):
 			self.keithley.set_current(self.bias.value())
 			self.keithley.voltage_cmp(self.cmpl.value())
 
+		# Message box to indicate successful save
+		msg = QMessageBox()
+		msg.setIcon(QMessageBox.Information)
+		msg.setText("Bias Updated")
+		msg.setWindowTitle("Bias Info")
+		msg.setStandardButtons(QMessageBox.Ok)
+		msg.exec_()		
 
 	# Update bias control selectors
 	def _update_bias_control(self):
@@ -337,6 +344,10 @@ class QKeithleyBias(QWidget):
 						'P' : np.multiply(self._voltage, self._current)
 				})
 
+
+			# Zero storage arrays
+			self._time, self._voltage, self._current = [],[],[]	
+
 			# Turn output OFF
 			self.keithley.output_off()	
 
@@ -391,11 +402,19 @@ class QKeithleyBias(QWidget):
 
 				f.close()
 
+			# Message box to indicate successful save
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Information)
+			msg.setText("Bias Data Saved")
+			msg.setWindowTitle("Bias Info")
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()	
+
 		# Warning box in case of no data
 		else:		
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Warning)
 			msg.setText("No measurement data")
-			msg.setWindowTitle("Sweep Info")
+			msg.setWindowTitle("Bias Info")
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()

@@ -27,6 +27,7 @@
 import visa
 import time
 import numpy as np
+import threading
 
 # Import d_plot and keithley driver
 import drivers.keithley_2400
@@ -35,7 +36,7 @@ import widgets.QDynamicPlot
 # Import QT backends
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 
 # Import matplotlibQT backends
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -81,9 +82,32 @@ class QKeithleySweep(QWidget):
 
 		self.ctl_layout = QVBoxLayout()
 
-		# Save data button
-		self.meas_button = QPushButton("Measure")
-		self.meas_button.clicked.connect(self._exec_sweep_measurement)
+		# Measurement Button. This will be a state machine which 
+		# alternates between 'measure' and 'abort' states
+		self.meas_state  = QStateMachine()
+		self.meas_button = QPushButton()
+
+		self.meas_button.setStyleSheet(
+			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+
+		# Create measurement states
+		self.meas_run  = QState()
+		self.meas_stop = QState()
+
+		# Assign state properties and transitions
+		self.meas_run.assignProperty(self.meas_button, 'text', 'Abort Sweep')
+		self.meas_run.addTransition(self.meas_button.clicked, self.meas_stop)
+		self.meas_run.entered.connect(self._exec_sweep_run)
+
+		self.meas_stop.assignProperty(self.meas_button, 'text', 'Measure Sweep')
+		self.meas_stop.addTransition(self.meas_button.clicked, self.meas_run)
+		self.meas_stop.entered.connect(self._exec_sweep_stop)
+
+		# Add states, set initial state, and state machine
+		self.meas_state.addState(self.meas_run)
+		self.meas_state.addState(self.meas_stop)
+		self.meas_state.setInitialState(self.meas_stop)
+		self.meas_state.start()
 
 		# Save traces 
 		self.save_button = QPushButton("Save Traces")
@@ -300,8 +324,42 @@ class QKeithleySweep(QWidget):
 		msg.setStandardButtons(QMessageBox.Ok)
 		msg.exec_()
 
+
+	# Function we run when we enter run state
+	def _exec_sweep_run(self):
+		
+		if self.keithley is not None:
+
+			# Update UI button to abort 
+			self.meas_button.setStyleSheet(
+				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
+			self.save_button.setEnabled(False)		
+
+			# Run the measurement thread function
+			self.thread = threading.Thread(target=self._exec_sweep_thread, args=())
+			self.thread.daemon = True						# Daemonize thread
+			self.thread.start()         					# Start the execution
+			self.thread_running = True
+
+	# Function we run when we enter abort state
+	def _exec_sweep_stop(self):
+		
+		if self.keithley is not None:
+
+			# Update UI button to start state
+			self.meas_button.setStyleSheet(
+				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+			self.save_button.setEnabled(True)	
+
+			# Kill measurement thread
+			self.thread_running = False
+			self.thread.join()  # Waits for thread to complete
+
+			# Zero storage arrays
+			self._time, self._voltage, self._current = [],[],[]
+
 	# Execute Sweep Measurement
-	def _exec_sweep_measurement(self):
+	def _exec_sweep_thread(self):
 
 		# Enforce data/plot consistency
 		if self.plot.hlist == []:
@@ -309,43 +367,49 @@ class QKeithleySweep(QWidget):
 
 		if self._get_sweep_params() is not None:
 
-			voltage, current = [],[]
+			self._time, self._voltage, self._current = [],[],[]
 			handle = self.plot.add_handle()
-
-			# Disable measurement and save buttons to avoid double click
-			self.meas_button.setEnabled(False)
-			self.save_button.setEnabled(False)
+			start  = time.time()
 
 			# Sweep Voltage Mode
 			if self.mode.currentText() == "Voltage":
 
+				# Turn on output and loop through values
 				self.keithley.output_on()
 				for _v in self._get_sweep_params():
-					
-					# Set bias
-					self.keithley.set_voltage(_v)
 
-					# Get data from buffer
-					_buffer = self.keithley.meas().split(",")
+					# If thread is running
+					if self.thread_running:
 
-					# Extract data from buffer
-					voltage.append(float(_buffer[0]))
-					current.append(float(_buffer[1]))
+						# Set bias
+						self.keithley.set_voltage(_v)
 
-					# Update plot
-					self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+						# Get data from buffer
+						_buffer = self.keithley.meas().split(",")
 
-					# Measurement Interval
-					if self.delay.value() != 0: 
-						time.sleep(self.delay.value())
+						# Extract data from buffer
+						self._time.append(float( time.time() - start ))
+						self._voltage.append(float(_buffer[0]))
+						self._current.append(float(_buffer[1]))
 
-				self._data.append({ 
-					'V': voltage, 
-					'I' : current, 
-					'P' : np.multiply(voltage, current)
-				})
-				self.keithley.set_voltage(0.0)
-				self.keithley.output_off()
+						# Update plot
+						self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+
+						# Measurement Interval
+						if self.delay.value() != 0: 
+							time.sleep(self.delay.value())
+
+					# Else kill output and return
+					else:
+						self._data.append({ 
+							't' : self._time, 
+							'V' : self._voltage, 
+							'I' : self._current,  
+							'P' : np.multiply(self._voltage, self._current)
+						})
+						self.keithley.set_voltage(0.0)
+						self.keithley.output_off()
+						return	
 
 			# Sweep Current Mode
 			if self.mode.currentText() == "Current":
@@ -353,35 +417,51 @@ class QKeithleySweep(QWidget):
 				self.keithley.output_on()
 				for _i in self._get_sweep_params():
 					
-					# Set bias
-					self.keithley.set_current(_i)
+					# If thread is running
+					if self.thread_running:
 
-					# Get data from buffer
-					_buffer = self.keithley.meas().split(",")
+						# Set bias
+						self.keithley.set_current(_i)
 
-					# Extract data from buffer
-					voltage.append(float(_buffer[0]))
-					current.append(float(_buffer[1]))
+						# Get data from buffer
+						_buffer = self.keithley.meas().split(",")
+
+						# Extract data from buffer
+						self._time.append(float( time.time() - start ))
+						self._voltage.append(float(_buffer[0]))
+						self._current.append(float(_buffer[1]))
+		
+						# Update plot
+						self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+
+						# Measurement Interval
+						if self.delay.value() != 0: 
+							time.sleep(self.delay.value())
+
+					# Else kill output and return
+					else:
+						self._data.append({ 
+							't' : self._time, 
+							'V' : self._voltage, 
+							'I' : self._current,  
+							'P' : np.multiply(self._voltage, self._current)
+						})
+						self.keithley.set_current(0.0)
+						self.keithley.output_off()
+						return
+
+			# Zero output after measurement			
+			self.keithley.set_voltage(0.0)
+			self.keithley.output_off()			
 	
-					# Update plot
-					self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
-
-					# Measurement Interval
-					if self.delay.value() != 0: 
-						time.sleep(self.delay.value())
-
-				self._data.append({ 
-					'V': voltage, 
-					'I' : current, 
-					'P' : np.multiply(voltage, current)
-				})
-				self.keithley.set_current(0.0)
-				self.keithley.output_off()
-
-			# Disable measurement button to avoid double click
-			self.meas_button.setEnabled(True)
-			self.save_button.setEnabled(True)
-
+			# Append measurement data to data array			
+			self._data.append({ 
+				't' : self._time, 
+				'V' : self._voltage, 
+				'I' : self._current,  
+				'P' : np.multiply(self._voltage, self._current)
+			})
+			
 		# Show warning message if sweep not configured
 		else: 
 			msg = QMessageBox()
@@ -390,6 +470,11 @@ class QKeithleySweep(QWidget):
 			msg.setWindowTitle("Sweep Info")
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()
+
+		# Update state to stop. We post a button click event to the 
+		# QStateMachine to trigger a state transition
+		self.meas_button.click()
+		
 
 	# Method to save data traces
 	def _save_traces(self):

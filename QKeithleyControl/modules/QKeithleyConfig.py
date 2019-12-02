@@ -33,8 +33,9 @@ import drivers.keithley_2400
 
 # Import QT backends
 import sys
-from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel
-from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QLabel,  QSizePolicy
+from PyQt5.QtCore import Qt, QSize
+
 
 # Container class to construct sweep measurement widget
 class QKeithleyConfig(QWidget):
@@ -135,6 +136,14 @@ class QKeithleyConfig(QWidget):
 			# Update integration time
 			self.keithley.update_nplc(self.config_nplc.value())
 
+		# Message box to indicate successful update
+		msg = QMessageBox()
+		msg.setIcon(QMessageBox.Information)
+		msg.setText("Keithley Configuration Updated")
+		msg.setWindowTitle("QKeithleyControl")
+		msg.setStandardButtons(QMessageBox.Ok)
+		msg.exec_()	
+
 
 	# Configuration modes for Keithley
 	def _gen_config_layout(self):
@@ -145,8 +154,12 @@ class QKeithleyConfig(QWidget):
 		self.configlgpib = QLabel("<b>GPIB Address</b>")
 		self.config_gpib = QSpinBox()
 		self.config_gpib.setMinimum(0)
-		self.config_gpib.setMaximum(36)
+		self.config_gpib.setMaximum(30)
 		self.config_gpib.setValue(24)
+
+		# Size the spinbox (to fix QVBoxLayout Width)
+		self.config_gpib.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding);
+		self.config_gpib.setMinimumSize(QSize(250, 10))
 
 		# GPIB Submit
 		self.submit_gpib = QPushButton("Initialize Keithley GPIB")
@@ -202,4 +215,5 @@ class QKeithleyConfig(QWidget):
 		self.config_layout.addWidget(self.submit_config)
 
 		# Return layout object
+		self.config_layout.setContentsMargins(20,11,11,11)
 		return self.config_layout
