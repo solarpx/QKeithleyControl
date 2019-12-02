@@ -55,6 +55,8 @@ t			V		I		P
 2.0056159496307373	0.7204689	0.001000029	0.0007204897935980999	
 2.3556177616119385	0.7204462	0.001000029	0.0007204670929398	
 ```
+**NOTE:** The data will be saved is tied to the traces that are shown in plot. When axes are cleared by invoking **Clear Data** in 
+the plot, data will be deleted from memory. Be sure to save your data before clearing plots. Also, changing operation from voltage source to current source mode will invoke **Clear Data**. A dialogue is always presented to the user if data is to be deleted.
 
 # IV-Sweep Mode
 
