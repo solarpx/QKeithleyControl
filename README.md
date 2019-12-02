@@ -1,5 +1,28 @@
 # QKeithleyControl
-QKeithleyControl is a user interface designed for automation of common measurement routines using Keithley 2400 sourcemeters.
+QKeithleyControl is a user interface designed for automation of common laboratory measurement routines using Keithley 2400 
+sourcemeters. The software offers three operational modes to interact with the Keithely: A configuration mode, IV-bias mode, 
+and IV-Sweep mode. The program flow is designed to be intuitive, allowing for users to easily configure and operate laboratory
+hardware. 
+
+### Hardware Configuration
+When first running the program, the user will first be greeted with basic hardware configuration options as shown in the screenshot 
+below. 
+
+
+This page allows the user to configure essential hardware globals for insturment operation. 
+
+Control          | Input              | Comment  
+------------     | -------------      | -------------
+GPIB Address     | `0-30`             | The GPIB address *must* be initialized prior to changing other settings. 
+Sense Mode       | `2-wire OR 4-wire` | Configuration option to select 2-wire or 4-wire measurements
+Output Route     | `Front OR Rear`    | Select front or rear output terminals on device
+Integration Time | `0.01-10.0`        | Specified in *Power Line Cycles*(PLCs). 1PLC = 20ms(50Hz) OR 16.7ms(60Hz)  
+
+### IV-Bias Mode
+
+### IV-Sweep Mode
+
+
  
 # Installation
 
