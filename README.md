@@ -77,7 +77,7 @@ not possible to save data while measurements are underway. Below is shown an ext
 Note that the data format is identical to that of the IV-Bias mode measurement
 ```
 *sweep
-t			V		I		P		
+t			V	I		P		
 0.23992514610290527	0.0	-1.417286e-11	-0.0	
 0.5734109878540039	0.1	2.78345e-08	2.7834500000000004e-09	
 0.8965251445770264	0.2	2.281799e-07	4.5635980000000006e-08	
