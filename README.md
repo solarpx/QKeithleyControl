@@ -59,11 +59,14 @@ t			V		I		P
 # IV-Sweep Mode
 
 Operation of the sourcemeter in sweep mode is similar to bias mode operation. Sweep mode allows one to specify a **start value**,
-**stop value** and the number of points to sweep. *QKeithleyControl* also offers a **Hysteresis Mode** which will configure the 
+**stop value** and the **number of points** to sweep. *QKeithleyControl* also offers a **Hysteresis Mode** which will configure the 
 sweep to go from start value to stop value to start value in a forward sweep followed reverse sweep. It is also possible to set a 
-time delay parameter between sweep measurement points of up to ten minutes.  
+time delay parameter between sweep measurement points of up to ten minutes. 
+
+### IV-Sweep Controls
 ![QKeithleyControl_IVSweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_IVSweep.PNG)
 
+### IV-Sweep Operation
 To create a sweep, enter your desired sweep parameters and select **Configure Sweep**. After this, click **Measure Sweep** to 
 acquire data from your device under test. Note that in sweep mode, it is always possible to abort measurements by clicking 
 the red **Abort Sweep** button mid measurement. In case of measurements with long measurement intervals, your measurement will 
