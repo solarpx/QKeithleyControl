@@ -27,7 +27,7 @@
 import numpy as np
 
 # Import QT backends
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
 
 # Import matplotlibQT backends
@@ -59,7 +59,7 @@ class QDynamicPlot(QWidget):
 		self.controls = QHBoxLayout()
 		self.toolbar = NavigationToolbar(self.canvas, _app_instance)
 
-		self.refresh = QPushButton("Clear Axes")
+		self.refresh = QPushButton("Clear Data")
 		self.refresh.clicked.connect(self.refresh_axes)
 
 		# Add the controls
@@ -80,21 +80,27 @@ class QDynamicPlot(QWidget):
 
 	# Add and refresh axes
 	def refresh_axes(self):
-		self.figure.clear()
-		self.hlist=[]
 
-		# Add axes and set axes labels
-		self.ax = self.figure.add_subplot(111)	
-		if self.xlabel is not None:
-			self.ax.set_xlabel(self.xlabel)
+		msg    = QMessageBox()
+		_clear = msg.question(self, 'QDynamicPlot', "Clear all measurement data?", QMessageBox.Yes | QMessageBox.No)
 
-		if self.ylabel is not None:
-			self.ax.set_ylabel(self.ylabel)
+		if _clear == QMessageBox.Yes:
 
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
-		self.figure.canvas.draw()
-		self.figure.canvas.flush_events()
+			self.figure.clear()
+			self.hlist=[]
+
+			# Add axes and set axes labels
+			self.ax = self.figure.add_subplot(111)	
+			if self.xlabel is not None:
+				self.ax.set_xlabel(self.xlabel)
+
+			if self.ylabel is not None:
+				self.ax.set_ylabel(self.ylabel)
+
+			plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
+			plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
+			self.figure.canvas.draw()
+			self.figure.canvas.flush_events()
 
 	# Add axes object to widget and draw figure
 	def add_axes(self):	

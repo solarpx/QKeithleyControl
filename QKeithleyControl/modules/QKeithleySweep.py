@@ -327,36 +327,56 @@ class QKeithleySweep(QWidget):
 
 	# Function we run when we enter run state
 	def _exec_sweep_run(self):
-		
-		if self.keithley is not None:
 
-			# Update UI button to abort 
-			self.meas_button.setStyleSheet(
-				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
-			self.save_button.setEnabled(False)		
+		# If sweep has been defined		
+		if self._get_sweep_params() is not None:
 
-			# Run the measurement thread function
-			self.thread = threading.Thread(target=self._exec_sweep_thread, args=())
-			self.thread.daemon = True						# Daemonize thread
-			self.thread.start()         					# Start the execution
-			self.thread_running = True
+			# For startup protection
+			if self.keithley is not None:
+
+				# Update UI button to abort 
+				self.meas_button.setStyleSheet(
+					"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
+				self.save_button.setEnabled(False)		
+
+				# Run the measurement thread function
+				self.thread = threading.Thread(target=self._exec_sweep_thread, args=())
+				self.thread.daemon = True						# Daemonize thread
+				self.thread.start()         					# Start the execution
+				self.thread_running = True
+
+		# Otherwise show infobox and revert state
+		else:
+			self.meas_button.click()
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Warning)
+			msg.setText("Sweep not configured")
+			msg.setWindowTitle("Sweep Info")
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()
+
 
 	# Function we run when we enter abort state
 	def _exec_sweep_stop(self):
 		
-		if self.keithley is not None:
+		# If sweep has been defined		
+		if self._get_sweep_params() is not None:
+	
+			# For startup protection
+			if self.keithley is not None:
 
-			# Update UI button to start state
-			self.meas_button.setStyleSheet(
-				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-			self.save_button.setEnabled(True)	
+				# Update UI button to start state
+				self.meas_button.setStyleSheet(
+					"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+				self.save_button.setEnabled(True)	
 
-			# Kill measurement thread
-			self.thread_running = False
-			self.thread.join()  # Waits for thread to complete
+				# Kill measurement thread
+				self.thread_running = False
+				self.thread.join()  # Waits for thread to complete
 
-			# Zero storage arrays
-			self._time, self._voltage, self._current = [],[],[]
+				# Zero storage arrays
+				self._time, self._voltage, self._current = [],[],[]
+
 
 	# Execute Sweep Measurement
 	def _exec_sweep_thread(self):
@@ -365,116 +385,105 @@ class QKeithleySweep(QWidget):
 		if self.plot.hlist == []:
 			self._data = []
 
-		if self._get_sweep_params() is not None:
 
-			self._time, self._voltage, self._current = [],[],[]
-			handle = self.plot.add_handle()
-			start  = time.time()
+		self._time, self._voltage, self._current = [],[],[]
+		handle = self.plot.add_handle()
+		start  = time.time()
 
-			# Sweep Voltage Mode
-			if self.mode.currentText() == "Voltage":
+		# Sweep Voltage Mode
+		if self.mode.currentText() == "Voltage":
 
-				# Turn on output and loop through values
-				self.keithley.output_on()
-				for _v in self._get_sweep_params():
+			# Turn on output and loop through values
+			self.keithley.output_on()
+			for _v in self._get_sweep_params():
 
-					# If thread is running
-					if self.thread_running:
+				# If thread is running
+				if self.thread_running:
 
-						# Set bias
-						self.keithley.set_voltage(_v)
+					# Set bias
+					self.keithley.set_voltage(_v)
 
-						# Get data from buffer
-						_buffer = self.keithley.meas().split(",")
+					# Get data from buffer
+					_buffer = self.keithley.meas().split(",")
 
-						# Extract data from buffer
-						self._time.append(float( time.time() - start ))
-						self._voltage.append(float(_buffer[0]))
-						self._current.append(float(_buffer[1]))
+					# Extract data from buffer
+					self._time.append(float( time.time() - start ))
+					self._voltage.append(float(_buffer[0]))
+					self._current.append(float(_buffer[1]))
 
-						# Update plot
-						self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+					# Update plot
+					self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
 
-						# Measurement Interval
-						if self.delay.value() != 0: 
-							time.sleep(self.delay.value())
+					# Measurement Interval
+					if self.delay.value() != 0: 
+						time.sleep(self.delay.value())
 
-					# Else kill output and return
-					else:
-						self._data.append({ 
-							't' : self._time, 
-							'V' : self._voltage, 
-							'I' : self._current,  
-							'P' : np.multiply(self._voltage, self._current)
-						})
-						self.keithley.set_voltage(0.0)
-						self.keithley.output_off()
-						return	
+				# Else kill output and return
+				else:
+					self._data.append({ 
+						't' : self._time, 
+						'V' : self._voltage, 
+						'I' : self._current,  
+						'P' : np.multiply(self._voltage, self._current)
+					})
+					self.keithley.set_voltage(0.0)
+					self.keithley.output_off()
+					return	
 
-			# Sweep Current Mode
-			if self.mode.currentText() == "Current":
+		# Sweep Current Mode
+		if self.mode.currentText() == "Current":
 				
-				self.keithley.output_on()
-				for _i in self._get_sweep_params():
+			self.keithley.output_on()
+			for _i in self._get_sweep_params():
 					
-					# If thread is running
-					if self.thread_running:
+				# If thread is running
+				if self.thread_running:
 
-						# Set bias
-						self.keithley.set_current(_i)
+					# Set bias
+					self.keithley.set_current(_i)
 
-						# Get data from buffer
-						_buffer = self.keithley.meas().split(",")
+					# Get data from buffer
+					_buffer = self.keithley.meas().split(",")
 
-						# Extract data from buffer
-						self._time.append(float( time.time() - start ))
-						self._voltage.append(float(_buffer[0]))
-						self._current.append(float(_buffer[1]))
+					# Extract data from buffer
+					self._time.append(float( time.time() - start ))
+					self._voltage.append(float(_buffer[0]))
+					self._current.append(float(_buffer[1]))
 		
-						# Update plot
-						self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+					# Update plot
+					self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
 
-						# Measurement Interval
-						if self.delay.value() != 0: 
-							time.sleep(self.delay.value())
+					# Measurement Interval
+					if self.delay.value() != 0: 
+						time.sleep(self.delay.value())
 
-					# Else kill output and return
-					else:
-						self._data.append({ 
-							't' : self._time, 
-							'V' : self._voltage, 
-							'I' : self._current,  
-							'P' : np.multiply(self._voltage, self._current)
-						})
-						self.keithley.set_current(0.0)
-						self.keithley.output_off()
-						return
+				# Else kill output and return
+				else:
+					self._data.append({ 
+						't' : self._time, 
+						'V' : self._voltage, 
+						'I' : self._current,  
+						'P' : np.multiply(self._voltage, self._current)
+					})
+					self.keithley.set_current(0.0)
+					self.keithley.output_off()
+					return
 
-			# Zero output after measurement			
-			self.keithley.set_voltage(0.0)
-			self.keithley.output_off()			
+		# Zero output after measurement			
+		self.keithley.set_voltage(0.0)
+		self.keithley.output_off()			
 	
-			# Append measurement data to data array			
-			self._data.append({ 
-				't' : self._time, 
-				'V' : self._voltage, 
-				'I' : self._current,  
-				'P' : np.multiply(self._voltage, self._current)
-			})
+		# Append measurement data to data array			
+		self._data.append({ 
+			't' : self._time, 
+			'V' : self._voltage, 
+			'I' : self._current,  
+			'P' : np.multiply(self._voltage, self._current)
+		})
 			
-		# Show warning message if sweep not configured
-		else: 
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("Sweep not configured")
-			msg.setWindowTitle("Sweep Info")
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
-
 		# Update state to stop. We post a button click event to the 
 		# QStateMachine to trigger a state transition
 		self.meas_button.click()
-		
 
 	# Method to save data traces
 	def _save_traces(self):
