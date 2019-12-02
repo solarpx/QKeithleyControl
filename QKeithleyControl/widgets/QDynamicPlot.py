@@ -33,6 +33,7 @@ from PyQt5.QtCore import Qt
 # Import matplotlibQT backends
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
 
 class QDynamicPlot(QWidget):
@@ -47,7 +48,7 @@ class QDynamicPlot(QWidget):
 		self.layout = QVBoxLayout()
 
 		# Create a figure object
-		self.figure = plt.figure()
+		self.figure = plt.figure(figsize=(8,5))
 		
 		# this is the Canvas Widget that displays the `figure`
 		# it takes the `figure` instance as a parameter to __init__
@@ -69,6 +70,7 @@ class QDynamicPlot(QWidget):
 		self.layout.addWidget(self.canvas)
 		self.layout.addLayout(self.controls)
 
+
 		# Variables for axes labels
 		self.xlabel = None
 		self.ylabel = None
@@ -82,20 +84,21 @@ class QDynamicPlot(QWidget):
 		self.hlist=[]
 
 		# Add axes and set axes labels
-		self.ax = self.figure.add_subplot(111)		
+		self.ax = self.figure.add_subplot(111)	
 		if self.xlabel is not None:
 			self.ax.set_xlabel(self.xlabel)
 
 		if self.ylabel is not None:
 			self.ax.set_ylabel(self.ylabel)
 
-		plt.tight_layout()	
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
+		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
+	# Add axes object to widget and draw figure
 	def add_axes(self):	
-		# Add axes object to widget and draw figure
+
 		self.ax = self.figure.add_subplot(111)
 		if self.xlabel is not None:
 			self.ax.set_xlabel(self.xlabel)
@@ -103,8 +106,8 @@ class QDynamicPlot(QWidget):
 		if self.ylabel is not None:
 			self.ax.set_ylabel(self.ylabel)
 
-		plt.tight_layout()	
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))		
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
+		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
@@ -126,8 +129,8 @@ class QDynamicPlot(QWidget):
 		self.ax.relim()
 		self.ax.autoscale_view()
 		
-		plt.tight_layout()	
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
+		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()
 
