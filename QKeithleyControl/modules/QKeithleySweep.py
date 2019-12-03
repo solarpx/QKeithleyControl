@@ -66,7 +66,7 @@ class QKeithleySweep(QWidget):
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
 		self.layout.addLayout(self._gen_sweep_layout())
-		self.layout.addLayout(self._gen_sweep_plot())
+		self.layout.addWidget(self._gen_sweep_plot())
 		self.setLayout(self.layout)
 
 	# Set visa insturment handle for keithley
@@ -170,7 +170,7 @@ class QKeithleySweep(QWidget):
 		self.npts_label = QLabel("Number of Points")
 		self.npts = QSpinBox()
 		self.npts.setMinimum(1)
-		self.npts.setMaximum(100)
+		self.npts.setMaximum(256)
 		self.npts.setValue(11)
 
 		# Hysteresis
@@ -294,14 +294,12 @@ class QKeithleySweep(QWidget):
 	# Dynamic Plotting Capability
 	def _gen_sweep_plot(self): 		
 
-		# Create QDynamicPlot Object
-		self.plot = widgets.QDynamicPlot.QDynamicPlot(self)
+		# Create QDynamicPlot object (inherits QWidget) 
+		self.plot = widgets.QDynamicPlot.QDynamicPlot()
 		self.plot.set_axes_labels("Voltage (V)", "Current (A)")
 		self.plot.add_axes()
 
-		# Alias plot layout and return layout
-		self.plt_layout = self.plot.layout
-		return self.plt_layout
+		return self.plot
 
 	# Create Measurement 
 	def _config_sweep_measurement(self):

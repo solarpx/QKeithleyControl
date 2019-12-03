@@ -112,7 +112,7 @@ class QUnitSelector(QWidget):
 		self.unit_value.setValue(self.config["default"])
 
 		# Size the spinbox
-		self.unit_value.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding);
+		self.unit_value.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum);
 		self.unit_value.setMinimumSize(QSize(200, 10))
 
 		# Add widgets to hbox

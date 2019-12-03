@@ -68,7 +68,7 @@ class QKeithleyBias(QWidget):
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
 		self.layout.addLayout(self._gen_bias_control())
-		self.layout.addLayout(self._gen_bias_plot())
+		self.layout.addWidget(self._gen_bias_plot())
 		self.setLayout(self.layout)
 
 	# Set visa insturment handle for keithley
@@ -393,14 +393,12 @@ class QKeithleyBias(QWidget):
 	# Dynamic Plotting Capability
 	def _gen_bias_plot(self): 		
 
-		# Create QDynamicPlot Object
-		self.plot = widgets.QDynamicPlot.QDynamicPlot(self)
+		# Create QDynamicPlot Object (inherits QWidget) 
+		self.plot = widgets.QDynamicPlot.QDynamicPlot()
 		self.plot.set_axes_labels("Time (s)", "Current (A)")
 		self.plot.add_axes()
 
-		# Alias plot layout and return layout
-		self.plt_layout = self.plot.layout
-		return self.plt_layout
+		return self.plot
 
 	# Sace traces method (same as sweep control)	
 	def _save_traces(self):

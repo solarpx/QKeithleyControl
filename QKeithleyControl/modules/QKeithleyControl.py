@@ -35,6 +35,7 @@ import drivers.keithley_2400
 import modules.QKeithleyConfig
 import modules.QKeithleySweep 
 import modules.QKeithleyBias
+import modules.QKeithleySolar
 
 # Import QT backends
 import os
@@ -74,11 +75,13 @@ class QKeithleyControl(QMainWindow):
 		self.ui_config = modules.QKeithleyConfig.QKeithleyConfig()
 		self.ui_bias   = modules.QKeithleyBias.QKeithleyBias()
 		self.ui_sweep  = modules.QKeithleySweep.QKeithleySweep()
+		self.ui_solar  = modules.QKeithleySolar.QKeithleySolar()
 
 		# Add ui-mode widgets to stack
 		self.ui_stack.addWidget(self.ui_config)
 		self.ui_stack.addWidget(self.ui_bias)
 		self.ui_stack.addWidget(self.ui_sweep)
+		self.ui_stack.addWidget(self.ui_solar)
 
 		# Set window central widget to stacked widget
 		self.setCentralWidget(self.ui_stack)
@@ -126,6 +129,25 @@ class QKeithleyControl(QMainWindow):
 				self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
 				self.ui_stack.setCurrentIndex(0)		
 
+
+		if q.text() == "PV-Characterization" and self.ui_stack.currentIndex() != 3:
+
+			# Get Keithley handle
+			self.keithley=self.ui_config._get_keithley_handle()
+
+			# If Keitheley handle is initialized, pass to sweep widget. 
+			if self.keithley is not None:
+				self.keithley.reset()
+				self.ui_solar._set_keithley_handle(self.keithley)
+				self.ui_solar._reset_defaults()
+				self.ui_stack.setCurrentIndex(3)
+
+			# Otherwise, display Keithley not initilized message
+			else:				
+				self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
+				self.ui_stack.setCurrentIndex(0)		
+
+
 		if q.text() == "Exit": 
 			self.app.exit()		
 
@@ -150,7 +172,11 @@ class QKeithleyControl(QMainWindow):
 		self.menu_sweep = QAction("IV-Sweep Control",self)
 		self.menu_selector.addAction(self.menu_sweep)
 
-		# Sweep Mode
+		# Solar Mode
+		self.menu_solar = QAction("PV-Characterization")
+		self.menu_selector.addAction(self.menu_solar)
+
+		# Exit Application
 		self.menu_exit = QAction("Exit",self)
 		self.menu_selector.addAction(self.menu_exit)
 
