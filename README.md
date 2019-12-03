@@ -6,7 +6,7 @@ sourcemeters. The software offers three operational modes to interact with the K
 When first running the program, the user will first be greeted with basic hardware configuration options as shown in the screenshot 
 below. To initialize your Keithley sourcemeter, simply enter the GPIB address and click on **Initialize Keithley GPIB**. 
 
-![QKeithleyControl_Config](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_Conf.png)
+![QKeithleyControl_Config](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_Config.png)
 
 After initialization, this page allows the user to configure essential hardware globals for insturment operation. Note that 
 configuration parameters cannot be modified prior to initialization. The configuration page allows one to modify the following
