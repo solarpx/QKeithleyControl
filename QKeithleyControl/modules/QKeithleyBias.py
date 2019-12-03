@@ -37,9 +37,11 @@ import widgets.QDynamicPlot
 import widgets.QUnitSelector
 
 # Import QT backends
+import os
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
+from PyQt5.QtGui import QIcon
 
 # Import matplotlibQT backends
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -53,6 +55,9 @@ class QKeithleyBias(QWidget):
 
 		# Inherits QWidget
 		QWidget.__init__(self)
+
+		# Create Icon for QMessageBox
+		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
 
 		# Initialize Keithley Object
 		self.keithley = None
@@ -70,6 +75,12 @@ class QKeithleyBias(QWidget):
 	def _set_keithley_handle(self, keithley):
 		self.keithley=keithley
 	
+	# Method to reset sweep on window switch
+	def _reset_defaults(self):
+		self.sweep = []
+		self._data = []
+		self.plot._refresh_axes() 
+
 	# Update bias values 
 	def _update_bias(self):
 
@@ -86,8 +97,9 @@ class QKeithleyBias(QWidget):
 		# Message box to indicate successful save
 		msg = QMessageBox()
 		msg.setIcon(QMessageBox.Information)
-		msg.setText("Bias Updated")
+		msg.setText("%s bias updated"%self.mode.currentText())
 		msg.setWindowTitle("Bias Info")
+		msg.setWindowIcon(self.icon)
 		msg.setStandardButtons(QMessageBox.Ok)
 		msg.exec_()		
 
@@ -432,8 +444,9 @@ class QKeithleyBias(QWidget):
 			# Message box to indicate successful save
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Information)
-			msg.setText("Bias Data Saved")
+			msg.setText("Measurement data saved")
 			msg.setWindowTitle("Bias Info")
+			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()	
 
@@ -443,5 +456,6 @@ class QKeithleyBias(QWidget):
 			msg.setIcon(QMessageBox.Warning)
 			msg.setText("No measurement data")
 			msg.setWindowTitle("Bias Info")
+			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()

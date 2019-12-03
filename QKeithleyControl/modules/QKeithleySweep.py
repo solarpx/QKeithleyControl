@@ -34,9 +34,11 @@ import drivers.keithley_2400
 import widgets.QDynamicPlot 
 
 # Import QT backends
+import os
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
+from PyQt5.QtGui import QIcon
 
 # Import matplotlibQT backends
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -53,6 +55,9 @@ class QKeithleySweep(QWidget):
 
 		# Initialize Keithley Object
 		self.keithley = None
+
+		# Create Icon for QMessageBox
+		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
 
 		# Create objects to hold data
 		self._data = []
@@ -72,6 +77,12 @@ class QKeithleySweep(QWidget):
 	def _set_sweep_params(self, _start, _stop, _points, _hist=False):
 		_ = np.linspace(float(_start), float(_stop), int(_points))
 		self.sweep = np.concatenate((_,_[-2::-1])) if _hist else _
+
+	# Method to reset sweep on window switch
+	def _reset_defaults(self):
+		self.sweep = []
+		self._data = []
+		self.plot._refresh_axes() 
 
 	# Method to get sweep parameters
 	def _get_sweep_params(self):
@@ -319,8 +330,9 @@ class QKeithleySweep(QWidget):
 		# Message box to indicate that sweep variable have been updated
 		msg = QMessageBox()
 		msg.setIcon(QMessageBox.Information)
-		msg.setText("Sweep Parameters Updated")
+		msg.setText("%s sweep parameters updated"%self.mode.currentText())
 		msg.setWindowTitle("Sweep Info")
+		msg.setWindowIcon(self.icon)
 		msg.setStandardButtons(QMessageBox.Ok)
 		msg.exec_()
 
@@ -352,6 +364,7 @@ class QKeithleySweep(QWidget):
 			msg.setIcon(QMessageBox.Warning)
 			msg.setText("Sweep not configured")
 			msg.setWindowTitle("Sweep Info")
+			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()
 
@@ -385,7 +398,7 @@ class QKeithleySweep(QWidget):
 		if self.plot.hlist == []:
 			self._data = []
 
-
+		# Zero arrays
 		self._time, self._voltage, self._current = [],[],[]
 		handle = self.plot.add_handle()
 		start  = time.time()
@@ -527,8 +540,9 @@ class QKeithleySweep(QWidget):
 			# Message box to indicate successful save
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Information)
-			msg.setText("Sweep Data Saved")
+			msg.setText("Measurement data saved")
 			msg.setWindowTitle("Sweep Info")
+			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()		
 

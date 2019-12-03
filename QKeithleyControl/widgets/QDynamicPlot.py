@@ -29,8 +29,10 @@ import numpy as np
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QMessageBox
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 
 # Import matplotlibQT backends
+import os 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.ticker import FormatStrFormatter
@@ -45,6 +47,7 @@ class QDynamicPlot(QWidget):
 		# Inherits QWidget
 		QWidget.__init__(self)
 
+		# Main layout
 		self.layout = QVBoxLayout()
 
 		# Create a figure object
@@ -70,7 +73,6 @@ class QDynamicPlot(QWidget):
 		self.layout.addWidget(self.canvas)
 		self.layout.addLayout(self.controls)
 
-
 		# Variables for axes labels
 		self.xlabel = None
 		self.ylabel = None
@@ -80,6 +82,10 @@ class QDynamicPlot(QWidget):
 
 		# External handle for dialog answer
 		self.msg_clear = None
+
+		# Create Icon for QMessageBox
+		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
+
 	# Expose refresh axes
 	def refresh_axes(self):
 		
@@ -87,7 +93,13 @@ class QDynamicPlot(QWidget):
 		if self.hlist != []:
 
 			msg = QMessageBox()
-			self.msg_clear = msg.question(self, 'QDynamicPlot', "Clear all measurement data?", QMessageBox.Yes | QMessageBox.No)
+			msg.setIcon(QMessageBox.Information)
+			msg.setText("Clear all measurement data?")
+			msg.setWindowTitle("QDynamicPlot")
+			msg.setWindowIcon(self.icon)
+			msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+			self.msg_clear = msg.exec_()
+
 			if self.msg_clear == QMessageBox.Yes:
 				self._refresh_axes()		
 	

@@ -32,9 +32,12 @@ import numpy as np
 import drivers.keithley_2400
 
 # Import QT backends
+import os
 import sys
 from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QLabel,  QSizePolicy
 from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon
 
 # Container class to construct sweep measurement widget
 class QKeithleyConfig(QWidget):
@@ -50,6 +53,9 @@ class QKeithleyConfig(QWidget):
 		self.layout.addStretch(2)
 		self.setLayout(self.layout)
 
+		# Create Icon for QMessageBox
+		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
+		
 		# Keithley object
 		self.keithley = None
 
@@ -82,6 +88,7 @@ class QKeithleyConfig(QWidget):
 			msg.setIcon(QMessageBox.Information)
 			msg.setText("Initialized device at GPIB address %s"%str(self.GPIB))
 			msg.setWindowTitle("pyVISA Connection")
+			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()
 
@@ -108,6 +115,7 @@ class QKeithleyConfig(QWidget):
 			msg.setIcon(QMessageBox.Warning)
 			msg.setText("No deivce at GPIB address %s"%str(self.GPIB))
 			msg.setWindowTitle("pyVISA Error")
+			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()
  			
@@ -140,6 +148,7 @@ class QKeithleyConfig(QWidget):
 		msg.setIcon(QMessageBox.Information)
 		msg.setText("Keithley Configuration Updated")
 		msg.setWindowTitle("QKeithleyControl")
+		msg.setWindowIcon(self.icon)
 		msg.setStandardButtons(QMessageBox.Ok)
 		msg.exec_()	
 

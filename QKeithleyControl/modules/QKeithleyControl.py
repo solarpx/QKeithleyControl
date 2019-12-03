@@ -56,14 +56,14 @@ class QKeithleyControl(QMainWindow):
 		# Instantiate super
 		super(QKeithleyControl, self).__init__(*args, **kwargs)
 
-		# Application handle
+		# Application handle and window title	
 		self.app = _application
 		self.version = '1.0'
-		
-		# Window title and python icon
-		self.icon = os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico")		
 		self.setWindowTitle("QKeithleyControl (v%s)"%self.version)
-		self.setWindowIcon(QIcon(self.icon))
+		
+		# Create Icon for QMainWindow and QMessageBox
+		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))
+		self.setWindowIcon(self.icon)
 
 		# Generate main menu and toplevel widget. We will 
 		# Render our controls into self.toplevel on menu selection
@@ -89,10 +89,10 @@ class QKeithleyControl(QMainWindow):
 	# Callback to update menu
 	def _menu_callback(self, q):		
 
-		if q.text() == "Hardware Config":
+		if q.text() == "Hardware Config" and self.ui_stack.currentIndex() != 0: 
 			self.ui_stack.setCurrentIndex(0)
 
-		if q.text() == "IV-Bias Control": 		
+		if q.text() == "IV-Bias Control" and self.ui_stack.currentIndex() != 1: 		
 
 			# Get Keithley handle
 			self.keithley=self.ui_config._get_keithley_handle()
@@ -101,6 +101,7 @@ class QKeithleyControl(QMainWindow):
 			if self.keithley is not None:
 				self.keithley.reset()
 				self.ui_bias._set_keithley_handle(self.keithley)
+				self.ui_bias._reset_defaults()
 				self.ui_stack.setCurrentIndex(1)
 
 			# Otherwise, display Keithley not initilized message
@@ -108,7 +109,7 @@ class QKeithleyControl(QMainWindow):
 				self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
 				self.ui_stack.setCurrentIndex(0)
 
-		if q.text() == "IV-Sweep Control": 
+		if q.text() == "IV-Sweep Control" and self.ui_stack.currentIndex() != 2:
 			
 			# Get Keithley handle
 			self.keithley=self.ui_config._get_keithley_handle()
@@ -117,6 +118,7 @@ class QKeithleyControl(QMainWindow):
 			if self.keithley is not None:
 				self.keithley.reset()
 				self.ui_sweep._set_keithley_handle(self.keithley)
+				self.ui_sweep._reset_defaults()
 				self.ui_stack.setCurrentIndex(2)
 
 			# Otherwise, display Keithley not initilized message
@@ -160,8 +162,9 @@ class QKeithleyControl(QMainWindow):
 					
 		# Message box to display error
 		msg = QMessageBox()
+		msg.setWindowTitle(_title)
+		msg.setWindowIcon(self.icon)
 		msg.setIcon(QMessageBox.Warning)
 		msg.setText(_text)
-		msg.setWindowTitle(_title)
 		msg.setStandardButtons(QMessageBox.Ok)
 		msg.exec_()	
