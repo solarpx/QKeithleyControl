@@ -38,8 +38,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
 
-
-
+# Class for dynamic matplotlib plotting in Qt
 class QDynamicPlotTest(QWidget):
 
 	def __init__(self, *args, **kwargs):
@@ -63,7 +62,7 @@ class QDynamicPlotTest(QWidget):
 		self.layout.addLayout(self.hlayout2)
 		self.layout.addLayout(self.hlayout1)
 
-		self.setLayout( self.layout )
+		self.setLayout(self.layout)
 
 	# Add axes labels
 	def set_axes_labels(self, _xlabel, _ylabel):

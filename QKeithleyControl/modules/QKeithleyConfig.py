@@ -34,9 +34,8 @@ import drivers.keithley_2400
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QLabel,  QSizePolicy
+from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QLabel, QSizePolicy
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QIcon
 
 # Container class to construct sweep measurement widget
