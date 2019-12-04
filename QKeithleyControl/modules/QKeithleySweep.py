@@ -36,7 +36,7 @@ import widgets.QDynamicPlot
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QLineEdit
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
@@ -69,6 +69,15 @@ class QKeithleySweep(QWidget):
 		self.layout.addWidget(self._gen_sweep_plot())
 		self.setLayout(self.layout)
 
+
+	# Helper method to generate QHBoxLayouts
+	def _gen_hboxlayout(self, _widget_list):
+	
+		_layout = QHBoxLayout()
+		for _w in _widget_list:
+			_layout.addWidget(_w)
+		return _layout	
+
 	# Set visa insturment handle for keithley
 	def _set_keithley_handle(self, keithley):
 		self.keithley=keithley
@@ -92,6 +101,10 @@ class QKeithleySweep(QWidget):
 	def _gen_sweep_layout(self): 
 
 		self.ctl_layout = QVBoxLayout()
+
+		#####################################
+		#   SWEEP STATE MACHINE AND BUTTON
+		#
 
 		# Measurement Button. This will be a state machine which 
 		# alternates between 'measure' and 'abort' states
@@ -120,14 +133,19 @@ class QKeithleySweep(QWidget):
 		self.meas_state.setInitialState(self.meas_stop)
 		self.meas_state.start()
 
-		# Save traces 
-		self.save_button = QPushButton("Save Traces")
-		self.save_button.clicked.connect(self._save_traces)	
+		#####################################
+		#  SWEEP MEASUREMENT CONFIGURATION
+		#
+
+		# Configuration button
+		self.config_button = QPushButton("Configure Sweep")
+		self.config_button.clicked.connect(self._config_sweep_measurement)
 
 		# Current/Voltage Sweep Mode 
 		self.mode_label = QLabel("Sweep Mode")
 		self.mode = QComboBox()
-		self.mode.addItems(["Voltage", "Current"])
+		self.mode.setFixedWidth(200)
+		self.mode.addItems(["Voltage", "Current"])	
 		self.mode.currentTextChanged.connect(self._update_sweep_control)
 
 		# Sweep Start
@@ -166,48 +184,68 @@ class QKeithleySweep(QWidget):
 		} 
 		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
 
-		# Step Spinbox
-		self.npts_label = QLabel("Number of Points")
-		self.npts = QSpinBox()
-		self.npts.setMinimum(1)
-		self.npts.setMaximum(256)
-		self.npts.setValue(11)
+		# NUmber of points
+		self.npts_config={
+			"unit" 		: "__INT__", 
+			"label"		: "Number of Points",
+			"limit"		: 256.0, 
+			"signed"	: False,
+			"default"	: 11.0
+		}
+		self.npts = widgets.QUnitSelector.QUnitSelector(self.npts_config)
 
-		# Hysteresis
-		self.delay_label = QLabel("Measurement Interval (s)")
-		self.delay = QDoubleSpinBox()
-		self.delay.setDecimals(3)
-		self.delay.setMinimum(0.0)
-		self.delay.setMaximum(600.0)
-		self.delay.setSingleStep(0.1)
-		self.delay.setValue(0.1)
+		# Measurement Delay
+		self.delay_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Measurement Interval (s)",
+			"limit"		: 60.0, 
+			"signed"	: False,
+			"default"	: 0.1
+		}
+		self.delay = widgets.QUnitSelector.QUnitSelector(self.delay_config)
+
 
 		# Hysteresis
 		self.hist = QCheckBox("Hysteresis Mode")
 
-		# Measure button
-		self.config_button = QPushButton("Configure Sweep")
-		self.config_button.clicked.connect(self._config_sweep_measurement)
+		#####################################
+		#  SAVE BUTTON
+		#
+
+		# Save Button
+		self.save_note_label = QLabel("Measurement Note")
+		self.save_note = QLineEdit()
+		self.save_note.setFixedWidth(200)
+		self.save_button = QPushButton("Save Traces")
+		self.save_button.clicked.connect(self._save_traces)	
+
+		#####################################
+		#  ADD CONTROLS
+		#
 
 		# Measurement Button
 		self.ctl_layout.addWidget(self.meas_button)
-		self.ctl_layout.addWidget(self.save_button)
-		self.ctl_layout.addStretch(1)		
 
-		# Add buttons to box
-		self.ctl_layout.addWidget(self.mode_label)
-		self.ctl_layout.addWidget(self.mode)
+		# Sweep configuration controls
+		self.ctl_layout.addStretch(1)
+		self.ctl_layout.addWidget(self.config_button)
+		_layout = self._gen_hboxlayout([self.mode, self.mode_label])
+		self.ctl_layout.addLayout(_layout)
 		self.ctl_layout.addWidget(self.start)
 		self.ctl_layout.addWidget(self.stop)
 		self.ctl_layout.addWidget(self.cmpl)
-		self.ctl_layout.addWidget(self.npts_label)
 		self.ctl_layout.addWidget(self.npts)
-		self.ctl_layout.addWidget(self.delay_label)
 		self.ctl_layout.addWidget(self.delay)
 		self.ctl_layout.addWidget(self.hist)
-		self.ctl_layout.addWidget(self.config_button)
 
-		# Return the layout
+		# Save and save note
+		self.ctl_layout.addStretch(1)
+		self.ctl_layout.addWidget(self.save_button)
+		_layout = self._gen_hboxlayout([self.save_note, self.save_note_label])
+		self.ctl_layout.addLayout(_layout)
+	
+		# Positioning
+		self.ctl_layout.setContentsMargins(0,15,0,20)
 		return self.ctl_layout
 
 	# Sweep control dynamic update

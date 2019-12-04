@@ -39,7 +39,7 @@ import widgets.QUnitSelector
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QLineEdit
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
@@ -71,6 +71,14 @@ class QKeithleyBias(QWidget):
 		self.layout.addWidget(self._gen_bias_plot())
 		self.setLayout(self.layout)
 
+	# Helper method to generate QHBoxLayouts
+	def _gen_hboxlayout(self, _widget_list):
+	
+		_layout = QHBoxLayout()
+		for _w in _widget_list:
+			_layout.addWidget(_w)
+		return _layout
+
 	# Set visa insturment handle for keithley
 	def _set_keithley_handle(self, keithley):
 		self.keithley=keithley
@@ -80,6 +88,129 @@ class QKeithleyBias(QWidget):
 		self.sweep = []
 		self._data = []
 		self.plot._refresh_axes() 
+
+	# Generate bias control
+	def _gen_bias_control(self):
+
+		# Control layout
+		self.ctl_layout = QVBoxLayout()
+
+
+		#####################################
+		#  OUTPUT STATE MACHINE AND BUTTON
+		#		
+
+		# Create QStateMachine for output state
+		self.output = QStateMachine()
+		self.output_button = QPushButton()
+		self.output_button.setStyleSheet(
+			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+
+		# Create output states
+		self.output_off = QState()
+		self.output_on  = QState()
+
+		# Attach states to output button and define state transitions
+		self.output_off.assignProperty(self.output_button, 'text', 'Output Off')
+		self.output_off.addTransition(self.output_button.clicked, self.output_on)
+		self.output_off.entered.connect(self._exec_output_off)
+
+		self.output_on.assignProperty(self.output_button, 'text', 'Output On')
+		self.output_on.addTransition(self.output_button.clicked, self.output_off)
+		self.output_on.entered.connect(self._exec_output_on)
+		
+		# Add states, set initial state, and start machine
+		self.output.addState(self.output_off)
+		self.output.addState(self.output_on)
+		self.output.setInitialState(self.output_off)
+		self.output.start()
+
+		# Main mode selctor 
+		self.mode_label = QLabel("Bias Mode")
+		self.mode = QComboBox()
+		self.mode.setFixedWidth(200)
+		self.mode.addItems(["Voltage", "Current"])	
+		self.mode.currentTextChanged.connect(self._update_bias_control)
+
+		#####################################
+		#  BIAS MEASUREMENT CONFIGURATION 
+		#
+
+		# Configuration for bias level unit box
+		self.bias_config={
+			"unit" 		: "V", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Bias Level",
+			"limit"		: 20.0, 
+			"signed"	: True,
+			"default"	: 0.0
+		} 
+		self.bias = widgets.QUnitSelector.QUnitSelector(self.bias_config)
+
+		# Compliance Spinbox
+		self.cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: 0.1
+		} 
+		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
+		
+		# Measurement Delay
+		self.delay_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Measurement Interval (s)",
+			"limit"		: 60.0, 
+			"signed"	: False,
+			"default"	: 0.1
+		}
+		self.delay = widgets.QUnitSelector.QUnitSelector(self.delay_config)
+
+
+		# Update 
+		self.update_button = QPushButton("Change Bias")
+		self.update_button.clicked.connect(self._update_bias)	
+
+		#####################################
+		#  SAVE BUTTON
+		#
+
+		# Save Button
+		self.save_note_label = QLabel("Measurement Note")
+		self.save_note = QLineEdit()
+		self.save_note.setFixedWidth(200)
+		self.save_button = QPushButton("Save Traces")
+		self.save_button.clicked.connect(self._save_traces)	
+
+		#####################################
+		#  ADD CONTROLS
+		#
+
+		# Main output
+		self.ctl_layout.addWidget(self.output_button)
+
+		# Additional controls
+		self.ctl_layout.addStretch(1)
+		self.ctl_layout.addWidget(self.update_button)
+		_layout = self._gen_hboxlayout([self.mode, self.mode_label])
+		self.ctl_layout.addLayout(_layout)
+		self.ctl_layout.addWidget(self.bias)
+		self.ctl_layout.addWidget(self.cmpl)
+		self.ctl_layout.addWidget(self.delay)
+		
+		# Spacer
+		self.ctl_layout.addStretch(1)
+		self.ctl_layout.addWidget(self.save_button)
+		_layout = self._gen_hboxlayout([self.save_note, self.save_note_label])
+		self.ctl_layout.addLayout(_layout)
+	
+		# Positioning
+		self.ctl_layout.setContentsMargins(0,15,0,20)
+		return self.ctl_layout
 
 	# Update bias values 
 	def _update_bias(self):
@@ -209,103 +340,7 @@ class QKeithleyBias(QWidget):
 			if self.plot.hlist == []:
 				self._data = []	
 
-	# Generate bias control
-	def _gen_bias_control(self):
 
-		# Control layout
-		self.ctl_layout = QVBoxLayout()
-
-		# Create QStateMachine for output state
-		self.output = QStateMachine()
-		self.output_button = QPushButton()
-		self.output_button.setStyleSheet(
-			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-
-		# Create output states
-		self.output_off = QState()
-		self.output_on  = QState()
-
-		# Attach states to output button and define state transitions
-		self.output_off.assignProperty(self.output_button, 'text', 'Output Off')
-		self.output_off.addTransition(self.output_button.clicked, self.output_on)
-		self.output_off.entered.connect(self._exec_output_off)
-
-		self.output_on.assignProperty(self.output_button, 'text', 'Output On')
-		self.output_on.addTransition(self.output_button.clicked, self.output_off)
-		self.output_on.entered.connect(self._exec_output_on)
-		
-		# Add states, set initial state, and start machine
-		self.output.addState(self.output_off)
-		self.output.addState(self.output_on)
-		self.output.setInitialState(self.output_off)
-		self.output.start()
-
-		# Save Button 
-		self.save_button = QPushButton("Save Traces")
-		self.save_button.clicked.connect(self._save_traces)	
-
-		# Current/Voltage Sweep Mode 
-		self.mode_label = QLabel("Bias Mode")
-		self.mode = QComboBox()
-		self.mode.addItems(["Voltage", "Current"])	
-		self.mode.currentTextChanged.connect(self._update_bias_control)
-
-
-		# Configuration for bias level unit box
-		self.bias_config={
-			"unit" 		: "V", 
-			"min"		: "u",
-			"max"		: "",
-			"label"		: "Bias Level",
-			"limit"		: 20.0, 
-			"signed"	: True,
-			"default"	: 0.0
-		} 
-		self.bias = widgets.QUnitSelector.QUnitSelector(self.bias_config)
-
-
-		# Compliance Spinbox
-		self.cmpl_config={
-			"unit" 		: "A", 
-			"min"		: "u",
-			"max"		: "",
-			"label"		: "Compliance",
-			"limit"		: 1.0, 
-			"signed"	: False,
-			"default"	: 0.1
-		} 
-		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
-
-		# Delay
-		self.delay_label = QLabel("Measurement Interval (s)")
-		self.delay = QDoubleSpinBox()
-		self.delay.setDecimals(3)
-		self.delay.setMinimum(0.0)
-		self.delay.setMaximum(600.0)
-		self.delay.setSingleStep(0.1)
-		self.delay.setValue(0.1)
-
-		# Update 
-		self.update_button = QPushButton("Change Bias")
-		self.update_button.clicked.connect(self._update_bias)	
-
-		# Add output/save buttons to layout
-		self.ctl_layout.addWidget(self.output_button)
-		self.ctl_layout.addWidget(self.save_button)
-
-		# Spacer
-		self.ctl_layout.addStretch(1)
-	
-		# Add remaining controls to layout
-		self.ctl_layout.addWidget(self.mode_label)
-		self.ctl_layout.addWidget(self.mode)
-		self.ctl_layout.addWidget(self.bias)
-		self.ctl_layout.addWidget(self.cmpl)
-		self.ctl_layout.addWidget(self.delay_label)
-		self.ctl_layout.addWidget(self.delay)
-		self.ctl_layout.addWidget(self.update_button)
-
-		return self.ctl_layout
 
 	# Measurement thread
 	def _exec_output_thread(self):	

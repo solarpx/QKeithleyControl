@@ -27,7 +27,7 @@ import numpy as np
 import collections
 
 # Import QT backends
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QDoubleSpinBox, QLabel, QSizePolicy
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QSpinBox, QDoubleSpinBox, QLabel, QSizePolicy
 from PyQt5.QtCore import Qt, QSize
 
 # Unit selector widget
@@ -50,7 +50,10 @@ class QUnitSelector(QWidget):
 		#		"default"	: 0.0
 		# } 
 		self.config = config
-		self._gen_unit_range()
+	
+		# If not generating a unitless value _gen_unit_range
+		if self.config['unit'] not in ['__INT__', '__DOUBLE__']:
+			self._gen_unit_range()
 		
 		# Generate the widget
 		self.setLayout(self._gen_unit_selector())
@@ -78,20 +81,45 @@ class QUnitSelector(QWidget):
 	# Function to update spinbox range on unit maximum
 	def _update_unit_limits(self):
 
-		# This if is needed so clear() in update does not trigget this method
-		if self.unit.currentText() != "":
-
-			_limit = float(self.config["limit"]) / float( self._units[self.unit.currentText()] ) 
-
-			# Set minimum takeing into account signed/unsigned input
-			if self.config["signed"] == True:
-				self.unit_value.setMinimum( max( -1.0  * _limit, -1000) ) 
-			else: 
-				self.unit_value.setMinimum(0.0)
-
-			# Set minimum takeing into account signed/unsigned input
-			self.unit_value.setMaximum( min(  1.0  * _limit,  1000) ) 
+		# If we are working with physical units
+		if self.unit_select is not None:
 	
+			# This if is needed so clear() in update does not trigger this method
+			if self.unit_select.currentText() != "":
+
+				_limit = float(self.config["limit"]) / float( self._units[self.unit_select.currentText()] ) 
+
+				# Set minimum takeing into account signed/unsigned input
+				if self.config["signed"] == True:
+					self.unit_value.setMinimum( max( -1.0  * _limit, -1000) ) 
+				else: 
+					self.unit_value.setMinimum( 0.0 )
+
+				# Set minimum takeing into account signed/unsigned input
+				self.unit_value.setMaximum( min(  1.0  * _limit,  1000) ) 
+	
+
+		# Otherwise ints or doubles		
+		else:
+
+			if self.config['unit'] == "__DOUBLE__":
+
+				self.unit_value.setMaximum( self.config["limit"] )
+				
+				if self.config["signed"] == True:
+					self.unit_value.setMinimum( self.config["limit"] ) 
+				else: 
+					self.unit_value.setMinimum( 0.0 )
+
+			if self.config['unit'] == "__INT__":
+
+				self.unit_value.setMaximum( int( self.config["limit"] ) )
+				
+				if self.config["signed"] == True:
+					self.unit_value.setMinimum( int( self.config["limit"] ) )
+				else: 
+					self.unit_value.setMinimum( 0 )
+
 	# Generate unit selector
 	def _gen_unit_selector(self):
 
@@ -99,35 +127,57 @@ class QUnitSelector(QWidget):
 		self.unit_layout = QHBoxLayout()
 		self.unit_layout.setContentsMargins(0,0,0,0)
 
-		# Unit selection combobox
-		self.unit = QComboBox()
-		self.unit.addItems( list(self._units.keys()) )
-		self.unit.currentTextChanged.connect(self._update_unit_limits)
+		# Generate unit box (double value)
+		if self.config['unit'] == "__DOUBLE__":
 
-		# Level Spinbox
-		self.unit_value = QDoubleSpinBox()
-		self.unit_value.setDecimals(3)
-		self.unit_value.setSingleStep(0.1)
-		self._update_unit_limits()
-		self.unit_value.setValue(self.config["default"])
+			# Unit select first (see below)
+			self.unit_select = None
 
-		# Size the spinbox
-		self.unit_value.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum);
-		self.unit_value.setMinimumSize(QSize(200, 10))
+			# Unit value Spinbox
+			self.unit_value = QDoubleSpinBox()
+			self.unit_value.setDecimals(3)		
+			self.unit_value.setSingleStep(0.1)	
+			self._update_unit_limits()
+			self.unit_value.setValue(self.config["default"])
+			self.unit_value.setFixedWidth(200)
 
+		# Generate unit box (int value)		
+		elif self.config['unit'] == "__INT__":
+			self.unit_value = QSpinBox()
+			self.unit_value.setFixedWidth(200)
+			self.unit_value.setValue(int(self.config["default"]))
+			self.unit_select = None
+
+		# General case (physical units)
+		else: 
+
+			# Unit selection combobox: needs to be first so self.unit_select 
+			# exists on _update_unit_limits call
+			self.unit_select = QComboBox()
+			self.unit_select.setFixedWidth(80)
+			self.unit_select.addItems( list(self._units.keys()) )
+			self.unit_select.currentTextChanged.connect(self._update_unit_limits)
+
+			# Unit value Spinbox
+			self.unit_value = QDoubleSpinBox()
+			self.unit_value.setDecimals(3)		
+			self.unit_value.setSingleStep(0.1)	
+			self._update_unit_limits()
+			self.unit_value.setValue(self.config["default"])
+			self.unit_value.setFixedWidth(200)			
+	
 		# Add widgets to hbox
 		self.unit_label=QLabel(self.config["label"]) # Pack this last
+
+		# Pack units			
 		self.unit_layout.addWidget(self.unit_value)
-		self.unit_layout.addWidget(self.unit)
+		if self.unit_select is not None:
+			self.unit_layout.addWidget(self.unit_select)
+		self.unit_layout.addWidget(self.unit_label)
+		self.unit_layout.setContentsMargins(0,0,0,0)
 
-		# Main layout for Widget
-		self.main_layout = QVBoxLayout()
-		self.main_layout.addWidget(self.unit_label)
-		self.main_layout.addLayout(self.unit_layout)
-
-		# Resize margins of main layout
-		self.main_layout.setContentsMargins(0,0,0,0)
-		return self.main_layout
+		# Return layout
+		return self.unit_layout
 
 	# Method to re-render widget with new configuration
 	def update_config(self, _config):
@@ -137,8 +187,9 @@ class QUnitSelector(QWidget):
 		self._gen_unit_range()
 
 		# Clear combobox and add new unit values
-		self.unit.clear()
-		self.unit.addItems( list(self._units.keys()) )
+		if self.unit_select is not None:
+			self.unit_select.clear()
+			self.unit_select.addItems( list(self._units.keys()) )
 
 		# Call _update_unit_limits for new limits 
 		# (it should be called on add_items)
@@ -152,4 +203,9 @@ class QUnitSelector(QWidget):
 
 	# Wrapper for value method
 	def value(self):
-		return float( self._units[ self.unit.currentText() ] * self.unit_value.value() )
+		
+		if self.unit_select is not None: 
+			return float( self._units[ self.unit_select.currentText() ] * self.unit_value.value() )
+		
+		else:
+			return self.unit_value.value()

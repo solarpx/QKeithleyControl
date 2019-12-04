@@ -38,22 +38,9 @@ import widgets.QUnitSelector
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QSizePolicy, QLineEdit
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
-
-# Import matplotlibQT backends
-import os 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.ticker import FormatStrFormatter
-import matplotlib.pyplot as plt
-
-
-
-
-
-
 
 # Container class to construct solar measurement widget
 class QKeithleySolar(QWidget):
@@ -77,11 +64,17 @@ class QKeithleySolar(QWidget):
 		self.layout.addWidget(self._gen_solar_plots())
 		self.setLayout(self.layout)
 
+	# Helper method to generate QHBoxLayouts
+	def _gen_hboxlayout(self, _widget_list):
+	
+		_layout = QHBoxLayout()
+		for _w in _widget_list:
+			_layout.addWidget(_w)
+		return _layout
 
 	# Set visa insturment handle for keithley
 	def _set_keithley_handle(self, keithley):
 		self.keithley=keithley
-
 
 	# Method to reset sweep on window switch
 	def _reset_defaults(self):
@@ -89,13 +82,13 @@ class QKeithleySolar(QWidget):
 
 	def _update_current_plot(self):
 
-		if self.plot_selector.currentText() == "IV":
+		if self.plot_select.currentText() == "IV":
 			self.plot_stack.setCurrentIndex(0)
 
-		if self.plot_selector.currentText() == "Voc":
+		if self.plot_select.currentText() == "Voc":
 			self.plot_stack.setCurrentIndex(1)
 
-		if self.plot_selector.currentText() == "MPP":
+		if self.plot_select.currentText() == "MPP":
 			self.plot_stack.setCurrentIndex(2)
 
 	# Method to generate solar characterization controls
@@ -103,6 +96,10 @@ class QKeithleySolar(QWidget):
 
 		self.ctl_layout = QVBoxLayout()
 
+		#####################################
+		#  SWEEP MEASUREMENT STATE MACHINE
+		#
+		
 		# Sweep measurement Button. This will be a state machine which 
 		# alternates between 'measure' and 'abort' states
 		self.sweep_meas_state  = QStateMachine()
@@ -129,6 +126,11 @@ class QKeithleySolar(QWidget):
 		self.sweep_meas_state.setInitialState(self.sweep_meas_stop)
 		self.sweep_meas_state.start()
 
+
+		#####################################
+		#  SWEEP MEASUREMENT CONFIGURATION
+		#
+		 
 		# Sweep control layout
 		self.sweep_start_config={
 			"unit" 		: "V", 
@@ -153,15 +155,20 @@ class QKeithleySolar(QWidget):
 		} 
 		self.sweep_stop = widgets.QUnitSelector.QUnitSelector(self.sweep_stop_config)
 
-		self.sweep_npts_label = QLabel("Number of Points")
-		self.sweep_npts = QSpinBox()
-		self.sweep_npts.setMinimum(1)
-		self.sweep_npts.setMaximum(256)
-		self.sweep_npts.setValue(11)
+		
+		self.sweep_npts_config={
+			"unit" 		: "__INT__", 
+			"label"		: "Number of Points",
+			"limit"		: 256.0, 
+			"signed"	: False,
+			"default"	: 11.0
+		}
+		self.sweep_npts = widgets.QUnitSelector.QUnitSelector(self.sweep_npts_config)
 
 
-
-
+		#####################################
+		#  TRACKING MEASUREMENT STATE MACHINE
+		#
 
 		# Create QStateMachine for output state
 		self.tmode_state = QStateMachine()
@@ -188,9 +195,15 @@ class QKeithleySolar(QWidget):
 		self.tmode_state.setInitialState(self.tmode_meas_off)
 		self.tmode_state.start()
 
+
+		#####################################
+		#  TRACKING MEASUREMENT CONFIGURATION
+		#
+
 		# Tracking mode control
-		self.tmode_label = QLabel("Parameter Tracking")
+		self.tmode_select_label = QLabel("Parameter Tracking")
 		self.tmode_select = QComboBox()
+		self.tmode_select.setFixedWidth(200)
 		self.tmode_select.addItems(["Voc", "MPP"])	
 
 		# Tracking mode initialization
@@ -218,39 +231,65 @@ class QKeithleySolar(QWidget):
 		self.tmode_conv = widgets.QUnitSelector.QUnitSelector(self.tmode_conv_config)
 
 
+		# Delay
+		self.tmode_delay_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Measurement Interval (s)",
+			"limit"		: 60.0, 
+			"signed"	: False,
+			"default"	: 0.1
+		}
+		self.tmode_delay = widgets.QUnitSelector.QUnitSelector(self.tmode_delay_config)
+
+		#####################################
+		#  PLOT AND SAVE MEASUREMENTS
+		#
+
 		# Plotting and save control
-		self.plot_selector_label = QLabel("Plot Dataset")
-		self.plot_selector = QComboBox()
-		self.plot_selector.addItems(["IV", "Voc", "MPP"])
-		self.plot_selector.currentTextChanged.connect(self._update_current_plot)
+		self.plot_select_label = QLabel("Measurement Plot")
+		self.plot_select = QComboBox()
+		self.plot_select.addItems(["IV", "Voc", "MPP"])
+		self.plot_select.setFixedWidth(200)
+		self.plot_select.currentTextChanged.connect(self._update_current_plot)
 
 		# Save traces 
-		self.save_button = QPushButton("Save Traces")
+		self.save_note_label = QLabel("Measurement Note")
+		self.save_note = QLineEdit()
+		self.save_note.setFixedWidth(200)
+		
+		self.save_button = QPushButton("Save Characterization")
 		#self.save_button.clicked.connect(self._save_traces)	
 
+		#####################################
+		#  ADD CONTROLS
+		#
 
 		# Add sweep controls	
 		self.ctl_layout.addWidget(self.sweep_meas_button)
 		self.ctl_layout.addWidget(self.sweep_start)
 		self.ctl_layout.addWidget(self.sweep_stop)
-		self.ctl_layout.addWidget(self.sweep_npts_label)
 		self.ctl_layout.addWidget(self.sweep_npts)
 
+	
 		# Add tracking controls
 		self.ctl_layout.addStretch(1)
 		self.ctl_layout.addWidget(self.tmode_meas_button)
-		self.ctl_layout.addWidget(self.tmode_label)
-		self.ctl_layout.addWidget(self.tmode_select)
+		_layout = self._gen_hboxlayout([self.tmode_select, self.tmode_select_label])
+		self.ctl_layout.addLayout(_layout)
+		self.ctl_layout.addWidget(self.tmode_delay)
 		self.ctl_layout.addWidget(self.tmode_init)
 		self.ctl_layout.addWidget(self.tmode_conv)
 
 		# Add save control 
 		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self.plot_selector_label)
-		self.ctl_layout.addWidget(self.plot_selector)
+		_layout = self._gen_hboxlayout([self.plot_select, self.plot_select_label])
+		self.ctl_layout.addLayout(_layout)
+		_layout = self._gen_hboxlayout([self.save_note, self.save_note_label])
+		self.ctl_layout.addLayout(_layout)
 		self.ctl_layout.addWidget(self.save_button)
 
-		# Return layout
+		# Positioning
+		self.ctl_layout.setContentsMargins(0,15,0,20)
 		return self.ctl_layout
 
 	# Method to generate solar cell plots. This will be implemented 
@@ -324,4 +363,3 @@ class QKeithleySolar(QWidget):
 			self.tmode_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )			
 			self.save_button.setEnabled(True)
-		
