@@ -26,6 +26,7 @@
 #!/usr/bin/env python 
 import visa
 import time
+import threading 
 import numpy as np
 
 # Import d_plot and keithley driver
@@ -55,8 +56,8 @@ class QKeithleySolar(QWidget):
 		# Initialize Keithley Object
 		self.keithley = None
 
-		# Create objects to hold data
-		self._data = []
+		# Create dictionary to hold data
+		self._data = {"IV" : None, "Voc" : None, "MPP" : None}
 			
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
@@ -78,7 +79,11 @@ class QKeithleySolar(QWidget):
 
 	# Method to reset sweep on window switch
 	def _reset_defaults(self):
-		self._data = []
+		self._data = {"IV" : None, "Voc" : None, "MPP" : None}
+
+	# Update bias from spinbox
+	def _update_bias(self, _value):
+		self.keithley.set_voltage(_value)		
 
 	def _update_current_plot(self):
 
@@ -139,7 +144,7 @@ class QKeithleySolar(QWidget):
 			"label"		: "Sweep Start (V)",
 			"limit"		: 2.0, 
 			"signed"	: True,
-			"default"	: -1.0
+			"default"	: -0.5
 		} 
 		self.sweep_start = widgets.QUnitSelector.QUnitSelector(self.sweep_start_config)
 
@@ -148,20 +153,33 @@ class QKeithleySolar(QWidget):
 			"unit" 		: "V", 
 			"min"		: "m",
 			"max"		: "",
-			"label"		: "Sweep Start (V)",
+			"label"		: "Sweep Stop (V)",
 			"limit"		: 2.0, 
 			"signed"	: True,
-			"default"	: 1.0
+			"default"	: 0.5
 		} 
 		self.sweep_stop = widgets.QUnitSelector.QUnitSelector(self.sweep_stop_config)
 
 		
+		# Compliance Spinbox
+		self.sweep_cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance (A)",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: 0.001
+		} 
+		self.sweep_cmpl = widgets.QUnitSelector.QUnitSelector(self.sweep_cmpl_config)	
+
+		# Compliance
 		self.sweep_npts_config={
 			"unit" 		: "__INT__", 
 			"label"		: "Number of Points",
 			"limit"		: 256.0, 
 			"signed"	: False,
-			"default"	: 11.0
+			"default"	: 51.0
 		}
 		self.sweep_npts = widgets.QUnitSelector.QUnitSelector(self.sweep_npts_config)
 
@@ -206,29 +224,43 @@ class QKeithleySolar(QWidget):
 		self.tmode_select.setFixedWidth(200)
 		self.tmode_select.addItems(["Voc", "MPP"])	
 
+		
 		# Tracking mode initialization
-		self.tmode_init_config={
+		# Note this example of passing arguments to a callback
+		self.tmode_bias_config={
 			"unit" 		: "V", 
 			"min"		: "m",
 			"max"		: "",
 			"label"		: "Initialization (V)",
 			"limit"		: 2.0, 
 			"signed"	: True,
-			"default"	: 0.7
+			"default"	: 0.4
 		} 
-		self.tmode_init = widgets.QUnitSelector.QUnitSelector(self.tmode_init_config)
-
+		self.tmode_bias = widgets.QUnitSelector.QUnitSelector(self.tmode_bias_config)
+		self.tmode_bias.unit_value.valueChanged.connect(lambda arg=self.tmode_bias.value(): self._update_bias(arg))
+		
 		# Tracking mode convergence
 		self.tmode_conv_config={
-			"unit" 		: "V", 
-			"min"		: "u",
-			"max"		: "m",
-			"label"		: "Convergence (mV)",
-			"limit"		: 10.0, 
-			"signed"	: True,
-			"default"	: 1.0
+			"unit" 		: "A", 
+			"min"		: "n",
+			"max"		: "u",
+			"label"		: "Convergence (A)",
+			"limit"		: 100, 
+			"signed"	: False,
+			"default"	: 0.015
 		} 
 		self.tmode_conv = widgets.QUnitSelector.QUnitSelector(self.tmode_conv_config)
+
+
+		# Delay
+		self.tmode_pgain_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Proportional Gain (%)",
+			"limit"		: 100, 
+			"signed"	: False,
+			"default"	: 3
+		}
+		self.tmode_pgain = widgets.QUnitSelector.QUnitSelector(self.tmode_pgain_config)
 
 
 		# Delay
@@ -237,7 +269,7 @@ class QKeithleySolar(QWidget):
 			"label"		: "Measurement Interval (s)",
 			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: 0.1
+			"default"	: 1.0
 		}
 		self.tmode_delay = widgets.QUnitSelector.QUnitSelector(self.tmode_delay_config)
 
@@ -268,17 +300,18 @@ class QKeithleySolar(QWidget):
 		self.ctl_layout.addWidget(self.sweep_meas_button)
 		self.ctl_layout.addWidget(self.sweep_start)
 		self.ctl_layout.addWidget(self.sweep_stop)
+		self.ctl_layout.addWidget(self.sweep_cmpl)
 		self.ctl_layout.addWidget(self.sweep_npts)
 
-	
 		# Add tracking controls
 		self.ctl_layout.addStretch(1)
 		self.ctl_layout.addWidget(self.tmode_meas_button)
 		_layout = self._gen_hboxlayout([self.tmode_select, self.tmode_select_label])
 		self.ctl_layout.addLayout(_layout)
-		self.ctl_layout.addWidget(self.tmode_delay)
-		self.ctl_layout.addWidget(self.tmode_init)
+		self.ctl_layout.addWidget(self.tmode_bias)
 		self.ctl_layout.addWidget(self.tmode_conv)
+		self.ctl_layout.addWidget(self.tmode_pgain)
+		self.ctl_layout.addWidget(self.tmode_delay)
 
 		# Add save control 
 		self.ctl_layout.addStretch(1)
@@ -301,8 +334,8 @@ class QKeithleySolar(QWidget):
 
 		# Plot IV-Sweep mode
 		self.sweep_plot =  widgets.QDynamicPlot.QDynamicPlot()
-		self.sweep_plot.set_axes_labels('Voltage (V)', 'Current (A)')
-		self.sweep_plot.add_axes()
+		self.sweep_plot.set_axes_labels('Voltage (V)', 'Current (mA)', 'Power (mW)')
+		self.sweep_plot.add_axes(_twinx=True)
 		
 		self.voc_plot =  widgets.QDynamicPlot.QDynamicPlot()
 		self.voc_plot.set_axes_labels('Time (s)', 'Voc (V)')
@@ -322,27 +355,206 @@ class QKeithleySolar(QWidget):
 		self.plot_stack.setCurrentIndex(0);
 		return self.plot_stack
 
-	###########################	
-	# State Machine Callbacks #	
-	###########################
+	#################################	
+	# Sweep State Machine Callbacks #	
+	#################################
+
+	# Set sweep parameters
+	def _set_sweep_params(self):
+		_start = self.sweep_start.value()
+		_stop  = self.sweep_stop.value()
+		_npts  = self.sweep_npts.value()
+		return np.linspace(float(_start), float(_stop), int(_npts))
+
+	# Get sweep parameters
+	def _get_sweep_params(self):
+		return self.sweep if self.sweep != [] else None
+
+	# Sweep measurement EXECUTION
+	def _exec_sweep_thread(self):
+
+		# Initialize IV Sweep dictionary and plot
+		self._data["IV"] = {"t" : [], "V" : [], "I" : [], "P" : []}
+
+		# Refresh axes (clears handle)
+		self.sweep_plot._refresh_axes()
+		self.plot_select.setCurrentIndex(0) 
+		h0 = self.sweep_plot.add_handle(_axes_index=0, _color='b')
+		h1 = self.sweep_plot.add_handle(_axes_index=1, _color='r')
+		start  = float(time.time())
+
+		# Set compliance and turn output on
+		self.keithley.current_cmp(self.sweep_cmpl.value())	
+		self.keithley.output_on()
+
+		# Loop through all voltage values
+		for _v in self._get_sweep_params():
+
+			# Check if measurement has been aborted
+			if self.sweep_thread_abort is True:
+
+				# If aborted, kill output and return
+				self.keithley.set_voltage(0.0)
+				self.keithley.output_off()
+				return	
+
+			# Otherwise continue measureing
+			else:
+
+				# Set bias
+				self.keithley.set_voltage(_v)
+
+				# Get data from buffer
+				_buffer = self.keithley.meas().split(",")
+
+				# Extract data from buffer
+				self._data["IV"]["t"].append( float(time.time() ) - start )
+				self._data["IV"]["V"].append( float(_buffer[0]) )
+				self._data["IV"]["I"].append( float(_buffer[1]) )
+				self._data["IV"]["P"].append( float(_buffer[0]) * (-1.0 * float(_buffer[1]) ) )
+
+				# Update current and output power plots. 
+				# Note photocurrents are interpreted as positive
+				self.sweep_plot.update_handle( 
+					h0, 
+					float(_buffer[0]), 
+					-1000.0 * float(_buffer[1]), 
+					_axes_index=0
+				)
+
+
+				self.sweep_plot.update_handle( 
+					h1, 
+					float(_buffer[0]), 
+					-1000.0 * float(_buffer[1]) * float(_buffer[0]), 
+					_axes_index=1
+				)
+		
+				self.sweep_plot._draw_canvas()
+
+		# Set output off after measurement
+		self.sweep_meas_button.click() 
+		self.keithley.set_voltage(0.0)
+		self.keithley.output_off()		
+
 	# Sweep measurement ON
 	def _exec_sweep_run(self):
 
 		if self.keithley is not None:
 
+			# Put measurement button in abort state
 			self.sweep_meas_button.setStyleSheet(
 				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
 			self.save_button.setEnabled(False)
+
+			# Set sweep parameters in memory
+			self.sweep = self._set_sweep_params()
+			
+			# Disable the tracking mode button
+			self.tmode_meas_button.setEnabled(False)
+
+			# Run the measurement thread function
+			self.sweep_thread = threading.Thread(target=self._exec_sweep_thread, args=())
+			self.sweep_thread.daemon = True				# Daemonize thread
+			self.sweep_thread_abort = False				# Flag to abort measurement
+			self.sweep_thread.start()         			# Start the execution
 
 	# Sweep measurement OFF
 	def _exec_sweep_stop(self):
 
 		if self.keithley is not None:
 
+			# Put measurement button in measure state
 			self.sweep_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
 			self.save_button.setEnabled(True)
+
+			# Enable the tracking mode button
+			self.tmode_meas_button.setEnabled(True)
+
+			# Set thread running to False. This will break the sweep measurements
+			# execution loop on next iteration.  
+			self.sweep_thread_abort = True
+			self.sweep_thread.join()  # Waits for thread to complete
+
+			# Zero storage arrays for IV data
+			self._data["IV"] = {"t" : [], "V" : [], "I" : [], "P" : []}
+
+
+	####################################
+	# Tracking State Machine Callbacks #
+	####################################
+	# These are modified  "bias mode" loops with embedded voltage/power tracking algorithms
+	def _exec_tmode_voc_thread(self):
 		
+		# Initialize Voc data-structure
+		self._data["Voc"] = {"t" : [], "Voc" : [], "Ioc" : []}
+
+		# Initialize Voc plot
+		self.voc_plot._refresh_axes()
+		self.plot_select.setCurrentIndex(1)
+		handle = self.voc_plot.add_handle()
+		start  = float(time.time())
+
+		# Set bias to initial value in voltas and turn output ON
+		self.keithley.current_cmp( self.sweep_cmpl.value() )	 	# Using sweep compliance
+		self.keithley.set_voltage( self.tmode_bias.value() )
+		self.keithley.output_on()
+
+		# Thread loop
+		while self.tmode_thread_running is True:
+			
+			# Voc TRACKING ALGORITHM LOOP GOES HERE
+			_iter_start = float(time.time())
+			while True:
+				
+				# Get data from buffer
+				_buffer = self.keithley.meas().split(",")
+				
+				# Check if current is below convergence value
+				# note that convergence is specified in mA 
+				if (abs(float( _buffer[1]))) <= float(self.tmode_conv.value()):					
+					break
+				
+				# If convergence takes too long paint a value (10s)
+				elif  float( time.time() - _iter_start ) >= 3.0:
+					break
+
+				# Otherwise, adjust the voltage proportionally
+				else:
+
+					# Create 1mV sense amplitude
+					_v, _i = np.add(float(_buffer[0]), np.linspace(-0.0005, 0.0005, 3)), []
+					
+					# Measure current over sense amplitude
+					for _ in _v:
+						self.keithley.set_voltage(_)
+						_b = self.keithley.meas().split(",")
+						_i.append( float( _b[1] ) )
+
+					# Reset the voltage
+					self.keithley.set_voltage( float(_buffer[0] ) )
+
+					# Porportional gain controller
+					if np.mean(_i) >= 0.0:
+						self._update_bias( float(_buffer[0]) * float( 1.0 - self.tmode_pgain.value()/100. ) ) 
+
+					else:
+						self._update_bias( float(_buffer[0]) * float( 1.0 + self.tmode_pgain.value()/100. ) )
+	
+
+			# Extract data from buffer
+			self._data["Voc"]["t"].append(float( time.time() - start ))
+			self._data["Voc"]["Voc"].append( float(_buffer[0]) )
+			self._data["Voc"]["Ioc"].append( float(_buffer[1]) ) # Sanity check
+
+			self.voc_plot.update_handle(handle, float(time.time() - start), float(_buffer[0]))
+			self.voc_plot._draw_canvas()
+	
+			# Measurement delay	
+			if self.tmode_delay.value() != 0: 
+				time.sleep(self.tmode_delay.value())
+
 	# Tracking measurement ON
 	def _exec_tmode_on(self):
 		
@@ -353,7 +565,20 @@ class QKeithleySolar(QWidget):
 				"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
 			self.save_button.setEnabled(False)
 			
+			# Create execution threads for measurement
+			# Voc monitoring
+			if self.tmode_select.currentText() == "Voc":
+				self.tmode_thread = threading.Thread(target=self._exec_tmode_voc_thread, args=())
+			
+			# MPP monitoring
+			if self.tmode_select.currentText() == "MPP":
+				pass
 
+			#	
+			self.tmode_thread.daemon = True		# Daemonize thread
+			self.tmode_thread.start()         	# Start the execution
+			self.tmode_thread_running = True	# Set execution flag	
+			
 
 	# Tracking measurement OFF
 	def _exec_tmode_off(self):
@@ -363,3 +588,37 @@ class QKeithleySolar(QWidget):
 			self.tmode_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )			
 			self.save_button.setEnabled(True)
+
+			self.tmode_thread_running = False
+			self.tmode_thread.join()  # Waits for thread to complete
+
+			self.keithley.set_voltage(0.0)
+			self.keithley.output_off()
+
+
+
+
+	# Putting this here for now to avoid confusion
+	def _exec_tmode_mpp_thread(self):
+		
+		# Initialize IV Sweep dictionary and plot
+		self._data["MPP"] = {"t" : [], "VMPP" : [], "IMPP" : [], "MPP" : []}
+		handle = self.sweep_plot.add_handle()
+		start  = float(time.time())
+
+		# Thread loop
+		while self.tmode_thread_running is True:
+			
+			# MPP TRACKING ALGORITHM LOOP GOES HERE
+			# Get data from buffer
+			#while True:
+			#if _buffer < convergence break
+			_buffer = self.keithley.meas().split(",")
+
+			# Extract data from buffer
+			self._data["MPP"]["t"].append(float( time.time() - start ))
+			self._data["MPP"]["MPP"].append( -1.0 * float(_buffer[0]) * float(_buffer[1]) )
+			self._data["MPP"]["VMPP"].append( float(_buffer[0]) )
+			self._data["MPP"]["IMPP"].append( float(_buffer[1]) )
+
+			self.plot.update_handle(handle, float(time.time() - start), float(_plt_data))

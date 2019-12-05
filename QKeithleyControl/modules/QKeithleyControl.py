@@ -59,7 +59,7 @@ class QKeithleyControl(QMainWindow):
 
 		# Application handle and window title	
 		self.app = _application
-		self.version = '1.0'
+		self.version = '1.1'
 		self.setWindowTitle("QKeithleyControl (v%s)"%self.version)
 		
 		# Create Icon for QMainWindow and QMessageBox

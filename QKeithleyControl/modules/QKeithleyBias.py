@@ -363,6 +363,8 @@ class QKeithleyBias(QWidget):
 			self._current.append(float(_buffer[1]))
 
 			self.plot.update_handle(handle, float(time.time() - start), float(_plt_data))
+			self.plot._draw_canvas()
+
 
 			if self.delay.value() != 0: 
 				time.sleep(self.delay.value())

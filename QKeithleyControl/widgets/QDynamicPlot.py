@@ -38,53 +38,6 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
 
-# Class for dynamic matplotlib plotting in Qt
-class QDynamicPlotTest(QWidget):
-
-	def __init__(self, *args, **kwargs):
-
-		
-		super(QDynamicPlotTest, self).__init__(*args, **kwargs)
-
-		self.figure  = plt.figure(figsize=(8,6))
-		self.canvas  = FigureCanvas(self.figure)
-		self.toolbar = NavigationToolbar(self.canvas, self)
-		self.refresh = QPushButton("Clear Data")
-
-		self.hlayout1 = QHBoxLayout()		
-		self.hlayout1.addWidget(self.toolbar)
-		self.hlayout1.addWidget(self.refresh)
-
-		self.hlayout2 = QHBoxLayout()
-		self.hlayout2.addWidget(self.canvas)
-		
-		self.layout = QVBoxLayout()
-		self.layout.addLayout(self.hlayout2)
-		self.layout.addLayout(self.hlayout1)
-
-		self.setLayout(self.layout)
-
-	# Add axes labels
-	def set_axes_labels(self, _xlabel, _ylabel):
-		self.xlabel = str(_xlabel)
-		self.ylabel = str(_ylabel)
-
-
-	# Add axes object to widget and draw figure
-	def add_axes(self):	
-
-		self.ax = self.figure.add_subplot(111)
-		if self.xlabel is not None:
-			self.ax.set_xlabel(self.xlabel)
-
-		if self.ylabel is not None:
-			self.ax.set_ylabel(self.ylabel)
-
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
-		self.figure.canvas.draw()
-		self.figure.canvas.flush_events()
-
 
 class QDynamicPlot(QWidget):
 
@@ -97,15 +50,19 @@ class QDynamicPlot(QWidget):
 		# Variables for axes labels
 		self.xlabel = None
 		self.ylabel = None
+		self.tlabel = None
 
-		# List of handles of plot into 
+		# Flag for twinx dynamic plots
+		self.twinx = False	
+
+		# List of handles of plot into
 		self.hlist = []
-
 
 		self.figure  = plt.figure(figsize=(8,5))
 		self.canvas  = FigureCanvas(self.figure)
 		self.toolbar = NavigationToolbar(self.canvas, self)
 		self.refresh = QPushButton("Clear Data")
+		self.refresh.clicked.connect(self.refresh_axes)
 
 		self.hlayout1 = QHBoxLayout()		
 		self.hlayout1.addWidget(self.toolbar)
@@ -119,8 +76,6 @@ class QDynamicPlot(QWidget):
 		self.layout.addLayout(self.hlayout1)
 
 		self.setLayout( self.layout )
-
-
 
 		# External handle for dialog answer
 		self.msg_clear = None
@@ -154,53 +109,65 @@ class QDynamicPlot(QWidget):
 		self.figure.clear()
 		self.hlist=[]
 
-		# Add axes and set axes labels
-		self.ax = self.figure.add_subplot(111)	
-		if self.xlabel is not None:
-			self.ax.set_xlabel(self.xlabel)
-
-		if self.ylabel is not None:
-			self.ax.set_ylabel(self.ylabel)
-
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
-		self.figure.canvas.draw()
-		self.figure.canvas.flush_events()
+		# Call add axes with self._twinx
+		self.add_axes(self.twinx)
 
 	# Add axes object to widget and draw figure
-	def add_axes(self):	
+	def add_axes(self, _twinx = False):	
 
+		# Set twinx flag
+		self.twinx = _twinx
+
+		# Add axes and set axes labels
 		self.ax = self.figure.add_subplot(111)
+
 		if self.xlabel is not None:
 			self.ax.set_xlabel(self.xlabel)
 
 		if self.ylabel is not None:
 			self.ax.set_ylabel(self.ylabel)
 
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
-		self.figure.canvas.draw()
-		self.figure.canvas.flush_events()
+		# Generate twinned axes
+		if self.twinx == True:
+
+			# Create twinned axes
+			self.ax_twin = self.ax.twinx()	
+
+			if self.tlabel is not None:
+				self.ax_twin.set_ylabel(self.tlabel)
+	
+		self._draw_canvas()
 
 	# Add axes labels
-	def set_axes_labels(self, _xlabel, _ylabel):
+	def set_axes_labels(self, _xlabel, _ylabel, _tlabel=None):
 		self.xlabel = str(_xlabel)
 		self.ylabel = str(_ylabel)
-
+		if _tlabel is not None:
+			self.tlabel = str(_tlabel)
+	
 	# Add trace
-	def add_handle(self):
-		h, = self.ax.plot([], [])
+	def add_handle(self, _axes_index=0, _color='b'):
+		h, = self.figure.axes[_axes_index].plot([], [], color=_color)
 		self.hlist.append(h)
-		return h
+		return h	
 
-	def update_handle(self, h, x_value, y_value):
+	# Update trace	
+	def update_handle(self, h, x_value, y_value, _axes_index=0):
 
 		h.set_xdata(np.append(h.get_xdata(), x_value))
 		h.set_ydata(np.append(h.get_ydata(), y_value))
-		self.ax.relim()
-		self.ax.autoscale_view()
 		
-		plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0), useOffset=False)
-		plt.subplots_adjust(left=0.15, right=0.9, top=0.9, bottom=0.1)
+	def _draw_canvas(self):
+
+		for _ in range(len(self.figure.axes)):
+			self.figure.axes[_].relim()
+			self.figure.axes[_].autoscale_view()
+			self.figure.axes[_].ticklabel_format(style='sci', scilimits=(0,0), axis='y', useOffset=False)
+
+		if self.twinx:
+			plt.subplots_adjust(left=0.15, right=0.85, top=0.90, bottom=0.10)
+		else: 
+			plt.subplots_adjust(left=0.15, right=0.90, top=0.90, bottom=0.10)
+
 		self.figure.canvas.draw()
 		self.figure.canvas.flush_events()

@@ -457,6 +457,7 @@ class QKeithleySweep(QWidget):
 
 					# Update plot
 					self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+					self.plot._draw_canvas()
 
 					# Measurement Interval
 					if self.delay.value() != 0: 
