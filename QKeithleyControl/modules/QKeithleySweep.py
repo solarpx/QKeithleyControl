@@ -151,7 +151,7 @@ class QKeithleySweep(QWidget):
 			"label"		: "Sweep Start (V)",
 			"limit"		: 20.0,
 			"signed"	: True,
-			"default"	: 0.0
+			"default"	: [0.0, ""]
 		} 
 		self.start = widgets.QUnitSelector.QUnitSelector(self.start_config)
 
@@ -163,7 +163,7 @@ class QKeithleySweep(QWidget):
 			"label"		: "Sweep Start (V)",
 			"limit"		: 20.0,
 			"signed"	: True,
-			"default"	: 1.0
+			"default"	: [1.0, ""]
 		} 
 		self.stop = widgets.QUnitSelector.QUnitSelector(self.stop_config)
 
@@ -175,7 +175,7 @@ class QKeithleySweep(QWidget):
 			"label"		: "Compliance (A)",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: 0.1
+			"default"	: [100, "m"]
 		} 
 		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
 
@@ -185,7 +185,7 @@ class QKeithleySweep(QWidget):
 			"label"		: "Number of Points",
 			"limit"		: 256.0, 
 			"signed"	: False,
-			"default"	: 11.0
+			"default"	: [11.0]
 		}
 		self.npts = widgets.QUnitSelector.QUnitSelector(self.npts_config)
 
@@ -195,7 +195,7 @@ class QKeithleySweep(QWidget):
 			"label"		: "Measurement Interval (s)",
 			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: 0.1
+			"default"	: [0.1]
 		}
 		self.delay = widgets.QUnitSelector.QUnitSelector(self.delay_config)
 
@@ -257,7 +257,7 @@ class QKeithleySweep(QWidget):
 				"label"		: "Sweep Start (V)",
 				"limit"		: 20.0,
 				"signed"	: True,
-				"default"	: 0.0
+				"default"	: [0.0,""]
 			} 
 			self.start.update_config(self.start_config)
 
@@ -269,7 +269,7 @@ class QKeithleySweep(QWidget):
 				"label"		: "Sweep Start (V)",
 				"limit"		: 20.0,
 				"signed"	: True,
-				"default"	: 1.0
+				"default"	: [1.0,""]
 			} 
 			self.stop.update_config(self.stop_config)
 
@@ -281,7 +281,7 @@ class QKeithleySweep(QWidget):
 				"label"		: "Compliance (A)",
 				"limit"		: 1.0, 
 				"signed"	: False,
-				"default"	: 0.1
+				"default"	: [100, ""]
 			} 
 			self.cmpl.update_config(self.cmpl_config)
 
@@ -296,7 +296,7 @@ class QKeithleySweep(QWidget):
 				"label"		: "Sweep Start (A)",
 				"limit"		: 1.0,
 				"signed"	: True,
-				"default"	: 0.0
+				"default"	: [0.0, "m"]
 			} 
 			self.start.update_config(self.start_config)
 
@@ -308,7 +308,7 @@ class QKeithleySweep(QWidget):
 				"label"		: "Sweep Stop (A)",
 				"limit"		: 1.0,
 				"signed"	: True,
-				"default"	: 0.1
+				"default"	: [100, "m"]
 			} 
 			self.stop.update_config(self.stop_config)
 
@@ -320,7 +320,7 @@ class QKeithleySweep(QWidget):
 				"label"		: "Compliance (V)",
 				"limit"		: 20, 
 				"signed"	: False,
-				"default"	: 1.0
+				"default"	: [1.0, ""]
 			} 
 			self.cmpl.update_config(self.cmpl_config)
 

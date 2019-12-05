@@ -139,7 +139,7 @@ class QKeithleyBias(QWidget):
 			"label"		: "Bias Level",
 			"limit"		: 20.0, 
 			"signed"	: True,
-			"default"	: 0.0
+			"default"	: [0.0, ""]
 		} 
 		self.bias = widgets.QUnitSelector.QUnitSelector(self.bias_config)
 
@@ -151,7 +151,7 @@ class QKeithleyBias(QWidget):
 			"label"		: "Compliance",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: 0.1
+			"default"	: [100, "m"]
 		} 
 		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
 		
@@ -161,7 +161,7 @@ class QKeithleyBias(QWidget):
 			"label"		: "Measurement Interval (s)",
 			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: 0.1
+			"default"	: [0.1]
 		}
 		self.delay = widgets.QUnitSelector.QUnitSelector(self.delay_config)
 
@@ -270,7 +270,7 @@ class QKeithleyBias(QWidget):
 					"label"		: "Bias Level",
 					"limit"		: 20.0,
 					"signed"	: True,
-					"default"	: 0.0
+					"default"	: [0.0, ""]
 				} 
 				self.bias.update_config(self.bias_config)
 
@@ -282,7 +282,7 @@ class QKeithleyBias(QWidget):
 					"label"		: "Compliance",
 					"limit"		: 1.0, 
 					"signed"	: False,
-					"default"	: 0.1
+					"default"	: [100, "m"]
 				} 
 				self.cmpl.update_config(self.cmpl_config)
 
@@ -306,7 +306,7 @@ class QKeithleyBias(QWidget):
 					"label"		: "Bias Level",
 					"limit"		: 1.0,
 					"signed"	: True,
-					"default" 	: 0.0
+					"default" 	: [1.0, "m"]
 				} 
 				self.bias.update_config(self.bias_config)
 
@@ -318,7 +318,7 @@ class QKeithleyBias(QWidget):
 					"label"		: "Compliance",
 					"limit"		: 20.0,
 					"signed"	: False,
-					"default"	: 1.0
+					"default"	: [1.0, ""]
 				} 
 				self.cmpl.update_config(self.cmpl_config)
 

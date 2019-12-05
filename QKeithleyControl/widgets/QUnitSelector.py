@@ -138,14 +138,16 @@ class QUnitSelector(QWidget):
 			self.unit_value.setDecimals(3)		
 			self.unit_value.setSingleStep(0.1)	
 			self._update_unit_limits()
-			self.unit_value.setValue(self.config["default"])
+			self.unit_value.setValue(self.config["default"][0])
 			self.unit_value.setFixedWidth(200)
+
 
 		# Generate unit box (int value)		
 		elif self.config['unit'] == "__INT__":
 			self.unit_value = QSpinBox()
 			self.unit_value.setFixedWidth(200)
-			self.unit_value.setValue(int(self.config["default"]))
+
+			self.unit_value.setValue(int(self.config["default"][0]))
 			self.unit_select = None
 
 		# General case (physical units)
@@ -156,6 +158,7 @@ class QUnitSelector(QWidget):
 			self.unit_select = QComboBox()
 			self.unit_select.setFixedWidth(80)
 			self.unit_select.addItems( list(self._units.keys()) )
+			self.unit_select.setCurrentText(self.config["default"][1] + self.config["unit"])
 			self.unit_select.currentTextChanged.connect(self._update_unit_limits)
 
 			# Unit value Spinbox
@@ -163,7 +166,7 @@ class QUnitSelector(QWidget):
 			self.unit_value.setDecimals(3)		
 			self.unit_value.setSingleStep(0.1)	
 			self._update_unit_limits()
-			self.unit_value.setValue(self.config["default"])
+			self.unit_value.setValue(self.config["default"][0])
 			self.unit_value.setFixedWidth(200)			
 	
 		# Add widgets to hbox
@@ -196,7 +199,10 @@ class QUnitSelector(QWidget):
 		self._update_unit_limits()
 
 		# Update default value
-		self.unit_value.setValue(self.config["default"])
+		self.unit_value.setValue(self.config["default"][0])
+		if self.config["default"] == 2:
+			self.unit_select.setCurrentText(self.config["default"][1] + self.config["unit"])
+
 		
 		# Set label text
 		self.unit_label.setText(self.config["label"])

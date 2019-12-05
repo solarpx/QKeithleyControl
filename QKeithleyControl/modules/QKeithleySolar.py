@@ -65,13 +65,17 @@ class QKeithleySolar(QWidget):
 		self.layout.addWidget(self._gen_solar_plots())
 		self.setLayout(self.layout)
 
-	# Helper method to generate QHBoxLayouts
-	def _gen_hboxlayout(self, _widget_list):
+	# Helper method to pack widgets
+	def _gen_hbox_widget(self, _widget_list):
 	
+		_widget = QWidget()
 		_layout = QHBoxLayout()
 		for _w in _widget_list:
 			_layout.addWidget(_w)
-		return _layout
+
+		_layout.setContentsMargins(0,0,0,0)
+		_widget.setLayout(_layout)
+		return _widget
 
 	# Set visa insturment handle for keithley
 	def _set_keithley_handle(self, keithley):
@@ -95,6 +99,220 @@ class QKeithleySolar(QWidget):
 
 		if self.plot_select.currentText() == "MPP":
 			self.plot_stack.setCurrentIndex(2)
+
+
+	#####################################
+	# MEASUREMENT CONFIGURATION CONTROLS
+	#		
+	
+	# Method to generate sweep controls
+	def _gen_sweep_control(self):		
+		 
+		# Sweep control layout
+		self.sweep_control = QWidget()
+		self.sweep_control_layout = QVBoxLayout()
+ 
+		# Sweep start
+		self.sweep_start_config={
+			"unit" 		: "V", 
+			"min"		: "m",
+			"max"		: "",
+			"label"		: "Sweep Start (V)",
+			"limit"		: 2.0, 
+			"signed"	: True,
+			"default"	: [-0.5, ""]
+		} 
+		self.sweep_start = widgets.QUnitSelector.QUnitSelector(self.sweep_start_config)
+
+		# Sweep stop
+		self.sweep_stop_config={
+			"unit" 		: "V", 
+			"min"		: "m",
+			"max"		: "",
+			"label"		: "Sweep Stop (V)",
+			"limit"		: 2.0, 
+			"signed"	: True,
+			"default"	: [0.5, ""]
+		} 
+		self.sweep_stop = widgets.QUnitSelector.QUnitSelector(self.sweep_stop_config)
+
+		
+		# Compliance Spinbox
+		self.sweep_cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance (A)",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: [20, "u"]
+		} 
+		self.sweep_cmpl = widgets.QUnitSelector.QUnitSelector(self.sweep_cmpl_config)	
+
+		# Compliance
+		self.sweep_npts_config={
+			"unit" 		: "__INT__", 
+			"label"		: "Number of Points",
+			"limit"		: 256.0, 
+			"signed"	: False,
+			"default"	: [51.0]
+		}
+		self.sweep_npts = widgets.QUnitSelector.QUnitSelector(self.sweep_npts_config)		
+
+
+		# Add sweep widgets to layout
+		self.sweep_control_layout.addWidget(self.sweep_start)
+		self.sweep_control_layout.addWidget(self.sweep_stop)
+		self.sweep_control_layout.addWidget(self.sweep_cmpl)
+		self.sweep_control_layout.addWidget(self.sweep_npts)
+		self.sweep_control_layout.setContentsMargins(0,0,0,0)
+	
+		# Set widget layout
+		self.sweep_control.setLayout(self.sweep_control_layout)
+
+
+	# Method to generate Voc controls
+	def _gen_voc_control(self):
+
+		#################################
+		# Voc tracking controls
+		#
+		self.voc_control = QWidget()
+		self.voc_control_layout = QVBoxLayout()
+
+		# Tracking mode initialization
+		# Note this example of passing arguments to a callback
+		self.voc_bias_config={
+			"unit" 		: "V", 
+			"min"		: "m",
+			"max"		: "",
+			"label"		: "Voc Initialization (V)",
+			"limit"		: 2.0, 
+			"signed"	: True,
+			"default"	: [0.3,""]
+		} 
+		self.voc_bias = widgets.QUnitSelector.QUnitSelector(self.voc_bias_config)
+		self.voc_bias.unit_value.valueChanged.connect(lambda arg=self.voc_bias.value(): self._update_bias(arg))
+		
+		# Tracking mode convergence
+		self.voc_conv_config={
+			"unit" 		: "A", 
+			"min"		: "n",
+			"max"		: "u",
+			"label"		: "Voc Convergence (A)",
+			"limit"		: 100, 
+			"signed"	: False,
+			"default"	: [0.05,"u"]
+		} 
+		self.voc_conv = widgets.QUnitSelector.QUnitSelector(self.voc_conv_config)
+
+		# Delay
+		self.voc_gain_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Proportional Gain (%)",
+			"limit"		: 100, 
+			"signed"	: False,
+			"default"	: [3]
+		}
+		self.voc_gain = widgets.QUnitSelector.QUnitSelector(self.voc_gain_config)
+
+
+		# Delay
+		self.voc_delay_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Measurement Interval (s)",
+			"limit"		: 60.0, 
+			"signed"	: False,
+			"default"	: [1.0]
+		}
+		self.voc_delay = widgets.QUnitSelector.QUnitSelector(self.voc_delay_config)
+
+		# Add voc widgets to layout
+		self.voc_control_layout.addWidget(self.voc_bias)
+		self.voc_control_layout.addWidget(self.voc_conv)
+		self.voc_control_layout.addWidget(self.voc_gain)
+		self.voc_control_layout.addWidget(self.voc_delay)
+		self.voc_control_layout.setContentsMargins(0,0,0,0)
+	
+		# Set widget layout
+		self.voc_control.setLayout(self.voc_control_layout)
+
+
+	# Method to generate Voc controls
+	def _gen_mpp_control(self):
+
+		#################################
+		# Voc tracking controls
+		#
+		self.mpp_control = QWidget()
+		self.mpp_control_layout = QVBoxLayout()
+
+		# Tracking mode initialization
+		# Note this example of passing arguments to a callback
+		self.mpp_bias_config={
+			"unit" 		: "V", 
+			"min"		: "m",
+			"max"		: "",
+			"label"		: "MPP Initialization (V)",
+			"limit"		: 2.0, 
+			"signed"	: True,
+			"default"	: [0.25,""]
+		} 
+		self.mpp_bias = widgets.QUnitSelector.QUnitSelector(self.mpp_bias_config)
+		self.mpp_bias.unit_value.valueChanged.connect(lambda arg=self.mpp_bias.value(): self._update_bias(arg))
+		
+		# Tracking mode convergence
+		self.mpp_ampl_config={
+			"unit" 		: "V", 
+			"min"		: "u",
+			"max"		: "m",
+			"label"		: "Sense amplitude (mV)",
+			"limit"		: 100, 
+			"signed"	: False,
+			"default"	: [20.0,"m"]
+		} 
+		self.mpp_ampl = widgets.QUnitSelector.QUnitSelector(self.mpp_ampl_config)
+
+		# Delay
+		self.mpp_gain_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Proportional Gain (%)",
+			"limit"		: 100, 
+			"signed"	: False,
+			"default"	: [3]
+		}
+		self.mpp_gain = widgets.QUnitSelector.QUnitSelector(self.mpp_gain_config)
+
+
+		# Delay
+		self.mpp_delay_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Measurement Interval (s)",
+			"limit"		: 60.0, 
+			"signed"	: False,
+			"default"	: [1.0]
+		}
+		self.mpp_delay = widgets.QUnitSelector.QUnitSelector(self.mpp_delay_config)
+
+		# Add mpp widgets to layout
+		self.mpp_control_layout.addWidget(self.mpp_bias)
+		self.mpp_control_layout.addWidget(self.mpp_ampl)
+		self.mpp_control_layout.addWidget(self.mpp_gain)
+		self.mpp_control_layout.addWidget(self.mpp_delay)
+		self.mpp_control_layout.setContentsMargins(0,0,0,0)
+	
+		# Set widget layout
+		self.mpp_control.setLayout(self.mpp_control_layout)
+
+
+	# Flip between controls when monitor mode selector is updated
+	def _update_monitor_page(self):
+	
+		if self.monitor_select.currentText() == "Voc":		
+			self.monitor_control_pages.setCurrentIndex(0)
+
+		if self.monitor_select.currentText() == "MPP":
+			self.monitor_control_pages.setCurrentIndex(1)
 
 	# Method to generate solar characterization controls
 	def _gen_solar_control(self):
@@ -129,150 +347,59 @@ class QKeithleySolar(QWidget):
 		self.sweep_meas_state.addState(self.sweep_meas_run)
 		self.sweep_meas_state.addState(self.sweep_meas_stop)
 		self.sweep_meas_state.setInitialState(self.sweep_meas_stop)
-		self.sweep_meas_state.start()
+		self.sweep_meas_state.start()		
 
-
-		#####################################
-		#  SWEEP MEASUREMENT CONFIGURATION
-		#
-		 
-		# Sweep control layout
-		self.sweep_start_config={
-			"unit" 		: "V", 
-			"min"		: "m",
-			"max"		: "",
-			"label"		: "Sweep Start (V)",
-			"limit"		: 2.0, 
-			"signed"	: True,
-			"default"	: -0.5
-		} 
-		self.sweep_start = widgets.QUnitSelector.QUnitSelector(self.sweep_start_config)
-
-		# Configuration for bias level unit box
-		self.sweep_stop_config={
-			"unit" 		: "V", 
-			"min"		: "m",
-			"max"		: "",
-			"label"		: "Sweep Stop (V)",
-			"limit"		: 2.0, 
-			"signed"	: True,
-			"default"	: 0.5
-		} 
-		self.sweep_stop = widgets.QUnitSelector.QUnitSelector(self.sweep_stop_config)
-
-		
-		# Compliance Spinbox
-		self.sweep_cmpl_config={
-			"unit" 		: "A", 
-			"min"		: "u",
-			"max"		: "",
-			"label"		: "Compliance (A)",
-			"limit"		: 1.0, 
-			"signed"	: False,
-			"default"	: 0.001
-		} 
-		self.sweep_cmpl = widgets.QUnitSelector.QUnitSelector(self.sweep_cmpl_config)	
-
-		# Compliance
-		self.sweep_npts_config={
-			"unit" 		: "__INT__", 
-			"label"		: "Number of Points",
-			"limit"		: 256.0, 
-			"signed"	: False,
-			"default"	: 51.0
-		}
-		self.sweep_npts = widgets.QUnitSelector.QUnitSelector(self.sweep_npts_config)
-
+		# Generate sweep controls
+		self._gen_sweep_control()
 
 		#####################################
 		#  TRACKING MEASUREMENT STATE MACHINE
 		#
 
 		# Create QStateMachine for output state
-		self.tmode_state = QStateMachine()
-		self.tmode_meas_button = QPushButton()
-		self.tmode_meas_button.setStyleSheet(
+		self.monitor_state = QStateMachine()
+		self.monitor_meas_button = QPushButton()
+		self.monitor_meas_button.setStyleSheet(
 			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
 
 		# Create output states
-		self.tmode_meas_off = QState()
-		self.tmode_meas_on  = QState()
+		self.monitor_meas_off = QState()
+		self.monitor_meas_on  = QState()
 
 		# Attach states to output button and define state transitions
-		self.tmode_meas_off.assignProperty(self.tmode_meas_button, 'text', 'Monitor Off')
-		self.tmode_meas_off.addTransition(self.tmode_meas_button.clicked, self.tmode_meas_on)
-		self.tmode_meas_off.entered.connect(self._exec_tmode_off)
+		self.monitor_meas_off.assignProperty(self.monitor_meas_button, 'text', 'Monitor Off')
+		self.monitor_meas_off.addTransition(self.monitor_meas_button.clicked, self.monitor_meas_on)
+		self.monitor_meas_off.entered.connect(self._exec_monitor_off)
 
-		self.tmode_meas_on.assignProperty(self.tmode_meas_button, 'text', 'Monitor On')
-		self.tmode_meas_on.addTransition(self.tmode_meas_button.clicked, self.tmode_meas_off)
-		self.tmode_meas_on.entered.connect(self._exec_tmode_on)
+		self.monitor_meas_on.assignProperty(self.monitor_meas_button, 'text', 'Monitor On')
+		self.monitor_meas_on.addTransition(self.monitor_meas_button.clicked, self.monitor_meas_off)
+		self.monitor_meas_on.entered.connect(self._exec_monitor_on)
 		
 		# Add states, set initial state, and start machine
-		self.tmode_state.addState(self.tmode_meas_off)
-		self.tmode_state.addState(self.tmode_meas_on)
-		self.tmode_state.setInitialState(self.tmode_meas_off)
-		self.tmode_state.start()
-
-
-		#####################################
-		#  TRACKING MEASUREMENT CONFIGURATION
-		#
+		self.monitor_state.addState(self.monitor_meas_off)
+		self.monitor_state.addState(self.monitor_meas_on)
+		self.monitor_state.setInitialState(self.monitor_meas_off)
+		self.monitor_state.start()
 
 		# Tracking mode control
-		self.tmode_select_label = QLabel("Parameter Tracking")
-		self.tmode_select = QComboBox()
-		self.tmode_select.setFixedWidth(200)
-		self.tmode_select.addItems(["Voc", "MPP"])	
+		self.monitor_select_label = QLabel("Parameter Tracking")
+		self.monitor_select = QComboBox()
+		self.monitor_select.setFixedWidth(200)
+		self.monitor_select.addItems(["Voc", "MPP"])
+		self.monitor_select.currentTextChanged.connect(self._update_monitor_page)
 
-		
-		# Tracking mode initialization
-		# Note this example of passing arguments to a callback
-		self.tmode_bias_config={
-			"unit" 		: "V", 
-			"min"		: "m",
-			"max"		: "",
-			"label"		: "Initialization (V)",
-			"limit"		: 2.0, 
-			"signed"	: True,
-			"default"	: 0.4
-		} 
-		self.tmode_bias = widgets.QUnitSelector.QUnitSelector(self.tmode_bias_config)
-		self.tmode_bias.unit_value.valueChanged.connect(lambda arg=self.tmode_bias.value(): self._update_bias(arg))
-		
-		# Tracking mode convergence
-		self.tmode_conv_config={
-			"unit" 		: "A", 
-			"min"		: "n",
-			"max"		: "u",
-			"label"		: "Convergence (A)",
-			"limit"		: 100, 
-			"signed"	: False,
-			"default"	: 0.015
-		} 
-		self.tmode_conv = widgets.QUnitSelector.QUnitSelector(self.tmode_conv_config)
+		# Generate (Voc, MPP) container widgets
+		self._gen_voc_control() 					# self.voc_control
+		self._gen_mpp_control()						# self.mpp_control
 
+		# Add monitor mode widgets to QStackedWidget
+		self.monitor_control_pages = QStackedWidget()
+		self.monitor_control_pages.addWidget(self.voc_control)
+		self.monitor_control_pages.addWidget(self.mpp_control)
 
-		# Delay
-		self.tmode_pgain_config={
-			"unit" 		: "__DOUBLE__", 
-			"label"		: "Proportional Gain (%)",
-			"limit"		: 100, 
-			"signed"	: False,
-			"default"	: 3
-		}
-		self.tmode_pgain = widgets.QUnitSelector.QUnitSelector(self.tmode_pgain_config)
-
-
-		# Delay
-		self.tmode_delay_config={
-			"unit" 		: "__DOUBLE__", 
-			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
-			"signed"	: False,
-			"default"	: 1.0
-		}
-		self.tmode_delay = widgets.QUnitSelector.QUnitSelector(self.tmode_delay_config)
-
+		# Return the stacked widget
+		self.monitor_control_pages.setCurrentIndex(0);
+	
 		#####################################
 		#  PLOT AND SAVE MEASUREMENTS
 		#
@@ -298,27 +425,18 @@ class QKeithleySolar(QWidget):
 
 		# Add sweep controls	
 		self.ctl_layout.addWidget(self.sweep_meas_button)
-		self.ctl_layout.addWidget(self.sweep_start)
-		self.ctl_layout.addWidget(self.sweep_stop)
-		self.ctl_layout.addWidget(self.sweep_cmpl)
-		self.ctl_layout.addWidget(self.sweep_npts)
+		self.ctl_layout.addWidget(self.sweep_control)
 
-		# Add tracking controls
+		# Add monitor controls
 		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self.tmode_meas_button)
-		_layout = self._gen_hboxlayout([self.tmode_select, self.tmode_select_label])
-		self.ctl_layout.addLayout(_layout)
-		self.ctl_layout.addWidget(self.tmode_bias)
-		self.ctl_layout.addWidget(self.tmode_conv)
-		self.ctl_layout.addWidget(self.tmode_pgain)
-		self.ctl_layout.addWidget(self.tmode_delay)
+		self.ctl_layout.addWidget(self.monitor_meas_button)		
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.monitor_select, self.monitor_select_label]))
+		self.ctl_layout.addWidget(self.monitor_control_pages)
 
 		# Add save control 
 		self.ctl_layout.addStretch(1)
-		_layout = self._gen_hboxlayout([self.plot_select, self.plot_select_label])
-		self.ctl_layout.addLayout(_layout)
-		_layout = self._gen_hboxlayout([self.save_note, self.save_note_label])
-		self.ctl_layout.addLayout(_layout)
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.plot_select, self.plot_select_label]))
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.save_note, self.save_note_label]))
 		self.ctl_layout.addWidget(self.save_button)
 
 		# Positioning
@@ -358,6 +476,10 @@ class QKeithleySolar(QWidget):
 	#################################	
 	# Sweep State Machine Callbacks #	
 	#################################
+
+	#####################################
+	#  SWEEP ALGORITHM
+	#	
 
 	# Set sweep parameters
 	def _set_sweep_params(self):
@@ -451,7 +573,7 @@ class QKeithleySolar(QWidget):
 			self.sweep = self._set_sweep_params()
 			
 			# Disable the tracking mode button
-			self.tmode_meas_button.setEnabled(False)
+			self.monitor_meas_button.setEnabled(False)
 
 			# Run the measurement thread function
 			self.sweep_thread = threading.Thread(target=self._exec_sweep_thread, args=())
@@ -470,7 +592,7 @@ class QKeithleySolar(QWidget):
 			self.save_button.setEnabled(True)
 
 			# Enable the tracking mode button
-			self.tmode_meas_button.setEnabled(True)
+			self.monitor_meas_button.setEnabled(True)
 
 			# Set thread running to False. This will break the sweep measurements
 			# execution loop on next iteration.  
@@ -485,7 +607,12 @@ class QKeithleySolar(QWidget):
 	# Tracking State Machine Callbacks #
 	####################################
 	# These are modified  "bias mode" loops with embedded voltage/power tracking algorithms
-	def _exec_tmode_voc_thread(self):
+
+	#####################################
+	#  Voc TRACKING ALGORITHM
+	#	
+
+	def _exec_monitor_voc_thread(self):
 		
 		# Initialize Voc data-structure
 		self._data["Voc"] = {"t" : [], "Voc" : [], "Ioc" : []}
@@ -498,11 +625,11 @@ class QKeithleySolar(QWidget):
 
 		# Set bias to initial value in voltas and turn output ON
 		self.keithley.current_cmp( self.sweep_cmpl.value() )	 	# Using sweep compliance
-		self.keithley.set_voltage( self.tmode_bias.value() )
+		self.keithley.set_voltage( self.voc_bias.value() )
 		self.keithley.output_on()
 
 		# Thread loop
-		while self.tmode_thread_running is True:
+		while self.monitor_thread_running is True:
 			
 			# Voc TRACKING ALGORITHM LOOP GOES HERE
 			_iter_start = float(time.time())
@@ -513,7 +640,7 @@ class QKeithleySolar(QWidget):
 				
 				# Check if current is below convergence value
 				# note that convergence is specified in mA 
-				if (abs(float( _buffer[1]))) <= float(self.tmode_conv.value()):					
+				if (abs(float( _buffer[1]))) <= float(self.voc_conv.value()):					
 					break
 				
 				# If convergence takes too long paint a value (10s)
@@ -537,11 +664,10 @@ class QKeithleySolar(QWidget):
 
 					# Porportional gain controller
 					if np.mean(_i) >= 0.0:
-						self._update_bias( float(_buffer[0]) * float( 1.0 - self.tmode_pgain.value()/100. ) ) 
+						self._update_bias( float(_buffer[0]) * float( 1.0 - self.voc_gain.value()/100. ) ) 
 
 					else:
-						self._update_bias( float(_buffer[0]) * float( 1.0 + self.tmode_pgain.value()/100. ) )
-	
+						self._update_bias( float(_buffer[0]) * float( 1.0 + self.voc_gain.value()/100. ) )	
 
 			# Extract data from buffer
 			self._data["Voc"]["t"].append(float( time.time() - start ))
@@ -552,73 +678,132 @@ class QKeithleySolar(QWidget):
 			self.voc_plot._draw_canvas()
 	
 			# Measurement delay	
-			if self.tmode_delay.value() != 0: 
-				time.sleep(self.tmode_delay.value())
+			if self.voc_delay.value() != 0: 
+				time.sleep(self.voc_delay.value())
+
+
+	#####################################
+	#  MPP TRACKING ALGORITHM
+	#	
+
+	def _exec_monitor_mpp_thread(self):
+		
+		# Initialize IV Sweep dictionary and plot
+		self._data["MPP"] = {"t" : [], "VMPP" : [], "IMPP" : [], "MPP" : []}
+	
+		# Initialize MPP plot
+		self.mpp_plot._refresh_axes()
+		self.plot_select.setCurrentIndex(2)
+		handle = self.mpp_plot.add_handle()
+		start  = float(time.time())
+
+		# Set bias to initial value in voltas and turn output ON
+		self.keithley.current_cmp( self.sweep_cmpl.value() )	 	# Using sweep compliance
+		self.keithley.set_voltage( self.mpp_bias.value() )
+		self.keithley.output_on()
+
+		# Thread loop
+		while self.monitor_thread_running is True:
+			
+			# Voc TRACKING ALGORITHM LOOP GOES HERE
+			_iter_start = float(time.time())
+
+			# Derivative array for checking convergence
+			_d = [] 
+			while True:
+				
+				# Get data from buffer
+				_buffer = self.keithley.meas().split(",")
+				
+				# Check if current is below convergence value
+				# note that convergence is specified in mA 
+				#if _d is not []:
+				#	break
+				
+				# If convergence takes too long paint a value (10s)
+				if  float( time.time() - _iter_start ) >= 3.0:
+					break
+
+				# Otherwise, adjust the voltage proportionally
+				else:
+
+					# Create signal amplitude
+					_amplitude = self.mpp_ampl.value()
+					_v, _i = np.add(float(_buffer[0]), np.linspace(-1.0 * _amplitude, _amplitude, 5)), []
+					
+					# Measure current over sense amplitude
+					for _ in _v:
+						self.keithley.set_voltage(_)
+						_b = self.keithley.meas().split(",")
+						_i.append( -1.0*float( _b[1] ) )
+
+					# Reset the voltage
+					self.keithley.set_voltage( float(_buffer[0] ) )
+
+					# Calculate derivative
+					_p = np.multiply(_i, _v)
+					_d = np.gradient(np.multiply(_i, _v))
+					_d = np.divide(_d, _amplitude)
+
+					# Differntial gain controller
+					if np.mean(_d) <= 0.0:
+						self._update_bias( float(_buffer[0]) * float( 1.0 - self.mpp_gain.value()/100. ) )  
+
+					else:
+						self._update_bias( float(_buffer[0]) * float( 1.0 + self.mpp_gain.value()/100. ) )
+
+			# Extract data from buffer
+			self._data["MPP"]["t"].append(float( time.time() - start ))
+			self._data["MPP"]["VMPP"].append( float(_buffer[0]) )
+			self._data["MPP"]["IMPP"].append( float(_buffer[1]) )
+			self._data["MPP"]["MPP"].append( -1.0 * float(_buffer[0]) * float(_buffer[1]) )
+				
+			self.mpp_plot.update_handle(handle, float(time.time() - start), float(_buffer[0]))
+			self.mpp_plot._draw_canvas()
+	
+			# Measurement delay	
+			if self.mpp_delay.value() != 0: 
+				time.sleep(self.mpp_delay.value())			
 
 	# Tracking measurement ON
-	def _exec_tmode_on(self):
+	def _exec_monitor_on(self):
 		
 		if self.keithley is not None:
 
 			# Update UI for ON state
-			self.tmode_meas_button.setStyleSheet(
+			self.monitor_meas_button.setStyleSheet(
 				"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
+	
+			self.sweep_meas_button.setEnabled(False)
 			self.save_button.setEnabled(False)
 			
 			# Create execution threads for measurement
-			# Voc monitoring
-			if self.tmode_select.currentText() == "Voc":
-				self.tmode_thread = threading.Thread(target=self._exec_tmode_voc_thread, args=())
+			# Voc monitoring thread
+			if self.monitor_select.currentText() == "Voc":
+				self.monitor_thread = threading.Thread(target=self._exec_monitor_voc_thread, args=())
 			
-			# MPP monitoring
-			if self.tmode_select.currentText() == "MPP":
-				pass
+			# MPP monitoring thread
+			if self.monitor_select.currentText() == "MPP":
+				self.monitor_thread = threading.Thread(target=self._exec_monitor_mpp_thread, args=())
 
-			#	
-			self.tmode_thread.daemon = True		# Daemonize thread
-			self.tmode_thread.start()         	# Start the execution
-			self.tmode_thread_running = True	# Set execution flag	
+			# Run the thread	
+			self.monitor_thread.daemon = True		# Daemonize thread
+			self.monitor_thread.start()         	# Start the execution
+			self.monitor_thread_running = True	# Set execution flag	
 			
 
 	# Tracking measurement OFF
-	def _exec_tmode_off(self):
+	def _exec_monitor_off(self):
 		
 		if self.keithley is not None:
 
-			self.tmode_meas_button.setStyleSheet(
+			self.monitor_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )			
+			self.sweep_meas_button.setEnabled(True)	
 			self.save_button.setEnabled(True)
 
-			self.tmode_thread_running = False
-			self.tmode_thread.join()  # Waits for thread to complete
+			self.monitor_thread_running = False
+			self.monitor_thread.join()  # Waits for thread to complete
 
 			self.keithley.set_voltage(0.0)
 			self.keithley.output_off()
-
-
-
-
-	# Putting this here for now to avoid confusion
-	def _exec_tmode_mpp_thread(self):
-		
-		# Initialize IV Sweep dictionary and plot
-		self._data["MPP"] = {"t" : [], "VMPP" : [], "IMPP" : [], "MPP" : []}
-		handle = self.sweep_plot.add_handle()
-		start  = float(time.time())
-
-		# Thread loop
-		while self.tmode_thread_running is True:
-			
-			# MPP TRACKING ALGORITHM LOOP GOES HERE
-			# Get data from buffer
-			#while True:
-			#if _buffer < convergence break
-			_buffer = self.keithley.meas().split(",")
-
-			# Extract data from buffer
-			self._data["MPP"]["t"].append(float( time.time() - start ))
-			self._data["MPP"]["MPP"].append( -1.0 * float(_buffer[0]) * float(_buffer[1]) )
-			self._data["MPP"]["VMPP"].append( float(_buffer[0]) )
-			self._data["MPP"]["IMPP"].append( float(_buffer[1]) )
-
-			self.plot.update_handle(handle, float(time.time() - start), float(_plt_data))
