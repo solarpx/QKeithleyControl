@@ -415,7 +415,7 @@ class QKeithleySolar(QWidget):
 		self.save_note.setFixedWidth(200)
 		
 		self.save_button = QPushButton("Save Characterization")
-		#self.save_button.clicked.connect(self._save_traces)	
+		self.save_button.clicked.connect(self._save_traces)	
 
 		#####################################
 		#  ADD CONTROLS
@@ -596,9 +596,6 @@ class QKeithleySolar(QWidget):
 			# execution loop on next iteration.  
 			self.sweep_thread_abort = True
 			self.sweep_thread.join()  # Waits for thread to complete
-
-			# Zero storage arrays for IV data
-			self._data["IV"] = {"t" : [], "V" : [], "I" : [], "P" : []}
 
 
 	####################################
@@ -805,3 +802,91 @@ class QKeithleySolar(QWidget):
 
 			self.keithley.set_voltage(0.0)
 			self.keithley.output_off()
+
+	# Reset data function
+	def _reset_data(self):		
+
+		# Refresh data dictionary
+		self.sweep_plot._refresh_axes()
+		self.voc_plot._refresh_axes()
+		self.mpp_plot._refresh_axes()
+		self._data = {"IV" : None, "Voc" : None, "MPP" : None}
+
+	# Sace traces method (same as sweep control)	
+	def _save_traces(self):
+
+		# If data is empty display warning message
+		if  all( _ is None for _ in list(self._data.values()) ):
+
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Warning)
+			msg.setText("No measurement data")
+			msg.setWindowTitle("Bias Info")
+			msg.setWindowIcon(self.icon)
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()
+
+		# Otherwise save
+		else:
+
+			# Open file dialog
+			dialog = QFileDialog(self)
+			dialog.setFileMode(QFileDialog.AnyFile)
+			dialog.setViewMode(QFileDialog.Detail)
+			filenames = []
+
+			# Select file
+			if dialog.exec_():
+				filenames = dialog.selectedFiles()
+
+			# Open file pointer			
+			f = open(filenames[0], 'w+')
+
+			# Start write sequence
+			with f:	
+	
+				# Write data header
+				f.write("* QKeithleyControl v1.1\n")
+				f.write("* PV Characterization\n")
+				if self.save_note.text() != "":
+					f.write("* NOTE %s\n"%self.save_note.text())
+				f.write("* \n")	
+			
+				# Only save if data exists on a given key
+				for meas_key, meas in self._data.items():
+
+					# If measurement data exists on key
+					if meas is not None:
+
+						# Write measurement key header
+						f.write("* %s\n"%str(meas_key))
+
+						# Write data keys
+						for data_key in meas.keys():
+							f.write("%s\t\t"%str(data_key))
+						f.write("\n")
+									
+						# Write data values. 
+						# Use length of first column for index iterator
+						for i in range( len( meas[ list(meas.keys())[0] ] ) ):
+
+							# Go across the dictionary keys on iterator
+							for data_key in meas.keys():
+								f.write("%s\t"%str(meas[data_key][i]))
+							f.write("\n")
+
+						f.write("\n\n")
+
+				f.close()
+
+			# Message box to indicate successful save
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Information)
+			msg.setText("Measurement data saved")
+			msg.setWindowTitle("Bias Info")
+			msg.setWindowIcon(self.icon)
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()
+
+			# Reset data after save
+			self._reset_data()
