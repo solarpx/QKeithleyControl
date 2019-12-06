@@ -396,8 +396,6 @@ class QKeithleySolar(QWidget):
 		self.monitor_control_pages = QStackedWidget()
 		self.monitor_control_pages.addWidget(self.voc_control)
 		self.monitor_control_pages.addWidget(self.mpp_control)
-
-		# Return the stacked widget
 		self.monitor_control_pages.setCurrentIndex(0);
 	
 		#####################################

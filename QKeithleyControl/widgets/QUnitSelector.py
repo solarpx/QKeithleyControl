@@ -144,11 +144,14 @@ class QUnitSelector(QWidget):
 
 		# Generate unit box (int value)		
 		elif self.config['unit'] == "__INT__":
+
+			# Unit select first (see below)
+			self.unit_select = None
+
+			# Unit value Spinbox
 			self.unit_value = QSpinBox()
 			self.unit_value.setFixedWidth(200)
-
 			self.unit_value.setValue(int(self.config["default"][0]))
-			self.unit_select = None
 
 		# General case (physical units)
 		else: 

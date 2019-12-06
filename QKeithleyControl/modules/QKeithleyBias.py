@@ -39,7 +39,7 @@ import widgets.QUnitSelector
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QPushButton, QLabel, QFileDialog, QLineEdit, QStackedWidget
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
@@ -66,30 +66,150 @@ class QKeithleyBias(QWidget):
 		self.layout.addWidget(self._gen_bias_plot())
 		self.setLayout(self.layout)
 
-	# Helper method to generate QHBoxLayouts
-	def _gen_hboxlayout(self, _widget_list):
-	
-		_layout = QHBoxLayout()
-		for _w in _widget_list:
-			_layout.addWidget(_w)
-		return _layout
-
-	# Set visa insturment handle for keithley
-	def _set_keithley_handle(self, keithley):
-		self.keithley=keithley
-	
-	# Method to reset sweep on window switch
+	# Reset data defaults	
 	def _reset_defaults(self):
 		self.sweep = []
 		self._data = []
 		self.plot._refresh_axes() 
+
+	# Set visa insturment handle for keithley
+	def _set_keithley_handle(self, keithley):
+		self.keithley=keithley
+		
+		# Sync keithley and UI
+		self._update_bias()
+		self._update_cmpl()
+
+	# Helper method to pack widgets
+	def _gen_hbox_widget(self, _widget_list):
+	
+		_widget = QWidget()
+		_layout = QHBoxLayout()
+		for _w in _widget_list:
+			_layout.addWidget(_w)
+
+		_layout.setContentsMargins(0,0,0,0)
+		_widget.setLayout(_layout)
+		return _widget
+
+
+	#####################################
+	#  BIAS MEASUREMENT CONFIGURATION 
+	#
+
+	# Generate voltage and current sources
+	def _gen_voltage_source(self):
+
+		# New QWidget
+		self.voltage_src = QWidget()
+		self.voltage_layout = QVBoxLayout()
+
+		# Configuration for bias level unit box
+		self.voltage_bias_config={
+			"unit" 		: "V", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Bias Level",
+			"limit"		: 20.0, 
+			"signed"	: True,
+			"default"	: [0.0, ""]
+		} 
+		self.voltage_bias = widgets.QUnitSelector.QUnitSelector(self.voltage_bias_config)
+		self.voltage_bias.unit_value.valueChanged.connect(self._update_bias)
+		self.voltage_bias.unit_select.currentTextChanged.connect(self._update_bias)
+
+
+		# Compliance Spinbox
+		self.voltage_cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: [100, "m"]
+		} 
+		self.voltage_cmpl = widgets.QUnitSelector.QUnitSelector(self.voltage_cmpl_config)	
+		self.voltage_cmpl.unit_value.valueChanged.connect(self._update_cmpl)
+		self.voltage_cmpl.unit_select.currentTextChanged.connect(self._update_cmpl)
+
+		# Measurement Delay
+		self.voltage_delay_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Measurement Interval (s)",
+			"limit"		: 60.0, 
+			"signed"	: False,
+			"default"	: [0.1]
+		}
+		self.voltage_delay = widgets.QUnitSelector.QUnitSelector(self.voltage_delay_config)
+
+		# Pack selectors into layout
+		self.voltage_layout.addWidget(self.voltage_bias)
+		self.voltage_layout.addWidget(self.voltage_cmpl)
+		self.voltage_layout.addWidget(self.voltage_delay)
+		self.voltage_layout.setContentsMargins(0,0,0,0)
+
+		# Set layout 
+		self.voltage_src.setLayout(self.voltage_layout)
+
+	def _gen_current_source(self):
+
+		# New QWidget
+		self.current_src = QWidget()
+		self.current_layout = QVBoxLayout()
+
+		# Configuration for bias level unit box
+		self.current_bias_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Bias Level",
+			"limit"		: 1.0,
+			"signed"	: True,
+			"default" 	: [1.0, "m"]
+		} 
+		self.current_bias = widgets.QUnitSelector.QUnitSelector(self.current_bias_config)
+		self.current_bias.unit_value.valueChanged.connect(self._update_bias)
+		self.current_bias.unit_select.currentTextChanged.connect(self._update_bias)
+
+		# Compliance Spinbox
+		self.current_cmpl_config={
+			"unit" 		: "V", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: [1, ""]
+		} 
+		self.current_cmpl = widgets.QUnitSelector.QUnitSelector(self.current_cmpl_config)	
+		self.current_cmpl.unit_value.valueChanged.connect(self._update_cmpl)
+		self.current_cmpl.unit_select.currentTextChanged.connect(self._update_cmpl)
+
+		# Measurement Delay
+		self.current_delay_config={
+			"unit" 		: "__DOUBLE__", 
+			"label"		: "Measurement Interval (s)",
+			"limit"		: 60.0, 
+			"signed"	: False,
+			"default"	: [0.1]
+		}
+		self.current_delay = widgets.QUnitSelector.QUnitSelector(self.current_delay_config)
+
+		# Pack selectors into layout
+		self.current_layout.addWidget(self.current_bias)
+		self.current_layout.addWidget(self.current_cmpl)
+		self.current_layout.addWidget(self.current_delay)
+		self.current_layout.setContentsMargins(0,0,0,0)
+	
+		# Set layout 
+		self.current_src.setLayout(self.current_layout)
 
 	# Generate bias control
 	def _gen_bias_control(self):
 
 		# Control layout
 		self.ctl_layout = QVBoxLayout()
-
 
 		#####################################
 		#  OUTPUT STATE MACHINE AND BUTTON
@@ -121,54 +241,21 @@ class QKeithleyBias(QWidget):
 		self.output.start()
 
 		# Main mode selctor 
-		self.mode_label = QLabel("Bias Mode")
-		self.mode = QComboBox()
-		self.mode.setFixedWidth(200)
-		self.mode.addItems(["Voltage", "Current"])	
-		self.mode.currentTextChanged.connect(self._update_bias_control)
+		self.src_select_label = QLabel("Bias Mode")
+		self.src_select = QComboBox()
+		self.src_select.setFixedWidth(200)
+		self.src_select.addItems(["Voltage", "Current"])	
+		self.src_select.currentTextChanged.connect(self._update_bias_control)
 
-		#####################################
-		#  BIAS MEASUREMENT CONFIGURATION 
-		#
+		# Generate voltage and current source widgets
+		self._gen_voltage_source()		# self.voltage_src
+		self._gen_current_source()		# self.current_src
 
-		# Configuration for bias level unit box
-		self.bias_config={
-			"unit" 		: "V", 
-			"min"		: "u",
-			"max"		: "",
-			"label"		: "Bias Level",
-			"limit"		: 20.0, 
-			"signed"	: True,
-			"default"	: [0.0, ""]
-		} 
-		self.bias = widgets.QUnitSelector.QUnitSelector(self.bias_config)
-
-		# Compliance Spinbox
-		self.cmpl_config={
-			"unit" 		: "A", 
-			"min"		: "u",
-			"max"		: "",
-			"label"		: "Compliance",
-			"limit"		: 1.0, 
-			"signed"	: False,
-			"default"	: [100, "m"]
-		} 
-		self.cmpl = widgets.QUnitSelector.QUnitSelector(self.cmpl_config)	
-		
-		# Measurement Delay
-		self.delay_config={
-			"unit" 		: "__DOUBLE__", 
-			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
-			"signed"	: False,
-			"default"	: [0.1]
-		}
-		self.delay = widgets.QUnitSelector.QUnitSelector(self.delay_config)
-
-
-		# Update 
-		self.update_button = QPushButton("Change Bias")
-		self.update_button.clicked.connect(self._update_bias)	
+		# Add to stacked widget
+		self.src_pages = QStackedWidget()
+		self.src_pages.addWidget(self.voltage_src)
+		self.src_pages.addWidget(self.current_src)
+		self.src_pages.setCurrentIndex(0)
 
 		#####################################
 		#  SAVE BUTTON
@@ -185,156 +272,76 @@ class QKeithleyBias(QWidget):
 		#  ADD CONTROLS
 		#
 
-		# Main output
+		# Main output and controls
 		self.ctl_layout.addWidget(self.output_button)
-
-		# Additional controls
-		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self.update_button)
-		_layout = self._gen_hboxlayout([self.mode, self.mode_label])
-		self.ctl_layout.addLayout(_layout)
-		self.ctl_layout.addWidget(self.bias)
-		self.ctl_layout.addWidget(self.cmpl)
-		self.ctl_layout.addWidget(self.delay)
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.src_select, self.src_select_label]))
+		self.ctl_layout.addWidget(self.src_pages)
 		
 		# Spacer
 		self.ctl_layout.addStretch(1)
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.save_note, self.save_note_label]))
 		self.ctl_layout.addWidget(self.save_button)
-		_layout = self._gen_hboxlayout([self.save_note, self.save_note_label])
-		self.ctl_layout.addLayout(_layout)
 	
 		# Positioning
 		self.ctl_layout.setContentsMargins(0,15,0,20)
 		return self.ctl_layout
 
+	#####################################
+	#  BIAS CONTROL UPDATE METHODS
+	#	
+
 	# Update bias values 
 	def _update_bias(self):
 
-		if self.mode.currentText() == "Voltage":
+		if self.src_select.currentText() == "Voltage":
+			self.keithley.set_voltage( self.voltage_bias.value() )
 
-			self.keithley.set_voltage(self.bias.value())
-			self.keithley.current_cmp(self.cmpl.value())
+		if self.src_select.currentText() == "Current":
+			self.keithley.set_current( self.current_bias.value() )
 
-		if self.mode.currentText() == "Current":
+	# Update compliance values 
+	def _update_cmpl(self):
 
-			self.keithley.set_current(self.bias.value())
-			self.keithley.voltage_cmp(self.cmpl.value())
+		if self.src_select.currentText() == "Voltage":
+			self.keithley.current_cmp( self.voltage_cmpl.value() )
 
-		# Message box to indicate successful save
-		msg = QMessageBox()
-		msg.setIcon(QMessageBox.Information)
-		msg.setText("%s bias updated"%self.mode.currentText())
-		msg.setWindowTitle("Bias Info")
-		msg.setWindowIcon(self.icon)
-		msg.setStandardButtons(QMessageBox.Ok)
-		msg.exec_()		
-
+		if self.src_select.currentText() == "Current":
+			self.keithley.voltage_cmp( self.current_cmpl.value() )
+	
 	# Update bias control selectors
 	def _update_bias_control(self):
 
-		# Call refresh axes to engage dialogue
-		self.plot.refresh_axes()
+		# Switch to voltage page
+		if self.src_select.currentText() == "Voltage":
+			self.src_pages.setCurrentIndex(0)
 
-		# If answer is no, then revert state
-		if self.plot.msg_clear == QMessageBox.No:
+			# Keithley to voltage source
+			self.keithley.voltage_src()
+			self._update_bias()
+			self._update_cmpl()
 
-			# Revert back to current mode. Note we need to block signals on 
-			# the QComboBox object so setCurrentIndex does not fire an unwanted
-			# currentTextChanged signal creating unwanted recursive call in 
-			# the self._update_bias_control function.
-			if self.mode.currentText() == "Voltage":
+			# Update plot axes and refresh
+			self.plot.set_axes_labels("Time (s)", "Current (A)")
+			self.plot._refresh_axes() # Here we call the internal method (no dialogue)
 
-				self.mode.blockSignals(True)
-				self.mode.setCurrentIndex(1)
-				self.mode.blockSignals(False)
-				return
+		# Switch to current page	
+		if self.src_select.currentText() == "Current":
 
-			# Revert back to voltage Mode
-			if self.mode.currentText() == "Current":
-				self.mode.blockSignals(True)
-				self.mode.setCurrentIndex(0)
-				self.mode.blockSignals(False)
-				return
+			self.src_pages.setCurrentIndex(1)
 
-		# If answer is yes, then clear and update controls
-		else:
+			# Keithley to current source
+			self.keithley.current_src()
+			self._update_bias()
+			self._update_cmpl()
 
-			# Voltage mode adjust lables and limits
-			if self.mode.currentText() == "Voltage":
+			# Update plot axes and refresh
+			self.plot.set_axes_labels("Time (s)", "Voltage (V)")
+			self.plot._refresh_axes() # Here we call the internal method (no dialogue)
 
-				# Bias spinbox (voltage mode)
-				self.bias_config={
-					"unit" 		: "V",
-					"min"		: "u",
-					"max"		: "",
-					"label"		: "Bias Level",
-					"limit"		: 20.0,
-					"signed"	: True,
-					"default"	: [0.0, ""]
-				} 
-				self.bias.update_config(self.bias_config)
 
-				# Compliance Spinbox
-				self.cmpl_config={
-					"unit" 		: "A", 
-					"min"		: "u",
-					"max"		: "",
-					"label"		: "Compliance",
-					"limit"		: 1.0, 
-					"signed"	: False,
-					"default"	: [100, "m"]
-				} 
-				self.cmpl.update_config(self.cmpl_config)
-
-				# Send commands to keithley
-				self.keithley.voltage_src()
-				self.keithley.set_voltage(self.bias.value())
-				self.keithley.current_cmp(self.cmpl.value())			
-
-				# Update plot axes and refresh
-				self.plot.set_axes_labels("Time (s)", "Current (A)")
-				self.plot._refresh_axes() # Here we call the internal method (no dialogue)
-
-			# Current mode adjust lables and limits
-			if self.mode.currentText() == "Current":
-
-				# Bias spinbox (current mode)
-				self.bias_config={
-					"unit" 		: "A", 
-					"min"		: "u",
-					"max"		: "",
-					"label"		: "Bias Level",
-					"limit"		: 1.0,
-					"signed"	: True,
-					"default" 	: [1.0, "m"]
-				} 
-				self.bias.update_config(self.bias_config)
-
-				# Compliance Spinbox
-				self.cmpl_config={
-					"unit" 		: "V", 
-					"min"		: "u",
-					"max"		: "",
-					"label"		: "Compliance",
-					"limit"		: 20.0,
-					"signed"	: False,
-					"default"	: [1.0, ""]
-				} 
-				self.cmpl.update_config(self.cmpl_config)
-
-				# Send commands to keithley
-				self.keithley.current_src()
-				self.keithley.voltage_cmp(self.cmpl.value())
-				self.keithley.set_current(self.bias.value())
-
-				# Update plot axes and refresh
-				self.plot.set_axes_labels("Time (s)", "Voltage (V)")
-				self.plot._refresh_axes() # Here we call the internal method (no dialogue)
-
-			# Enforce data/plot consistency
-			if self.plot.hlist == []:
-				self._data = []	
-
+		# Enforce data/plot consistency
+		if self.plot.hlist == []:
+			self._data = []		
 
 
 	# Measurement thread
@@ -351,23 +358,30 @@ class QKeithleyBias(QWidget):
 			# Get data from buffer
 			_buffer = self.keithley.meas().split(",")
 
-			if self.mode.currentText() == "Current":
-				_plt_data = _buffer[0]
+			# If in current mode, plot voltage
+			if self.src_select.currentText() == "Current":
+				_p = _buffer[0]
 
-			if self.mode.currentText() == "Voltage":
-				_plt_data = _buffer[1]
+				# Measurement delay 
+				if self.current_delay.value() != 0: 
+					time.sleep(self.current_delay.value())
+
+			# It in voltage mode plot current		
+			if self.src_select.currentText() == "Voltage":
+				_p = _buffer[1]
+
+				# Measurement delay 
+				if self.voltage_delay.value() != 0: 
+					time.sleep(self.voltage_delay.value())
 
 			# Extract data from buffer
 			self._time.append(float( time.time() - start ))
 			self._voltage.append(float(_buffer[0]))
 			self._current.append(float(_buffer[1]))
 
-			self.plot.update_handle(handle, float(time.time() - start), float(_plt_data))
+			self.plot.update_handle(handle, float(time.time() - start), float(_p))
 			self.plot._draw_canvas()
 
-
-			if self.delay.value() != 0: 
-				time.sleep(self.delay.value())
 
 	# UI output on state (measurement)
 	def _exec_output_on(self):
@@ -378,7 +392,7 @@ class QKeithleyBias(QWidget):
 			self.output_button.setStyleSheet(
 				"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
 			self.save_button.setEnabled(False)
-			self.mode.setEnabled(False)
+			self.src_select.setEnabled(False)
 
 			# Turn output ON
 			self.keithley.output_on()
@@ -399,7 +413,7 @@ class QKeithleyBias(QWidget):
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )			
 			
 			self.save_button.setEnabled(True)
-			self.mode.setEnabled(True)
+			self.src_select.setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False
@@ -452,11 +466,17 @@ class QKeithleyBias(QWidget):
 				f = open(filenames[0], 'w+')	
 
 				with f:
-				
+					f.write("* QKeithleyControl v1.1\n")
+
 					for _m in self._data: 
 
 						# Write data header
-						f.write("*bias\n")
+						f.write("* BIAS\n")
+
+						# If there is a measurement note
+						if self.save_note.text() != "":
+							f.write("* NOTE %s\n"%self.save_note.text())
+
 						for key in _m.keys():
 							f.write("%s\t\t"%str(key))
 						f.write("\n")
