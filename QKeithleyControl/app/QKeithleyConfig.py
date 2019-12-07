@@ -28,8 +28,11 @@ import visa
 import time
 import numpy as np
 
-# Import d_plot and keithley driver
-import drivers.keithley_2400
+# Import device drivers
+import drivers.keithley2400
+
+# Import QVisaConfig
+import widgets.QVisaConfig
 
 # Import QT backends
 import os
@@ -38,37 +41,36 @@ from PyQt5.QtWidgets import QWidget, QMessageBox, QVBoxLayout, QHBoxLayout, QCom
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 
-# Container class to construct sweep measurement widget
-class QKeithleyConfig(QWidget):
+
+class QKeithleyConfig(widgets.QVisaConfig.QVisaConfig):
 
 	def __init__(self):
 
-		# Inherits QWidget
-		QWidget.__init__(self)	
+		# Inherits QVisaWidget -> QWidget
+		super(QKeithleyConfig, self).__init__(self)	
+
+		# Create Icon for QMessageBox
+		self._gen_main_layout()
+
+	# Main layout	
+	def _gen_main_layout(self):	
 
 		# Create configuration layout
 		self.layout = QHBoxLayout()
 		self.layout.addLayout(self._gen_config_layout())
 		self.layout.addStretch(2)
 		self.setLayout(self.layout)
+	
 
-		# Create Icon for QMessageBox
-		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
-		
-		# Keithley object
-		self.keithley = None
-
-	def _get_keithley_handle(self):
-		return self.keithley	
+		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))
 
 	# Callback to handle GPIB initialization
 	def _initialize_gpib(self):
 
 		try: 
 			# Try to initialize Keithley
-			self.GPIB = self.config_gpib.value()
-			self.keithley = drivers.keithley_2400.keithley_2400(self.GPIB)
-			self.keithley.reset()
+			self._add_inst_handle(drivers.keithley2400.keithley2400(self.config_gpib.value()))
+			self._get_inst_byaddr(self.config_gpib.value()).reset()
 
 			# Enable controls. Reset comboboxes to reflect current state
 			self.config_sense_mode.setEnabled(True)
@@ -85,7 +87,7 @@ class QKeithleyConfig(QWidget):
 			# Message box to display success
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Information)
-			msg.setText("Initialized device at GPIB address %s"%str(self.GPIB))
+			msg.setText("Initialized device at GPIB address %s"%self.config_gpib.value())
 			msg.setWindowTitle("pyVISA Connection")
 			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
@@ -93,9 +95,6 @@ class QKeithleyConfig(QWidget):
 
 		# Display error message if connection error
 		except visa.VisaIOError:
-
-			# Set Keithley as None
-			self.keithley = None	
 
 			# Disable controls
 			self.config_sense_mode.setEnabled(False)
@@ -118,29 +117,28 @@ class QKeithleyConfig(QWidget):
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()
  			
-
 	# Callback for sense mode
 	def _update_config(self):
 
 		# Check to see if Keithley has been initilaized
-		if self.keithley is not None:	
+		if self._get_inst_byaddr(self.config_gpib.value()) is not None:
 
 			# Update sense mode
 			if self.config_sense_mode.currentText() == "2-wire":
-				self.keithley.four_wire_sense_off()
+				self._get_inst_byaddr(self.config_gpib.value()).four_wire_sense_off()
 			
 			if self.config_sense_mode.currentText() == "4-wire":
-				self.keithley.four_wire_sense_on()
+				self._get_inst_byaddr(self.config_gpib.value()).four_wire_sense_on()
 
 			# Update output route
 			if self.config_output_route.currentText() == "Front":
-				self.keithley.output_route_front()
+				self._get_inst_byaddr(self.config_gpib.value()).output_route_front()
 			
 			if self.config_output_route.currentText() == "Rear":
-				self.keithley.output_route_rear()
+				self._get_inst_byaddr(self.config_gpib.value()).output_route_rear()
 
 			# Update integration time
-			self.keithley.update_nplc(self.config_nplc.value())
+			self._get_inst_byaddr(self.config_gpib.value()).update_nplc(self.config_nplc.value())
 
 		# Message box to indicate successful update
 		msg = QMessageBox()
@@ -150,7 +148,6 @@ class QKeithleyConfig(QWidget):
 		msg.setWindowIcon(self.icon)
 		msg.setStandardButtons(QMessageBox.Ok)
 		msg.exec_()	
-
 
 	# Configuration modes for Keithley
 	def _gen_config_layout(self):

@@ -33,6 +33,7 @@ import numpy as np
 import drivers.keithley_2400
 
 # Import widgets
+import widgets.QMeasWidget
 import widgets.QDynamicPlot 
 import widgets.QUnitSelector
 
@@ -44,11 +45,12 @@ from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
 # Container class to construct solar measurement widget
-class QKeithleySolar(QWidget):
+class QKeithleySolar(widgets.QMeasWidget.QMeasWidget):
 
-	def __init__(self):
+	def __init__(self, *args, **kwargs):
 
-		QWidget.__init__(self)
+		super(QKeithleySolar, self).__init__(*args, **kwargs)
+
 
 		# Create Icon for QMessageBox
 		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
@@ -57,7 +59,7 @@ class QKeithleySolar(QWidget):
 		self.keithley = None
 
 		# Create dictionary to hold data
-		self._data = {"IV" : None, "Voc" : None, "MPP" : None}
+		self._set_data_keys["IV", "Voc", "MPP"]
 			
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
@@ -65,17 +67,6 @@ class QKeithleySolar(QWidget):
 		self.layout.addWidget(self._gen_solar_plots())
 		self.setLayout(self.layout)
 
-	# Helper method to pack widgets
-	def _gen_hbox_widget(self, _widget_list):
-	
-		_widget = QWidget()
-		_layout = QHBoxLayout()
-		for _w in _widget_list:
-			_layout.addWidget(_w)
-
-		_layout.setContentsMargins(0,0,0,0)
-		_widget.setLayout(_layout)
-		return _widget
 
 	# Set visa insturment handle for keithley
 	def _set_keithley_handle(self, keithley):
@@ -811,82 +802,3 @@ class QKeithleySolar(QWidget):
 		self.voc_plot._refresh_axes()
 		self.mpp_plot._refresh_axes()
 		self._data = {"IV" : None, "Voc" : None, "MPP" : None}
-
-	# Sace traces method (same as sweep control)	
-	def _save_traces(self):
-
-		# If data is empty display warning message
-		if  all( _ is None for _ in list(self._data.values()) ):
-
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("No measurement data")
-			msg.setWindowTitle("Bias Info")
-			msg.setWindowIcon(self.icon)
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
-
-		# Otherwise save
-		else:
-
-			# Open file dialog
-			dialog = QFileDialog(self)
-			dialog.setFileMode(QFileDialog.AnyFile)
-			dialog.setViewMode(QFileDialog.Detail)
-			filenames = []
-
-			# Select file
-			if dialog.exec_():
-				filenames = dialog.selectedFiles()
-
-			# Open file pointer			
-			f = open(filenames[0], 'w+')
-
-			# Start write sequence
-			with f:	
-	
-				# Write data header
-				f.write("* QKeithleyControl v1.1\n")
-				f.write("* PV Characterization\n")
-				if self.save_note.text() != "":
-					f.write("* NOTE %s\n"%self.save_note.text())
-				f.write("* \n")	
-			
-				# Only save if data exists on a given key
-				for meas_key, meas in self._data.items():
-
-					# If measurement data exists on key
-					if meas is not None:
-
-						# Write measurement key header
-						f.write("* %s\n"%str(meas_key))
-
-						# Write data keys
-						for data_key in meas.keys():
-							f.write("%s\t\t"%str(data_key))
-						f.write("\n")
-									
-						# Write data values. 
-						# Use length of first column for index iterator
-						for i in range( len( meas[ list(meas.keys())[0] ] ) ):
-
-							# Go across the dictionary keys on iterator
-							for data_key in meas.keys():
-								f.write("%s\t"%str(meas[data_key][i]))
-							f.write("\n")
-
-						f.write("\n\n")
-
-				f.close()
-
-			# Message box to indicate successful save
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Information)
-			msg.setText("Measurement data saved")
-			msg.setWindowTitle("Bias Info")
-			msg.setWindowIcon(self.icon)
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
-
-			# Reset data after save
-			self._reset_data()

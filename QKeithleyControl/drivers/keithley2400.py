@@ -27,48 +27,15 @@
 import visa
 import time
 
-class keithley_2400:
+# Import pyVisaDevice
+import drivers.pyVisaDevice
 
-	# Initialize
-	def __init__(self, GPIB):	
+class keithley2400(drivers.pyVisaDevice.pyVisaDevice):
 
-		# Extract SPCI handle for Keithley
-		rm = visa.ResourceManager()
-		rm.list_resources()
+	# Initialize Driver
+	def __init__(self, _addr, _name="Keithley"):
 
-		# Attempt to open resource. __init__ should appear in try except block
-		self.spci = rm.open_resource('GPIB0::%s::INSTR'%GPIB)
-		self.spci.timeout = 5000
-		self.spci.clear()
-
-		# GPIB address 
-		self.GPIB = int(GPIB)
-
-		# Create buffer object
-		self.buffer = ""
-
-	# Close instrument on pogram termination
-	def close(self): 
-		self.spci.close()
-
-	# Write command
-	def write(self, _data):
-		self.spci.write(_data)
-	
-	# Query command. Only use when reading data	
-	def query(self, _data, print_buffer=False):
-
-		# Try to communicate with device
-		self.buffer = self.spci.query(_data)
-
-		# Option to print buffer
-		if print_buffer:
-			print(self.buffer)
-
-		return self.buffer	
-
-	# All other methods are shortcut methods for 
-	# Keithley control
+		super(keithley2400, self).__init__(_addr, _name)
 
 	# Reset command
 	def reset(self):
