@@ -146,8 +146,13 @@ class QDynamicPlot(QWidget):
 			self.tlabel = str(_tlabel)
 	
 	# Add trace
-	def add_handle(self, _axes_index=0, _color='b'):
-		h, = self.figure.axes[_axes_index].plot([], [], color=_color)
+	def add_handle(self, _axes_index=0, _color=None):
+
+		if _color is not None:
+			h, = self.figure.axes[_axes_index].plot([], [], color=_color)
+		else:
+			h, = self.figure.axes[_axes_index].plot([], [])
+
 		self.hlist.append(h)
 		return h	
 

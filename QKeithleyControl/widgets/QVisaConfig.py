@@ -32,7 +32,7 @@ import numpy as np
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QSizePolicy, QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QLabel
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
@@ -42,7 +42,7 @@ from PyQt5.QtGui import QIcon
 # object to QVisaWidget objects which can interact with the insturments
 #
 
-class QVisaConifg(QWidget):
+class QVisaConfig(QWidget):
 
 	# Initialization
 	def __init__(self, *args, **kwargs):
@@ -63,12 +63,27 @@ class QVisaConifg(QWidget):
 	def _get_inst_handles(self):
 		return self.inst
 
+	# Get all insturment names
+	def _get_inst_names(self):
+		return [_.name for _ in self._inst]	
+
 	# Get handle by addrress
 	def _get_inst_byaddr(self, _addr):
 
 		# Loop through insturment list
 		for _ in self._inst:
 			if _.addr == _addr:
+				return _ 
+
+		# If we do not find device return None		
+		return None
+
+	# Get handle by name
+	def _get_inst_byname(self, _name):
+
+		# Loop through insturment list
+		for _ in self._inst:
+			if _.name == _name:
 				return _ 
 
 		# If we do not find device return None		

@@ -46,7 +46,7 @@ class QKeithleyConfig(widgets.QVisaConfig.QVisaConfig):
 
 	def __init__(self):
 
-		# Inherits QVisaWidget -> QWidget
+		# Inherits QVisaConfig -> QWidget
 		super(QKeithleyConfig, self).__init__(self)	
 
 		# Create Icon for QMessageBox
@@ -60,16 +60,19 @@ class QKeithleyConfig(widgets.QVisaConfig.QVisaConfig):
 		self.layout.addLayout(self._gen_config_layout())
 		self.layout.addStretch(2)
 		self.setLayout(self.layout)
-	
 
 		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))
 
 	# Callback to handle GPIB initialization
 	def _initialize_gpib(self):
 
+		# Try to initialize Keithley
+		_gpib = self.config_gpib.value()
+		_name = str("Keithley GPIB::%s"%_gpib) 
+
 		try: 
-			# Try to initialize Keithley
-			self._add_inst_handle(drivers.keithley2400.keithley2400(self.config_gpib.value()))
+					
+			self._add_inst_handle(drivers.keithley2400.keithley2400(_gpib, _name))
 			self._get_inst_byaddr(self.config_gpib.value()).reset()
 
 			# Enable controls. Reset comboboxes to reflect current state

@@ -46,44 +46,44 @@ from PyQt5.QtGui import QIcon
 
 class QVisaWidget(QWidget):
 
-	# Initialization
-	def __init__(self, *args, **kwargs):
+	# Initialization: Note that _config is a QVisaConfig object 
+	# which contains a list of pyVisaDevices	
+	def __init__(self, _config):
 
 		QWidget.__init__(self)
+		self._config = _config 
 		self._data = {}	
-		self._inst = []
 
-	# Method add data keys
-	def _set_data_keys(self, _keys):
-		self._data = {_: None for _ in self._keys}
 
-	# Method to set insturment handles	
-	def _set_inst_handles(self, _inst):
-		self._inst = _inst
+	#####################################
+	#  DATA MANAGEMENT METHODS
+	#			
 
-	# Helper method to pack widgets into hbox
-	def _gen_hbox_widget(self, _widget_list):
+	# Method to add data keys	
+	def _add_meas_keys(self, _meas_keys):
+		for _ in _meas_keys:
+			self._data[_] = None
+
+	# Method to add single key
+	def _add_meas_key(self, _meas_key):
+		self._data[_meas_key] = None
+
+	# Method set data keys
+	def _set_meas_keys(self, _meas_keys):
+		self._data = {_: None for _ in _meas_keys}
+
+	# Method to add data fields
+	def _set_data_fields(self, _meas_key, _data_keys):
+		if _meas_key in self._data.keys():
+			self._data[_meas_key]={_: [] for _ in _data_keys}
+
+	def _reset_data(self):
+		self._data = {}	
 	
-		_widget = QWidget()
-		_layout = QHBoxLayout()
-		for _w in _widget_list:
-			_layout.addWidget(_w)
 
-		_layout.setContentsMargins(0,0,0,0)
-		_widget.setLayout(_layout)
-		return _widget	
-
-	# Helper method to pack widgets into vbox
-	def _gen_hbox_widget(self, _widget_list):
-	
-		_widget = QWidget()
-		_layout = QVBoxLayout()
-		for _w in _widget_list:
-			_layout.addWidget(_w)
-
-		_layout.setContentsMargins(0,0,0,0)
-		_widget.setLayout(_layout)
-		return _widget	
+	#####################################
+	#  SAVE METHOD
+	#	
 
 	# Sace traces method (same as sweep control)	
 	def _gen_data_file(self):
@@ -119,33 +119,31 @@ class QVisaWidget(QWidget):
 			with f:	
 	
 				# Write data header
-				f.write("* QKeithleyControl v1.1\n")
-				f.write("* PV Characterization\n")
+				f.write("* QVisaWidget v1.1\n")
 				if self.save_note.text() != "":
 					f.write("* NOTE %s\n"%self.save_note.text())
-				f.write("* \n")	
-			
+				
 				# Only save if data exists on a given key
-				for meas_key, meas in self._data.items():
+				for _meas_key, _meas_data in self._data.items():
 
 					# If measurement data exists on key
-					if meas is not None:
+					if _meas_data is not None:
 
 						# Write measurement key header
-						f.write("* %s\n"%str(meas_key))
+						f.write("* %s\n*\n"%str(_meas_key))
 
 						# Write data keys
-						for data_key in meas.keys():
-							f.write("%s\t\t"%str(data_key))
+						for _data_key in _meas_data.keys():
+							f.write("%s\t\t"%str(_data_key))
 						f.write("\n")
 									
 						# Write data values. 
 						# Use length of first column for index iterator
-						for i in range( len( meas[ list(meas.keys())[0] ] ) ):
+						for i in range( len( _meas_data[ list(_meas_data.keys())[0] ] ) ):
 
 							# Go across the dictionary keys on iterator
-							for data_key in meas.keys():
-								f.write("%s\t"%str(meas[data_key][i]))
+							for data_key in _meas_data.keys():
+								f.write("%s\t"%str(_meas_data[data_key][i]))
 							f.write("\n")
 
 						f.write("\n\n")
@@ -159,4 +157,33 @@ class QVisaWidget(QWidget):
 			msg.setWindowTitle("Bias Info")
 			msg.setWindowIcon(self.icon)
 			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
+			msg.exec_()		
+
+
+	#####################################
+	#  LAYOUT SHORTCUTS
+	#					
+
+	# Helper method to pack widgets into hbox
+	def _gen_hbox_widget(self, _widget_list):
+	
+		_widget = QWidget()
+		_layout = QHBoxLayout()
+		for _w in _widget_list:
+			_layout.addWidget(_w)
+
+		_layout.setContentsMargins(0,0,0,0)
+		_widget.setLayout(_layout)
+		return _widget	
+
+	# Helper method to pack widgets into vbox
+	def _gen_vbox_widget(self, _widget_list):
+	
+		_widget = QWidget()
+		_layout = QVBoxLayout()
+		for _w in _widget_list:
+			_layout.addWidget(_w)
+
+		_layout.setContentsMargins(0,0,0,0)
+		_widget.setLayout(_layout)
+		return _widget

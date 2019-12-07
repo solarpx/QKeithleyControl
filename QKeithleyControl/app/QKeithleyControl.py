@@ -33,8 +33,9 @@ import drivers.keithley2400
 
 # Import Keithley control widgets
 import app.QKeithleyConfig
+import app.QKeithleyBias
+
 #import modules.QKeithleySweep 
-#import modules.QKeithleyBias
 #import modules.QKeithleySolar
 
 # Import QT backends
@@ -75,21 +76,18 @@ class QKeithleyControl(QMainWindow):
 		self.ui_config = app.QKeithleyConfig.QKeithleyConfig()
 		
 		# Create QVisaWidget for each measurement mode
-		#self.ui_bias   = modules.QKeithleyBias.QKeithleyBias(self.ui_config)
-		#self.ui_sweep  = modules.QKeithleySweep.QKeithleySweep(self.ui_config)
+		self.ui_bias   = app.QKeithleyBias.QKeithleyBias(self.ui_config)
+		#self.ui_sweep  = app.QKeithleySweep.QKeithleySweep(self.ui_config)
 		#self.ui_solar  = app.QKeithleySolar.QKeithleySolar(self.ui_config)
 
 		# Add ui-mode widgets to stack
 		self.ui_stack.addWidget(self.ui_config)
-		#self.ui_stack.addWidget(self.ui_bias)
+		self.ui_stack.addWidget(self.ui_bias)
 		#self.ui_stack.addWidget(self.ui_sweep)
 		#self.ui_stack.addWidget(self.ui_solar)
 
 		# Set window central widget to stacked widget
 		self.setCentralWidget(self.ui_stack)
-
-		# Create empty keithley object
-		self.keithley = None
 
 	# Callback to update menu
 	def _menu_callback(self, q):		
@@ -97,22 +95,17 @@ class QKeithleyControl(QMainWindow):
 		if q.text() == "Hardware Config" and self.ui_stack.currentIndex() != 0: 
 			self.ui_stack.setCurrentIndex(0)
 
-		# if q.text() == "IV-Bias Control" and self.ui_stack.currentIndex() != 1: 		
+		if q.text() == "IV-Bias Control" and self.ui_stack.currentIndex() != 1: 		
 
-		# 	# Get Keithley handle
-		# 	self.keithley=self.ui_config._get_keithley_handle()
+			# If Keitheley handle is initialized, pass to bias widget. 
+			#if self.keithley is not None:
+			self.ui_bias.refresh()
+			self.ui_stack.setCurrentIndex(1)
 
-		# 	# If Keitheley handle is initialized, pass to bias widget. 
-		# 	if self.keithley is not None:
-		# 		self.keithley.reset()
-		# 		self.ui_bias._set_keithley_handle(self.keithley)
-		# 		self.ui_bias._reset_defaults()
-		# 		self.ui_stack.setCurrentIndex(1)
-
-		# 	# Otherwise, display Keithley not initilized message
-		# 	else:
-		# 		self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
-		# 		self.ui_stack.setCurrentIndex(0)
+			# Otherwise, display Keithley not initilized message
+			#else:
+			#	self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
+			#	self.ui_stack.setCurrentIndex(0)
 
 		# if q.text() == "IV-Sweep Control" and self.ui_stack.currentIndex() != 2:
 			
@@ -167,8 +160,8 @@ class QKeithleyControl(QMainWindow):
 		self.menu_selector.addAction(self.menu_config)
 
 		# # Bias Mode
-		# self.menu_bias = QAction("IV-Bias Control",self)
-		# self.menu_selector.addAction(self.menu_bias)
+		self.menu_bias = QAction("IV-Bias Control",self)
+		self.menu_selector.addAction(self.menu_bias)
 
 		# # Sweep Mode
 		# self.menu_sweep = QAction("IV-Sweep Control",self)
