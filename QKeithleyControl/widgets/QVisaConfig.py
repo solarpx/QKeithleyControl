@@ -32,9 +32,7 @@ import numpy as np
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QLabel
-from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
 
 # The purpouse of this object is to bind a list pyVisaDevices to a QWidget 
 # in a configuration context. The idea is to first construct a QVisaConifg

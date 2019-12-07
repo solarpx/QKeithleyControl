@@ -32,9 +32,7 @@ import numpy as np
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QSizePolicy, QLineEdit
-from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
 
 # The purpouse of this object is to bind a list pyVisaDevices to a QWidget 
 # Thus, it provides a basic framework for constructing user interfaces for 
@@ -79,7 +77,7 @@ class QVisaWidget(QWidget):
 
 	def _reset_data(self):
 		self._data = {}	
-	
+
 
 	#####################################
 	#  SAVE METHOD

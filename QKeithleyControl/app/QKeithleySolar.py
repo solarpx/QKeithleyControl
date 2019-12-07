@@ -51,6 +51,8 @@ class QKeithleySolar(widgets.QMeasWidget.QMeasWidget):
 
 		super(QKeithleySolar, self).__init__(*args, **kwargs)
 
+		# Add data keys 
+		self._add_data_keys()
 
 		# Create Icon for QMessageBox
 		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
