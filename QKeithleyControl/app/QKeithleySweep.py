@@ -108,12 +108,19 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 			neg = neg[~np.isnan(neg)]
 
 			# Create the zero centered hysteresis re-insert zeros
-			if start < stop:
+			# Forward sweep, zero crossing
+			if (start < 0.) and (stop > 0.) and (start < stop):
 				sp = np.concatenate( ([0.0], pos, pos[-2::-1], [0.0], neg[::-1], neg[1::], [0.0]) )
 
-			if start > stop:	
+		 	# Reverse sweep, zero crossing
+			elif  (start > 0.) and (stop < 0.) and (start > stop):	
 				sp = np.concatenate( ([0.0], neg[::-1], neg[1::], [0.0], pos, pos[-2::-1], [0.0]) )
 
+			# If not zero crossing, default to "Reverse-sweep" case
+			else: 	
+				sp = np.concatenate( (sp, sp[-2::-1]) )	
+
+			# Set meta field
 			self._set_meta( "sweep", sp)
 
 
