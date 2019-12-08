@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyControl
+# 	QKeithleyConfig -> QVisaConfig
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------

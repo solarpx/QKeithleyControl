@@ -32,15 +32,13 @@ import numpy as np
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QLabel, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QLabel, QLineEdit, QPushButton, QComboBox
 
-# The purpouse of this object is to bind a list pyVisaDevices to a QWidget 
-# Thus, it provides a basic framework for constructing user interfaces for 
-# interacting with GPIB hardware. QVisaWidget also contains a structure to 
-# manipulate data and some basic tools to render controls. The QVisaWidget 
-# object can also be used as a container for GPIB insturment handles to be
-# used in other QVisaWidget objects in an application context.
-#
+# The purpouse of the QVisaApplication object is to bind a list pyVisaDevices to a QWidget 
+# It provides a basic framework for constructing user interfaces for nteracting with GPIB 
+# hardware. QVisaApplication also contains a structure to manipulate data and some basic 
+# tools to render controls. QVisaAppication also embeds two standard widget templates for 
+# saving data and to managing insturments.
 
 class QVisaApplication(QWidget):
 
@@ -89,36 +87,92 @@ class QVisaApplication(QWidget):
 
 
 	#####################################
-	#  SAVE METHOD and WIDGET
+	#  CONFIG WRAPPER METHODS
 	#	
-	def _enable_save(self,_bool=True):
-		self._save_button.setEnabled(_bool)
+
+	# Method to get insturment handles
+	def _get_inst_handles(self):
+		return self._config._get_inst_handles()
+
+	# Method to get insturment names
+	def _get_inst_names(self):
+		return self._config._get_inst_names()
+
+	# Method to get insturment handles
+	def _get_inst_byname(self, _name):
+		return self._config._get_inst_byname(_name)	
+
+
+	#####################################
+	#  INST METHODS and WIDGET
+	#	
+	
+	# Method to generate insturment widget
+	def _gen_inst_widget(self):
+
+		# Save widget and layout
+		_widget = QWidget()
+		_layout = QHBoxLayout()
+
+		# Widget label and comboBox
+		_widget_label = QLabel("Select Insturment")
+		_widget_select =  QComboBox()
+		_widget_select.setFixedWidth(200)
+
+		# Widget select
+		if self._get_inst_names() is not None:
+			_widget_select.addItems(self._get_inst_names())
+
+		# Add widgets to layout
+		return self._gen_hbox_widget([_widget_select, _widget_label])
+
+	# Get insturment text	
+	def _get_inst_widget_text(self, _widget):
+		_widget_select = _widget.findChild(QComboBox)
+		return _widget_select.currentText()
+
+	# Method to refresh insurment widget
+	def _refresh_inst_widget(self, _widget):
+	
+		# If there are insturment handles
+		_widget_select = _widget.findChild(QComboBox)
+		_widget_select.clear()
+		_widget_select.addItems(self._get_inst_names())
+		
+	#####################################
+	#  SAVE METHODS and WIDGET
+	#	
+
+	# Enable and disable save button
+	def _set_save_enabled(self, _widget, _bool):
+		_widget_button = _widget.findChild(QPushButton)
+		_widget_button.setEnabled(_bool)
 
 	# Method to generate the standard save widget
 	def _gen_save_widget(self):
 
 		# Save widget and layout
-		self._save_widget = QWidget()
-		self._save_widget_layout = QVBoxLayout()
+		_widget = QWidget()
+		_layout = QVBoxLayout()
 
 		# Save note
-		self._save_note_label = QLabel("Measurement Note")
-		self._save_note = QLineEdit()
-		self._save_note.setFixedWidth(200)
+		_widget_note_label = QLabel("Measurement Note")
+		_widget_note = QLineEdit()
+		_widget_note.setFixedWidth(200)
 		
 		# Save button
-		self._save_button = QPushButton("Save Data")
-		self._save_button.clicked.connect(self._gen_data_file)
+		_widget_button = QPushButton("Save Data")
+		_widget_button.clicked.connect(self._gen_data_file)
 
 		# Pack the widget layout
-		self._save_widget_layout.addWidget(self._gen_hbox_widget([self._save_note, self._save_note_label]))
-		self._save_widget_layout.addWidget(self._save_button)
-		self._save_widget_layout.setContentsMargins(0,0,0,0)
+		_layout.addWidget(self._gen_hbox_widget([_widget_note, _widget_note_label]))
+		_layout.addWidget(_widget_button)
+		_layout.setContentsMargins(0,0,0,0)
 
 		# Set layout and return the widget
-		self._save_widget.setLayout(self._save_widget_layout)
+		_widget.setLayout(_layout)
 
-		return self._save_widget
+		return _widget
 
 	# Sace traces method (same as sweep control)	
 	def _gen_data_file(self):

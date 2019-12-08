@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyControl
+# 	QKeithleyBias -> QVisaApplication
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------

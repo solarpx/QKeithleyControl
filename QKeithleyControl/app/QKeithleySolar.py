@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyControl
+# 	QKeithleySolar -> QVisaApplication 
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -64,35 +64,36 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	# Wrapper method to get keitley write handle
 	# 	Returns the pyVisaDevice object
 	def keithley(self):
-		return self._config._get_inst_byname(self.inst_select.currentText())	
+		return self._get_inst_byname(self._get_inst_widget_text(self.inst_widget))
 
+	# Method to refresh the widget
+	def refresh(self):
+	
+		# If add insturments have been initialized
+		if self._get_inst_handles() is not None:
 
-		# Add data keys 
-		#self._add_data_keys()
+			# Reset the widget and add insturments
+			self._refresh_inst_widget(self.inst_widget)
 
-		# Create Icon for QMessageBox
-		#self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
+			# Enable measurement buttons
+			self.iv_meas_button.setEnabled(True)
+			self.voc_meas_button.setEnabled(True)
+			self.mpp_meas_button.setEnabled(True)
 
-		# Initialize Keithley Object
-		#self.keithley = None
-
-		# Create dictionary to hold data
-		#self._set_data_keys["IV", "Voc", "MPP"]
+		else:
 			
-		# Create layout objects and set layout
-		#self.layout = QHBoxLayout()
-		#self.layout.addLayout(self._gen_solar_ctrl())
-		#self.layout.addWidget(self._gen_solar_plots())
-		#self.setLayout(self.layout)
+			# Disable measurement buttons
+			self.iv_meas_button.setEnabled(False)
+			self.voc_meas_button.setEnabled(False)
+			self.mpp_meas_button.setEnabled(False)	
 
 
-	# # Set visa insturment handle for keithley
-	# def _set_keithley_handle(self, keithley):
-	# 	self.keithley=keithley
 
-	# # Method to reset sweep on window switch
-	# def _reset_defaults(self):
-	# 	self._data = {"IV" : None, "Voc" : None, "MPP" : None}
+	#def set_sweep_params(self):
+	# 	_start = self.iv_start.value()
+	# 	_stop  = self.iv_stop.value()
+	# 	_npts  = self.iv_npts.value()
+	# 	return np.linspace(float(_start), float(_stop), int(_npts))
 
 
 	# # Reset data function
@@ -104,12 +105,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	# 	self.mpp_plot._refresh_axes()
 	# 	self._data = {"IV" : None, "Voc" : None, "MPP" : None}
 	# # Set sweep parameters
-	# def _set_sweep_params(self):
-	# 	_start = self.iv_start.value()
-	# 	_stop  = self.iv_stop.value()
-	# 	_npts  = self.iv_npts.value()
-	# 	return np.linspace(float(_start), float(_stop), int(_npts))
-
+	
 	# # Get sweep parameters
 	# def _get_sweep_params(self):
 	# 	return self.sweep if self.sweep != [] else None	
@@ -148,14 +144,12 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Solar mode layout
 		self.ctl_layout = QVBoxLayout()
 
-		# Measurement select QComboBox
-		self.meas_select_label = QLabel("Measurement Mode")
-		self.meas_select = QComboBox()
-		self.meas_select.setFixedWidth(200)
-		self.meas_select.addItems(["IV", "Voc", "MPP"])
-		self.meas_select.currentTextChanged.connect(self.update_meas_pages)
+		# Add insturement selector
+		self.inst_widget = self._gen_inst_widget()
+		self.save_widget = self._gen_save_widget()
 
 		# Generate (IV, Voc, MPP) container widgets
+		# These methods will pack self.inst_select
 		self.gen_iv_ctrl()				# self.iv_ctrl
 		self.gen_voc_ctrl() 			# self.voc_ctrl
 		self.gen_mpp_ctrl()				# self.mpp_ctrl
@@ -167,6 +161,14 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		self.meas_pages.addWidget(self.mpp_ctrl)
 		self.meas_pages.setCurrentIndex(0);
 	
+		# Measurement select QComboBox
+		self.meas_select_label = QLabel("Measurement Mode")
+		self.meas_select = QComboBox()
+		self.meas_select.setFixedWidth(200)
+		self.meas_select.addItems(["IV", "Voc", "MPP"])
+		self.meas_select.currentTextChanged.connect(self.update_meas_pages)
+
+
 		#####################################
 		#  ADD CONTROLS
 		#
@@ -174,10 +176,11 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Add measurement select and measurement pages
 		self.ctl_layout.addWidget(self.meas_pages)
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.meas_select, self.meas_select_label]))
+		self.ctl_layout.addWidget(self.inst_widget)
 
 		# Pack the standard save widget
 		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self._gen_save_widget())
+		self.ctl_layout.addWidget(self.save_widget)
 
 		# Positioning
 		self.ctl_layout.setContentsMargins(0,15,0,20)
@@ -300,11 +303,11 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Attach states to output button and define state transitions
 		self.voc_meas_off.assignProperty(self.voc_meas_button, 'text', 'Voc Monitor Off')
 		self.voc_meas_off.addTransition(self.voc_meas_button.clicked, self.voc_meas_on)
-		self.voc_meas_off.entered.connect(self._exec_monitor_off)
+		self.voc_meas_off.entered.connect(self.exec_monitor_off)
 
 		self.voc_meas_on.assignProperty(self.voc_meas_button, 'text', 'Voc Monitor On')
 		self.voc_meas_on.addTransition(self.voc_meas_button.clicked, self.voc_meas_off)
-		self.voc_meas_on.entered.connect(self._exec_monitor_on)
+		self.voc_meas_on.entered.connect(self.exec_monitor_on)
 		
 		# Add states, set initial state, and start machine
 		self.voc_state.addState(self.voc_meas_off)
@@ -394,11 +397,11 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Attach states to output button and define state transitions
 		self.mpp_meas_off.assignProperty(self.mpp_meas_button, 'text', 'MPP Monitor Off')
 		self.mpp_meas_off.addTransition(self.mpp_meas_button.clicked, self.mpp_meas_on)
-		self.mpp_meas_off.entered.connect(self._exec_monitor_off)
+		self.mpp_meas_off.entered.connect(self.exec_monitor_off)
 
 		self.mpp_meas_on.assignProperty(self.mpp_meas_button, 'text', 'MPP Monitor On')
 		self.mpp_meas_on.addTransition(self.mpp_meas_button.clicked, self.mpp_meas_off)
-		self.mpp_meas_on.entered.connect(self._exec_monitor_on)
+		self.mpp_meas_on.entered.connect(self.exec_monitor_on)
 		
 		# Add states, set initial state, and start machine
 		self.mpp_state.addState(self.mpp_meas_off)
@@ -510,20 +513,12 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			self.meas_pages.setCurrentIndex(2)
 
 
-
-
-
-	#################################	
-	# Sweep State Machine Callbacks #	
-	#################################
-
 	#####################################
 	#  SWEEP ALGORITHM
 	#	
 
-
 	# Sweep measurement EXECUTION
-	def _exec_sweep_thread(self):
+	def exec_iv_thread(self):
 		pass
 
 		# # Initialize IV Sweep dictionary and plot
@@ -592,44 +587,62 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 
 	# Sweep measurement ON
 	def exec_iv_run(self):
-		pass
-		# if self.keithley is not None:
+	
+		if self.keithley() is not None:
 
-		# 	# Put measurement button in abort state
-		# 	self.iv_meas_button.setStyleSheet(
-		# 		"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
-		# 	self.save_button.setEnabled(False)
-
-		# 	# Set sweep parameters in memory
-		# 	self.sweep = self._set_sweep_params()
-			
-		# 	# Disable the tracking mode button
-		# 	self.monitor_meas_button.setEnabled(False)
-
-		# 	# Run the measurement thread function
-		# 	self.iv_thread = threading.Thread(target=self._exec_sweep_thread, args=())
-		# 	self.iv_thread.daemon = True				# Daemonize thread
-		# 	self.iv_thread_abort = False				# Flag to abort measurement
-		# 	self.iv_thread.start()         			# Start the execution
+			# Put measurement button in abort state
+			self.iv_meas_button.setStyleSheet(
+				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
+			self._set_save_enabled(self.save_widget, False)
+				
+			# Run the measurement thread function
+			self.iv_thread = threading.Thread(target=self.exec_iv_thread, args=())
+			self.iv_thread.daemon = True				# Daemonize thread
+			self.iv_thread_abort = False				# Flag to abort measurement
+			self.iv_thread.start()         				# Start the execution
 
 	# Sweep measurement OFF
 	def exec_iv_stop(self):
-		pass
+		
+		if self.keithley() is not None:
 
-		# if self.keithley is not None:
+			# Put measurement button in measure state
+			self.iv_meas_button.setStyleSheet(
+				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+			self._set_save_enabled(self.save_widget, True)
+		
+			# Set thread running to False. This will break the sweep measurements
+			# execution loop on next iteration.  
+			self.iv_thread_abort = True
+			self.iv_thread.join()  # Waits for thread to complete
 
-		# 	# Put measurement button in measure state
-		# 	self.iv_meas_button.setStyleSheet(
-		# 		"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-		# 	self.save_button.setEnabled(True)
 
-		# 	# Enable the tracking mode button
-		# 	self.monitor_meas_button.setEnabled(True)
 
-		# 	# Set thread running to False. This will break the sweep measurements
-		# 	# execution loop on next iteration.  
-		# 	self.iv_thread_abort = True
-		# 	self.iv_thread.join()  # Waits for thread to complete
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	####################################
@@ -641,7 +654,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	#  Voc TRACKING ALGORITHM
 	#	
 
-	def _exec_monitor_voc_thread(self):
+	def exec_monitor_voc_thread(self):
 		
 		pass
 
@@ -717,7 +730,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	#  MPP TRACKING ALGORITHM
 	#	
 
-	def _exec_monitor_mpp_thread(self):
+	def exec_monitor_mpp_thread(self):
 		pass
 		
 		# # Initialize IV Sweep dictionary and plot
@@ -798,7 +811,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# 		time.sleep(self.mpp_delay.value())			
 
 	# Tracking measurement ON
-	def _exec_monitor_on(self):
+	def exec_monitor_on(self):
 		pass
 		# if self.keithley is not None:
 
@@ -812,11 +825,11 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# 	# Create execution threads for measurement
 		# 	# Voc monitoring thread
 		# 	if self.monitor_select.currentText() == "Voc":
-		# 		self.monitor_thread = threading.Thread(target=self._exec_monitor_voc_thread, args=())
+		# 		self.monitor_thread = threading.Thread(target=self.exec_monitor_voc_thread, args=())
 			
 		# 	# MPP monitoring thread
 		# 	if self.monitor_select.currentText() == "MPP":
-		# 		self.monitor_thread = threading.Thread(target=self._exec_monitor_mpp_thread, args=())
+		# 		self.monitor_thread = threading.Thread(target=self.exec_monitor_mpp_thread, args=())
 
 		# 	# Run the thread	
 		# 	self.monitor_thread.daemon = True		# Daemonize thread
@@ -825,7 +838,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			
 
 	# Tracking measurement OFF
-	def _exec_monitor_off(self):
+	def exec_monitor_off(self):
 		pass
 		
 		# if self.keithley is not None:

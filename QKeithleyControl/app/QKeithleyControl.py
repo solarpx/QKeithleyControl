@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyControl
+# 	QKeithleyControl -> QMainWindow
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -24,12 +24,7 @@
 #
 
 #!/usr/bin/env python 
-import visa
-import time
-import numpy as np
-
-# Import d_plot and keithley driver
-import drivers.keithley2400
+import os
 
 # Import Keithley control widgets
 import app.QKeithleyConfig
@@ -38,16 +33,9 @@ import app.QKeithleySweep
 import app.QKeithleySolar
 
 # Import QT backends
-import os
-import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QMessageBox, QMenu
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-
-# Import matplotlibQT backends
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
 
 # Subclass QMainWindow to customise your application's main window
 class QKeithleyControl(QMainWindow):
@@ -104,9 +92,9 @@ class QKeithleyControl(QMainWindow):
 			self.ui_sweep.refresh()
 			self.ui_stack.setCurrentIndex(2)
 
-		if q.text() == "PV-Characterization" and self.ui_stack.currentIndex() != 2:
+		if q.text() == "PV-Characterization" and self.ui_stack.currentIndex() != 3:
 
-
+			self.ui_solar.refresh()
 			self.ui_stack.setCurrentIndex(3)
 
 		if q.text() == "Exit": 
