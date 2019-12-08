@@ -361,14 +361,19 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 
 
 	#####################################
-	#  MEASUREMENT EXDECUTION THREADS
+	#  MEASUREMENT EXECUTION THREADS
 	#			
 
 	# Measurement thread
 	def exec_output_thread(self):	
 
 		# Create a unique data key
-		_meas_key = "bias@%s"%str(time.time())
+		m = hashlib.sha256()
+		m.update(str("bias@%s"%str(time.time())).encode() )		
+		m.hexdigest()[:7]
+
+		# Measurement key
+		_meas_key = "bias %s"%m.hexdigest()[:6]
 
 		# Add to data
 		self._add_meas_key(_meas_key)

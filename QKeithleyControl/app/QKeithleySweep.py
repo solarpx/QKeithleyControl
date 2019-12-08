@@ -27,6 +27,7 @@
 import os
 import sys
 import time
+import hashlib
 import threading
 
 # Import visa and numpy
@@ -73,16 +74,19 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 		self.inst_select.clear()
 		self.inst_select.addItems(self._config._get_inst_names())
 
+		# Update sweep parameters
+		self.update_sweep_params()
+
 	# Method to set sweep parameters
 	def set_sweep_params(self, start, stop, npts):
 		
 		# No hysteresis	
-		if self.sweep_hist.text() == "None": 	
+		if self.sweep_hist.currentText() == "None": 	
 			sp = np.linspace(float(start), float(stop), int(npts) )
 			self._set_meta( "sweep", sp)
 
 		# Prepare reverse sweep
-		if self.sweep_hist.text() == "Reverse-sweep":
+		if self.sweep_hist.currentText() == "Reverse-sweep":
 
 			# Sweep centered hysteresis
 			sp = np.linspace(float(start), float(stop), int(npts) )
@@ -90,7 +94,7 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 			self._set_meta( "sweep", sp)
 
 		# Prepare a zero centered hysteresis
-		if self.sweep_hist.text() == "Zero-centered":
+		if self.sweep_hist.currentText() == "Zero-centered":
 
 			# Create a linspace
 			sp = np.linspace(float(start), float(stop), int(npts) )
@@ -102,21 +106,13 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 			# Extract negative slice
 			neg = np.where(sp < 0, sp, np.nan) 
 			neg = neg[~np.isnan(neg)]
-			
-			# if sweep spans zero and direction is positive
-			if start < 0 and stop > 0 and start < stop: 
-				np.insert(pos, 0.0, 0.0)
-			
-			# if sweep spans zero and direction is negative
-			if start > 0 and stop < 0 and start < stop: 
-				np.insert(neg, 0.0, 0.0)
 
-			# Create the zero centered hysteresis
+			# Create the zero centered hysteresis re-insert zeros
 			if start < stop:
-				np.concatenate(pos, pos[-2::-1], neg[::-1], neg[1::])
+				sp = np.concatenate( ([0.0], pos, pos[-2::-1], [0.0], neg[::-1], neg[1::], [0.0]) )
 
 			if start > stop:	
-				np.concatenate((neg[::-1], neg[1::], pos, pos[-2::-1]))
+				sp = np.concatenate( ([0.0], neg[::-1], neg[1::], [0.0], pos, pos[-2::-1], [0.0]) )
 
 			self._set_meta( "sweep", sp)
 
@@ -215,7 +211,7 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 		self.sweep_hist_label = QLabel("Hysteresis Mode")
 		self.sweep_hist = QComboBox()
 		self.sweep_hist.setFixedWidth(200)
-		self.sweep_hist.addItems(["None", "Zero-centered", "Reverse-sweep"])	
+		self.sweep_hist.addItems(["None", "Reverse-sweep", "Zero-centered"])	
 
 		#####################################
 		#  SAVE BUTTON
@@ -250,7 +246,6 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 		self.ctl_layout.setContentsMargins(0,15,0,20)
 		return self.ctl_layout
 
-
 	# Generate voltage and current sweep widgets
 	def gen_voltage_sweep(self):
 	
@@ -266,7 +261,7 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 			"label"		: "Sweep Start (V)",
 			"limit"		: 20.0,
 			"signed"	: True,
-			"default"	: [0.0, ""]
+			"default"	: [-1.0, ""]
 		} 
 		self.voltage_start = widgets.QUnitSelector.QUnitSelector(self.voltage_start_config)
 
@@ -408,8 +403,11 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 		self.plot.set_axes_labels("Voltage (V)", "Current (A)")
 		self.plot.add_axes()
 
-		return self.plot
+		# Connect clear plot button to update_sweep_ctrl
+		self.plot.refresh.clicked.connect(self.update_sweep_ctrl)
 
+		# Return the plot
+		return self.plot		
 
 	#####################################
 	#  SWEEP CONTROL UPDATE METHODS
@@ -418,25 +416,26 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 	# Sweep control dynamic update
 	def update_sweep_ctrl(self):
 
+		# Enforce data/plot consistency
+		self.plot.refresh_axes()
+		if self.plot.hlist == []:
+			self._reset_data()
+
 		# Switch to voltage sweep page
 		if self.sweep_select.currentText() == "Voltage":
 			self.sweep_pages.setCurrentIndex(0)
+			self.update_sweep_params()
 
 		# Switch to current sweep page
 		if self.sweep_select.currentText() == "Current":		
 			self.sweep_pages.setCurrentIndex(1)
-	
+			self.update_sweep_params()
 
 	# Create Measurement 
 	def update_sweep_params(self):
 
-		# Enforce data/plot consistency
-		if self.plot.hlist == []:				
-			pass
-
-
 		# Set up v-source(i-compliance) on keithley 
-		if self.mode.currentText() == "Voltage":
+		if self.sweep_select.currentText() == "Voltage":
 			
 			self.keithley().voltage_src()
 			self.keithley().set_voltage(0.0)
@@ -450,7 +449,7 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 
 
 		# Set up i-source(v-compliance) on keithley 
-		if self.mode.currentText() == "Current":
+		if self.sweep_select.currentText() == "Current":
 
 			self.keithley().current_src()
 			self.keithley().set_current(0.0)
@@ -463,178 +462,116 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 				self.current_npts.value())
 
 
-		# Message box to indicate that sweep variable have been updated
-		msg = QMessageBox()
-		msg.setIcon(QMessageBox.Information)
-		msg.setText("%s sweep parameters updated"%self.mode.currentText())
-		msg.setWindowTitle("Sweep Info")
-		msg.setWindowIcon(self.icon)
-		msg.setStandardButtons(QMessageBox.Ok)
-		msg.exec_()
-
-
-	# Function we run when we enter run state
-	def exec_sweep_run(self):
-		pass
-
-		# If sweep has been defined		
-		# if self._get_sweep_params() is not None:
-
-		# 	# For startup protection
-		# 	if self.keithley is not None:
-
-		# 		# Update UI button to abort 
-		# 		self.meas_button.setStyleSheet(
-		# 			"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
-		# 		self.save_button.setEnabled(False)		
-
-		# 		# Run the measurement thread function
-		# 		self.thread = threading.Thread(target=self.exec_sweep_thread, args=())
-		# 		self.thread.daemon = True						# Daemonize thread
-		# 		self.thread.start()         					# Start the execution
-		# 		self.thread_running = True
-
-		# # Otherwise show infobox and revert state
-		# else:
-		# 	self.meas_button.click()
-		# 	msg = QMessageBox()
-		# 	msg.setIcon(QMessageBox.Warning)
-		# 	msg.setText("Sweep not configured")
-		# 	msg.setWindowTitle("Sweep Info")
-		# 	msg.setWindowIcon(self.icon)
-		# 	msg.setStandardButtons(QMessageBox.Ok)
-		# 	msg.exec_()
-
-
-	# Function we run when we enter abort state
-	def exec_sweep_stop(self):
-		pass
-
-		# If sweep has been defined		
-		# if self._get_sweep_params() is not None:
-	
-		# 	# For startup protection
-		# 	if self.keithley is not None:
-
-		# 		# Update UI button to start state
-		# 		self.meas_button.setStyleSheet(
-		# 			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-		# 		self.save_button.setEnabled(True)	
-
-		# 		# Kill measurement thread
-		# 		self.thread_running = False
-		# 		self.thread.join()  # Waits for thread to complete
-
-		# 		# Zero storage arrays
-		# 		self._time, self._voltage, self._current = [],[],[]
-
+	#####################################
+	#  MEASUREMENT EXECUTION THREADS
+	#		
 
 	# Execute Sweep Measurement
 	def exec_sweep_thread(self):
-		pass
 
-		# Enforce data/plot consistency
-		# if self.plot.hlist == []:
-		# 	self._data = []
+		# Create a unique data key
+		m = hashlib.sha256()
+		m.update(str("sweep@%s"%str(time.time())).encode() )		
+		m.hexdigest()[:7]
 
-		# # Zero arrays
-		# self._time, self._voltage, self._current = [],[],[]
-		# handle = self.plot.add_handle()
-		# start  = time.time()
+		# Measurement key
+		_meas_key = "sweep %s"%m.hexdigest()[:6]
 
-		# # Sweep Voltage Mode
-		# if self.mode.currentText() == "Voltage":
+		# Add to data
+		self._add_meas_key(_meas_key)
+		self._set_data_fields(_meas_key, ["t", "V", "I", "P"])
 
-		# 	# Turn on output and loop through values
-		# 	self.keithley.output_on()
-		# 	for _v in self._get_sweep_params():
+		# Generate function pointer for voltage/current mode
+		if self.sweep_select.currentText() == "Voltage":
+			__func__  = self.keithley().set_voltage
+			__delay__ = self.voltage_delay.value()
 
-		# 		# If thread is running
-		# 		if self.thread_running:
+		if self.sweep_select.currentText() == "Current":
+			__func__ = self.keithley().set_current
+			__delay__ = self.current_delay.value()
 
-		# 			# Set bias
-		# 			self.keithley.set_voltage(_v)
-
-		# 			# Get data from buffer
-		# 			_buffer = self.keithley.meas().split(",")
-
-		# 			# Extract data from buffer
-		# 			self._time.append(float( time.time() - start ))
-		# 			self._voltage.append(float(_buffer[0]))
-		# 			self._current.append(float(_buffer[1]))
-
-		# 			# Update plot
-		# 			self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
-		# 			self.plot._draw_canvas()
-
-		# 			# Measurement Interval
-		# 			if self.delay.value() != 0: 
-		# 				time.sleep(self.delay.value())
-
-		# 		# Else kill output and return
-		# 		else:
-		# 			self._data.append({ 
-		# 				't' : self._time, 
-		# 				'V' : self._voltage, 
-		# 				'I' : self._current,  
-		# 				'P' : np.multiply(self._voltage, self._current)
-		# 			})
-		# 			self.keithley.set_voltage(0.0)
-		# 			self.keithley.output_off()
-		# 			return	
-
-		# # Sweep Current Mode
-		# if self.mode.currentText() == "Current":
-				
-		# 	self.keithley.output_on()
-		# 	for _i in self._get_sweep_params():
-					
-		# 		# If thread is running
-		# 		if self.thread_running:
-
-		# 			# Set bias
-		# 			self.keithley.set_current(_i)
-
-		# 			# Get data from buffer
-		# 			_buffer = self.keithley.meas().split(",")
-
-		# 			# Extract data from buffer
-		# 			self._time.append(float( time.time() - start ))
-		# 			self._voltage.append(float(_buffer[0]))
-		# 			self._current.append(float(_buffer[1]))
+		# Clear plot and zero arrays
+		handle = self.plot.add_handle()
+		start  = time.time()
 		
-		# 			# Update plot
-		# 			self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+		# Output on
+		self.keithley().output_on()
 
-		# 			# Measurement Interval
-		# 			if self.delay.value() != 0: 
-		# 				time.sleep(self.delay.value())
+		# Loop through sweep variables
+		for _bias in self.get_sweep_params():
 
-		# 		# Else kill output and return
-		# 		else:
-		# 			self._data.append({ 
-		# 				't' : self._time, 
-		# 				'V' : self._voltage, 
-		# 				'I' : self._current,  
-		# 				'P' : np.multiply(self._voltage, self._current)
-		# 			})
-		# 			self.keithley.set_current(0.0)
-		# 			self.keithley.output_off()
-		# 			return
+			# If thread is running
+			if self.thread_running:
 
-		# # Zero output after measurement			
-		# self.keithley.set_voltage(0.0)
-		# self.keithley.output_off()			
+				# Set voltage/current bias
+				__func__(_bias)			
+
+				# Get data from buffer
+				_buffer = self.keithley().meas().split(",")
+		
+				if __delay__ != 0: 
+					time.sleep(__delay__)
+
+				# Extract data from buffer
+				self._data[_meas_key]["t"].append( float( time.time() - start ) )
+				self._data[_meas_key]["V"].append( float(_buffer[0]) )
+				self._data[_meas_key]["I"].append( float(_buffer[1]) )
+				self._data[_meas_key]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
+
+				self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+				self.plot._draw_canvas()	
+		
+		# Reset Keithley
+		__func__(0.0)
+		self.keithley().output_off()
+		
+		# Reset sweep control and update measurement state to stop. 
+		# Post a button click event to the QStateMachine to trigger 
+		# a state transition if thread is still running (not aborted)
+		if self.thread_running:
+			self.meas_button.click()
+
+	# Function we run when we enter run state
+	def exec_sweep_run(self):
+
+		self.update_sweep_params()
+
+		# For startup protection
+		if self.keithley() is not None:
+
+			# Update UI button to abort 
+			self.meas_button.setStyleSheet(
+				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
+			self.save_button.setEnabled(False)		
+
+	 		# Run the measurement thread function
+			self.thread = threading.Thread(target=self.exec_sweep_thread, args=())
+			self.thread.daemon = True						# Daemonize thread
+			self.thread.start()         					# Start the execution
+			self.thread_running = True
+
+		# Otherwise show infobox and revert state
+		else:
+			self.meas_button.click()
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Warning)
+			msg.setText("Keithley not configured")
+			msg.setWindowTitle("Sweep Info")
+			msg.setWindowIcon(self.icon)
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()
+
+	# Function we run when we enter abort state
+	def exec_sweep_stop(self):
 	
-		# # Append measurement data to data array			
-		# self._data.append({ 
-		# 	't' : self._time, 
-		# 	'V' : self._voltage, 
-		# 	'I' : self._current,  
-		# 	'P' : np.multiply(self._voltage, self._current)
-		# })
-			
-		# # Update state to stop. We post a button click event to the 
-		# # QStateMachine to trigger a state transition
-		# self.meas_button.click()
+		# For startup protection
+		if self.keithley() is not None:
 
+			# Update UI button to start state
+			self.meas_button.setStyleSheet(
+				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+			self.save_button.setEnabled(True)	
+
+			# Kill measurement thread
+			self.thread_running = False
+			self.thread.join()  # Waits for thread to complete

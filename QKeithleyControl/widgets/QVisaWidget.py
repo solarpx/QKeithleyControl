@@ -53,7 +53,6 @@ class QVisaWidget(QWidget):
 		self._data = {}
 		self._meta = {}
 
-
 	#####################################
 	#  DATA MANAGEMENT METHODS
 	#			
@@ -97,7 +96,7 @@ class QVisaWidget(QWidget):
 	def _gen_data_file(self):
 
 		# If data is empty display warning message
-		if  all( _ is None for _ in list(self._data.values()) ):
+		if  self._data == {}:
 
 			msg = QMessageBox()
 			msg.setIcon(QMessageBox.Warning)
@@ -120,52 +119,57 @@ class QVisaWidget(QWidget):
 			if dialog.exec_():
 				filenames = dialog.selectedFiles()
 
-			# Open file pointer			
-			f = open(filenames[0], 'w+')
 
-			# Start write sequence
-			with f:	
-	
-				# Write data header
-				f.write("* QVisaWidget v1.1\n")
-				if self.save_note.text() != "":
-					f.write("* NOTE %s\n"%self.save_note.text())
+			# Check if filenames is not empty 
+			# 	*) for cancel button
+			if filenames != []:
 				
-				# Only save if data exists on a given key
-				for _meas_key, _meas_data in self._data.items():
+				# Open file pointer	
+				f = open(filenames[0], 'w+')
 
-					# If measurement data exists on key
-					if _meas_data is not None:
+				# Start write sequence
+				with f:	
+		
+					# Write data header
+					f.write("*! QVisaWidget v1.1\n")
+					if self.save_note.text() != "":
+						f.write("*! NOTE %s\n"%self.save_note.text())
+					
+					# Only save if data exists on a given key
+					for _meas_key, _meas_data in self._data.items():
 
-						# Write measurement key header
-						f.write("* %s\n*\n"%str(_meas_key))
+						# If measurement data exists on key
+						if _meas_data is not None:
 
-						# Write data keys
-						for _data_key in _meas_data.keys():
-							f.write("%s\t\t"%str(_data_key))
-						f.write("\n")
-									
-						# Write data values. 
-						# Use length of first column for index iterator
-						for i in range( len( _meas_data[ list(_meas_data.keys())[0] ] ) ):
+							# Write measurement key header
+							f.write("#! %s\n"%str(_meas_key))
 
-							# Go across the dictionary keys on iterator
-							for data_key in _meas_data.keys():
-								f.write("%s\t"%str(_meas_data[data_key][i]))
+							# Write data keys
+							for _data_key in _meas_data.keys():
+								f.write("%s\t\t"%str(_data_key))
 							f.write("\n")
+										
+							# Write data values. 
+							# Use length of first column for index iterator
+							for i in range( len( _meas_data[ list(_meas_data.keys())[0] ] ) ):
 
-						f.write("\n\n")
+								# Go across the dictionary keys on iterator
+								for data_key in _meas_data.keys():
+									f.write("%s\t"%str(_meas_data[data_key][i]))
+								f.write("\n")
 
-				f.close()
+							f.write("\n\n")
 
-			# Message box to indicate successful save
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Information)
-			msg.setText("Measurement data saved")
-			msg.setWindowTitle("Bias Info")
-			msg.setWindowIcon(self.icon)
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()		
+					f.close()
+
+				# Message box to indicate successful save
+				msg = QMessageBox()
+				msg.setIcon(QMessageBox.Information)
+				msg.setText("Measurement data saved")
+				msg.setWindowTitle("Application Info")
+				msg.setWindowIcon(self.icon)
+				msg.setStandardButtons(QMessageBox.Ok)
+				msg.exec_()		
 
 
 	#####################################

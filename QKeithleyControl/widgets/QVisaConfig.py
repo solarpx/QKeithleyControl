@@ -110,3 +110,4 @@ class QVisaConfig(QWidget):
 		_layout.setContentsMargins(0,0,0,0)
 		_widget.setLayout(_layout)
 		return _widget
+		
