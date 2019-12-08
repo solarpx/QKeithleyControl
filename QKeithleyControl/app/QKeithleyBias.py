@@ -35,9 +35,9 @@ import visa
 import numpy as np
 
 # Import custom widgets
-import widgets.QVisaWidget
-import widgets.QDynamicPlot 
+import widgets.QVisaApplication
 import widgets.QUnitSelector
+import widgets.QDynamicPlot 
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QPushButton, QLabel, QFileDialog, QLineEdit, QStackedWidget
@@ -45,11 +45,11 @@ from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
 # Container class to construct sweep measurement widget
-class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
+class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 
 	def __init__(self, _config):
 
-		# Inherits QVisaWidget -> QWidget
+		# Inherits QVisaApplication -> QWidget
 		super(QKeithleyBias, self).__init__(_config)
 
 		# Generate Main Layout
@@ -168,17 +168,6 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 		self.src_pages.setCurrentIndex(0)
 
 		#####################################
-		#  SAVE BUTTON
-		#
-
-		# Save Button
-		self.save_note_label = QLabel("Measurement Note")
-		self.save_note = QLineEdit()
-		self.save_note.setFixedWidth(200)
-		self.save_button = QPushButton("Save Traces")
-		self.save_button.clicked.connect(self._gen_data_file)	
-
-		#####################################
 		#  ADD CONTROLS
 		#
 
@@ -188,10 +177,9 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.src_select, self.src_select_label]))
 		self.ctl_layout.addWidget(self.src_pages)
 		
-		# Spacer
+		# Spacer and save widget
 		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self._gen_hbox_widget([self.save_note, self.save_note_label]))
-		self.ctl_layout.addWidget(self.save_button)
+		self.ctl_layout.addWidget(self._gen_save_widget())
 	
 		# Positioning
 		self.ctl_layout.setContentsMargins(0,15,0,20)
@@ -435,10 +423,10 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 			# Update UI for ON state
 			self.output_button.setStyleSheet(
 				"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
-			self.save_button.setEnabled(False)
 			self.src_select.setEnabled(False)
-
+			
 			# Turn output ON
+			self._enable_save(False)
 			self.keithley().output_on()
 
 			# Create execution thread for measurement
@@ -456,8 +444,8 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 			self.output_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )			
 			
-			self.save_button.setEnabled(True)
-			self.src_select.setEnabled(True)
+			self._enable_save(True)
+			self._save_button.setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False

@@ -35,7 +35,7 @@ import drivers.keithley2400
 import app.QKeithleyConfig
 import app.QKeithleyBias
 import app.QKeithleySweep 
-#import modules.QKeithleySolar
+import app.QKeithleySolar
 
 # Import QT backends
 import os
@@ -77,13 +77,13 @@ class QKeithleyControl(QMainWindow):
 		# Create QVisaWidget for each measurement mode
 		self.ui_bias   = app.QKeithleyBias.QKeithleyBias(self.ui_config)
 		self.ui_sweep  = app.QKeithleySweep.QKeithleySweep(self.ui_config)
-		#self.ui_solar  = app.QKeithleySolar.QKeithleySolar(self.ui_config)
+		self.ui_solar  = app.QKeithleySolar.QKeithleySolar(self.ui_config)
 
 		# Add ui-mode widgets to stack
 		self.ui_stack.addWidget(self.ui_config)
 		self.ui_stack.addWidget(self.ui_bias)
 		self.ui_stack.addWidget(self.ui_sweep)
-		#self.ui_stack.addWidget(self.ui_solar)
+		self.ui_stack.addWidget(self.ui_solar)
 
 		# Set window central widget to stacked widget
 		self.setCentralWidget(self.ui_stack)
@@ -103,6 +103,11 @@ class QKeithleyControl(QMainWindow):
 			
 			self.ui_sweep.refresh()
 			self.ui_stack.setCurrentIndex(2)
+
+		if q.text() == "PV-Characterization" and self.ui_stack.currentIndex() != 2:
+
+
+			self.ui_stack.setCurrentIndex(3)
 
 		if q.text() == "Exit": 
 			self.app.exit()		
@@ -127,9 +132,9 @@ class QKeithleyControl(QMainWindow):
 		self.app_sweep = QAction("IV-Sweep Control",self)
 		self.app_submenu.addAction(self.app_sweep)
 
-		# # Solar Mode
-		# self.menu_solar = QAction("PV-Characterization")
-		# self.main_menuor.addAction(self.menu_solar)
+		# Solar Mode
+		self.app_solar = QAction("PV-Characterization")
+		self.app_submenu.addAction(self.app_solar)
 
 		# Add app submenu to main menu
 		self.main_menu.addMenu(self.app_submenu)

@@ -35,9 +35,10 @@ import visa
 import numpy as np
 
 # Import custom widgets
-import widgets.QVisaWidget
-import widgets.QDynamicPlot 
+import widgets.QVisaApplication
 import widgets.QUnitSelector
+import widgets.QDynamicPlot 
+
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QLineEdit, QStackedWidget
@@ -46,11 +47,11 @@ from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
 # Container class to construct sweep measurement widget
-class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
+class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 
 	def __init__(self, _config):
 
-		# Inherits QVisaWidget -> QWidget
+		# Inherits QVisaApplication -> QWidget
 		super(QKeithleySweep, self).__init__(_config)
 
 		# Generate Main Layout
@@ -81,7 +82,7 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 			self.update_sweep_params()			
 
 		else: 
-			
+
 			# Disable output button
 			self.meas_button.setEnabled(False)	
 
@@ -229,17 +230,6 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 		self.sweep_hist.addItems(["None", "Reverse-sweep", "Zero-centered"])	
 
 		#####################################
-		#  SAVE BUTTON
-		#
-
-		# Save Button
-		self.save_note_label = QLabel("Measurement Note")
-		self.save_note = QLineEdit()
-		self.save_note.setFixedWidth(200)
-		self.save_button = QPushButton("Save Traces")
-		self.save_button.clicked.connect(self._gen_data_file)	
-
-		#####################################
 		#  ADD CONTROLS
 		#
 
@@ -252,10 +242,9 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.sweep_hist, self.sweep_hist_label]))
 		self.ctl_layout.addWidget(self.sweep_pages)
 
-		# Save and save note
+		# Spacer and save widget
 		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self._gen_hbox_widget([self.save_note, self.save_note_label]))
-		self.ctl_layout.addWidget(self.save_button)
+		self.ctl_layout.addWidget(self._gen_save_widget())
 	
 		# Positioning
 		self.ctl_layout.setContentsMargins(0,15,0,20)
@@ -557,7 +546,7 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 			# Update UI button to abort 
 			self.meas_button.setStyleSheet(
 				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
-			self.save_button.setEnabled(False)		
+			self._enable_save(False)
 
 	 		# Run the measurement thread function
 			self.thread = threading.Thread(target=self.exec_sweep_thread, args=())
@@ -585,7 +574,7 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 			# Update UI button to start state
 			self.meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-			self.save_button.setEnabled(True)	
+			self._enable_save(True)
 
 			# Kill measurement thread
 			self.thread_running = False

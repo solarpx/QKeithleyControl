@@ -32,7 +32,7 @@ import numpy as np
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QLabel, QLineEdit, QPushButton
 
 # The purpouse of this object is to bind a list pyVisaDevices to a QWidget 
 # Thus, it provides a basic framework for constructing user interfaces for 
@@ -42,7 +42,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFil
 # used in other QVisaWidget objects in an application context.
 #
 
-class QVisaWidget(QWidget):
+class QVisaApplication(QWidget):
 
 	# Initialization: Note that _config is a QVisaConfig object 
 	# which contains a list of pyVisaDevices	
@@ -89,8 +89,36 @@ class QVisaWidget(QWidget):
 
 
 	#####################################
-	#  SAVE METHOD
+	#  SAVE METHOD and WIDGET
 	#	
+	def _enable_save(self,_bool=True):
+		self._save_button.setEnabled(_bool)
+
+	# Method to generate the standard save widget
+	def _gen_save_widget(self):
+
+		# Save widget and layout
+		self._save_widget = QWidget()
+		self._save_widget_layout = QVBoxLayout()
+
+		# Save note
+		self._save_note_label = QLabel("Measurement Note")
+		self._save_note = QLineEdit()
+		self._save_note.setFixedWidth(200)
+		
+		# Save button
+		self._save_button = QPushButton("Save Data")
+		self._save_button.clicked.connect(self._gen_data_file)
+
+		# Pack the widget layout
+		self._save_widget_layout.addWidget(self._gen_hbox_widget([self._save_note, self._save_note_label]))
+		self._save_widget_layout.addWidget(self._save_button)
+		self._save_widget_layout.setContentsMargins(0,0,0,0)
+
+		# Set layout and return the widget
+		self._save_widget.setLayout(self._save_widget_layout)
+
+		return self._save_widget
 
 	# Sace traces method (same as sweep control)	
 	def _gen_data_file(self):
@@ -132,8 +160,8 @@ class QVisaWidget(QWidget):
 		
 					# Write data header
 					f.write("*! QVisaWidget v1.1\n")
-					if self.save_note.text() != "":
-						f.write("*! NOTE %s\n"%self.save_note.text())
+					if self._save_note.text() != "":
+						f.write("*! NOTE %s\n"%self._save_note.text())
 					
 					# Only save if data exists on a given key
 					for _meas_key, _meas_data in self._data.items():
