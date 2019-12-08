@@ -104,75 +104,16 @@ class QVisaApplication(QWidget):
 
 
 	#####################################
-	#  INST METHODS and WIDGET
+	#  INST/SAVE WIDGET CONSTRUCTORS
 	#	
 	
 	# Method to generate insturment widget
 	def _gen_inst_widget(self):
-
-		# Save widget and layout
-		_widget = QWidget()
-		_layout = QHBoxLayout()
-
-		# Widget label and comboBox
-		_widget_label = QLabel("Select Insturment")
-		_widget_select =  QComboBox()
-		_widget_select.setFixedWidth(200)
-
-		# Widget select
-		if self._get_inst_names() is not None:
-			_widget_select.addItems(self._get_inst_names())
-
-		# Add widgets to layout
-		return self._gen_hbox_widget([_widget_select, _widget_label])
-
-	# Get insturment text	
-	def _get_inst_widget_text(self, _widget):
-		_widget_select = _widget.findChild(QComboBox)
-		return _widget_select.currentText()
-
-	# Method to refresh insurment widget
-	def _refresh_inst_widget(self, _widget):
-	
-		# If there are insturment handles
-		_widget_select = _widget.findChild(QComboBox)
-		_widget_select.clear()
-		_widget_select.addItems(self._get_inst_names())
-		
-	#####################################
-	#  SAVE METHODS and WIDGET
-	#	
-
-	# Enable and disable save button
-	def _set_save_enabled(self, _widget, _bool):
-		_widget_button = _widget.findChild(QPushButton)
-		_widget_button.setEnabled(_bool)
+		return QVisaInstWidget(self)
 
 	# Method to generate the standard save widget
 	def _gen_save_widget(self):
-
-		# Save widget and layout
-		_widget = QWidget()
-		_layout = QVBoxLayout()
-
-		# Save note
-		_widget_note_label = QLabel("Measurement Note")
-		_widget_note = QLineEdit()
-		_widget_note.setFixedWidth(200)
-		
-		# Save button
-		_widget_button = QPushButton("Save Data")
-		_widget_button.clicked.connect(self._gen_data_file)
-
-		# Pack the widget layout
-		_layout.addWidget(self._gen_hbox_widget([_widget_note, _widget_note_label]))
-		_layout.addWidget(_widget_button)
-		_layout.setContentsMargins(0,0,0,0)
-
-		# Set layout and return the widget
-		_widget.setLayout(_layout)
-
-		return _widget
+		return QVisaSaveWidget(self)
 
 	# Sace traces method (same as sweep control)	
 	def _gen_data_file(self):
@@ -281,3 +222,78 @@ class QVisaApplication(QWidget):
 		_layout.setContentsMargins(0,0,0,0)
 		_widget.setLayout(_layout)
 		return _widget
+
+
+#####################################
+#  HELPER CLASSES
+#	
+
+# Helper class to generate insturment select widgets
+class QVisaInstWidget(QWidget):
+
+	def __init__(self, _app):
+
+		# Extends QWidget
+		QWidget.__init__(self)
+
+		# Inst widget and layout
+		self._layout = QHBoxLayout()
+
+		# Widget label and comboBox
+		self._label  = QLabel("Select Insturment")
+		self._select =  QComboBox()
+		self._select.setFixedWidth(200)
+
+		# Widget select
+		if _app._get_inst_names() is not None:
+			self._select.addItems( _app._get_inst_names() )
+
+		# Add widgets to layout
+		self._layout.addWidget(_app._gen_hbox_widget([self._select, self._label]))
+		self._layout.setContentsMargins(0,0,0,0)
+
+		# Set layout
+		self.setLayout(self._layout)
+
+	# Method to refresh insurment widget
+	def refresh(self,_app):
+	
+		# If there are insturment handles
+		self._select.clear()
+		self._select.addItems( _app._get_inst_names() )	
+
+	# Get insturment text	
+	def currentText(self):
+		return self._select.currentText()
+
+
+# Helper class to generate save widgets
+class QVisaSaveWidget(QWidget):
+
+	def __init__(self, _app):
+
+		QWidget.__init__(self)
+
+		self._layout = QVBoxLayout()
+
+		# Save note
+		self._note_label = QLabel("Measurement Note")
+		self._note = QLineEdit()
+		self._note.setFixedWidth(200)
+		
+		# Save button
+		self._button = QPushButton("Save Data")
+		self._button.clicked.connect(_app._gen_data_file)
+
+		# Pack the widget layout
+		self._layout.addWidget(_app._gen_hbox_widget([self._note, self._note_label]))
+		self._layout.addWidget(self._button)
+		self._layout.setContentsMargins(0,0,0,0)
+
+		# Set layout and return the widget
+		self.setLayout(self._layout)
+
+	# Wrapper method for setEnabled 	
+	def setEnabled(self, _bool):
+
+		self._button.setEnabled(_bool)

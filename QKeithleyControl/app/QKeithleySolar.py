@@ -64,7 +64,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	# Wrapper method to get keitley write handle
 	# 	Returns the pyVisaDevice object
 	def keithley(self):
-		return self._get_inst_byname(self._get_inst_widget_text(self.inst_widget))
+		return self._get_inst_byname( self.inst_widget.currentText() )
 
 	# Method to refresh the widget
 	def refresh(self):
@@ -73,7 +73,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		if self._get_inst_handles() is not None:
 
 			# Reset the widget and add insturments
-			self._refresh_inst_widget(self.inst_widget)
+			self.inst_widget.refresh( self )
 
 			# Enable measurement buttons
 			self.iv_meas_button.setEnabled(True)
@@ -593,7 +593,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Put measurement button in abort state
 			self.iv_meas_button.setStyleSheet(
 				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
-			self._set_save_enabled(self.save_widget, False)
+			self.save_widget.setEnabled(False)
 				
 			# Run the measurement thread function
 			self.iv_thread = threading.Thread(target=self.exec_iv_thread, args=())
@@ -609,7 +609,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Put measurement button in measure state
 			self.iv_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-			self._set_save_enabled(self.save_widget, True)
+			self.save_widget.setEnabled(True)
 		
 			# Set thread running to False. This will break the sweep measurements
 			# execution loop on next iteration.  

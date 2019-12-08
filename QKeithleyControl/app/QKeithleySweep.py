@@ -79,7 +79,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 
 			# Update sweep parameters and enable output button
 			self.meas_button.setEnabled(True)
-			self.update_sweep_params()			
+			self.update_sweep_params()
 
 		else: 
 
