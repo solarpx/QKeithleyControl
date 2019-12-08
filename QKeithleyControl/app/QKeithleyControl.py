@@ -40,7 +40,7 @@ import app.QKeithleySweep
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QMessageBox, QMenu
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
@@ -89,61 +89,20 @@ class QKeithleyControl(QMainWindow):
 		self.setCentralWidget(self.ui_stack)
 
 	# Callback to update menu
-	def _menu_callback(self, q):		
+	def menu_callback(self, q):		
 
 		if q.text() == "Hardware Config" and self.ui_stack.currentIndex() != 0: 
 			self.ui_stack.setCurrentIndex(0)
 
 		if q.text() == "IV-Bias Control" and self.ui_stack.currentIndex() != 1: 		
-
-			# If Keitheley handle is initialized, pass to bias widget. 
-			#if self.keithley is not None:
+			
 			self.ui_bias.refresh()
 			self.ui_stack.setCurrentIndex(1)
 
-			# Otherwise, display Keithley not initilized message
-			#else:
-			#	self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
-			#	self.ui_stack.setCurrentIndex(0)
-
 		if q.text() == "IV-Sweep Control" and self.ui_stack.currentIndex() != 2:
 			
-		# 	# Get Keithley handle
-		# 	self.keithley=self.ui_config._get_keithley_handle()
 			self.ui_sweep.refresh()
 			self.ui_stack.setCurrentIndex(2)
-
-
-		# 	# If Keitheley handle is initialized, pass to sweep widget. 
-		# 	if self.keithley is not None:
-		# 		self.keithley.reset()
-		# 		self.ui_sweep._set_keithley_handle(self.keithley)
-		# 		self.ui_sweep._reset_defaults()
-		# 		self.ui_stack.setCurrentIndex(2)
-
-		# 	# Otherwise, display Keithley not initilized message
-		# 	else:				
-		# 		self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
-		# 		self.ui_stack.setCurrentIndex(0)		
-
-
-		# if q.text() == "PV-Characterization" and self.ui_stack.currentIndex() != 3:
-
-		# 	# Get Keithley handle
-		# 	self.keithley=self.ui_config._get_keithley_handle()
-
-		# 	# If Keitheley handle is initialized, pass to sweep widget. 
-		# 	if self.keithley is not None:
-		# 		self.keithley.reset()
-		# 		self.ui_solar._set_keithley_handle(self.keithley, 24)
-		# 		self.ui_solar._reset_defaults()
-		# 		self.ui_stack.setCurrentIndex(3)
-
-		# 	# Otherwise, display Keithley not initilized message
-		# 	else:				
-		# 		self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
-		# 		self.ui_stack.setCurrentIndex(0)		
-
 
 		if q.text() == "Exit": 
 			self.app.exit()		
@@ -155,30 +114,36 @@ class QKeithleyControl(QMainWindow):
 		self.menu_bar = self.menuBar()
 		
 		# Add a selector menu items
-		self.menu_selector = self.menu_bar.addMenu('Select Measurement')
+		self.main_menu = self.menu_bar.addMenu('Select Measurement')
 
-		# Add some various modes. These will generate windows in main layout
-		self.menu_config = QAction("Hardware Config",self)
-		self.menu_selector.addAction(self.menu_config)
+		# Add submenu for applications
+		self.app_submenu = QMenu("Applications", parent=self.main_menu)
 
-		# # Bias Mode
-		self.menu_bias = QAction("IV-Bias Control",self)
-		self.menu_selector.addAction(self.menu_bias)
+		# Bias Mode
+		self.app_bias = QAction("IV-Bias Control",self)
+		self.app_submenu.addAction(self.app_bias)
 
-		# # Sweep Mode
-		self.menu_sweep = QAction("IV-Sweep Control",self)
-		self.menu_selector.addAction(self.menu_sweep)
+		# Sweep Mode
+		self.app_sweep = QAction("IV-Sweep Control",self)
+		self.app_submenu.addAction(self.app_sweep)
 
 		# # Solar Mode
 		# self.menu_solar = QAction("PV-Characterization")
-		# self.menu_selector.addAction(self.menu_solar)
+		# self.main_menuor.addAction(self.menu_solar)
 
-		# Exit Application
-		self.menu_exit = QAction("Exit",self)
-		self.menu_selector.addAction(self.menu_exit)
+		# Add app submenu to main menu
+		self.main_menu.addMenu(self.app_submenu)
+
+		# Add hardware configuration app 
+		self.app_config = QAction("Hardware Config",self)
+		self.main_menu.addAction(self.app_config)
+
+		# Add exit app
+		self.app_exit = QAction("Exit",self)
+		self.main_menu.addAction(self.app_exit)
 
 		# Callback Trigge
-		self.menu_selector.triggered[QAction].connect(self._menu_callback)
+		self.main_menu.triggered[QAction].connect(self.menu_callback)
 
 	# Method to generate warning box
 	def _gen_warning_box(self, _title, _text): 

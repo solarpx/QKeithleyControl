@@ -27,6 +27,7 @@
 import os
 import sys
 import time
+import hashlib
 import threading
 
 # Import visa and numpy
@@ -65,15 +66,26 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 
 	# Method to refresh the widget
 	def refresh(self):
-
-		# Reset the widget
-		self.inst_select.clear()
-		self.inst_select.addItems(self._config._get_inst_names())
 	
-		# Reset the keithley
-		self.keithley().reset()
-		self.keithley().set_voltage( self.voltage_bias.value() )
-		self.keithley().current_cmp( self.voltage_cmpl.value() )
+		# If add insturments have been initialized
+		if self._config._get_inst_handles() is not None:
+
+			# Reset the widget and add insturments
+			self.inst_select.clear()
+			self.inst_select.addItems(self._config._get_inst_names())
+
+			# Enable output button
+			self.output_button.setEnabled(True)
+
+			# Reset the keithley
+			self.keithley().reset()
+			self.keithley().set_voltage( self.voltage_bias.value() )
+			self.keithley().current_cmp( self.voltage_cmpl.value() )
+
+		else:
+			
+			# Disable output button
+			self.output_button.setEnabled(False)		
 
 
 	#####################################

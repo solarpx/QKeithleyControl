@@ -59,11 +59,19 @@ class QVisaConfig(QWidget):
 
 	# Get all insturment handles	
 	def _get_inst_handles(self):
-		return self.inst
-
+	
+		if self._inst != []:
+			return self._inst
+		else:
+			return None 
+			
 	# Get all insturment names
 	def _get_inst_names(self):
-		return [_.name for _ in self._inst]	
+
+		if self._inst != []:
+			return [_.name for _ in self._inst]	
+		else:	
+			return None
 
 	# Get handle by addrress
 	def _get_inst_byaddr(self, _addr):
@@ -110,4 +118,3 @@ class QVisaConfig(QWidget):
 		_layout.setContentsMargins(0,0,0,0)
 		_widget.setLayout(_layout)
 		return _widget
-		

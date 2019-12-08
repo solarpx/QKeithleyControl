@@ -46,7 +46,6 @@ from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
 # Container class to construct sweep measurement widget
-# 589
 class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 
 	def __init__(self, _config):
@@ -70,12 +69,21 @@ class QKeithleySweep(widgets.QVisaWidget.QVisaWidget):
 	# Method to reset sweep on window switch
 	def refresh(self):
 	
-		# Reset the widget
-		self.inst_select.clear()
-		self.inst_select.addItems(self._config._get_inst_names())
+		# If add insturments have been initialized
+		if self._config._get_inst_handles() is not None:
 
-		# Update sweep parameters
-		self.update_sweep_params()
+			# Reset the widget
+			self.inst_select.clear()
+			self.inst_select.addItems(self._config._get_inst_names())
+
+			# Update sweep parameters and enable output button
+			self.meas_button.setEnabled(True)
+			self.update_sweep_params()			
+
+		else: 
+			
+			# Disable output button
+			self.meas_button.setEnabled(False)	
 
 	# Method to set sweep parameters
 	def set_sweep_params(self, start, stop, npts):
