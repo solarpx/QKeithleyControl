@@ -24,26 +24,27 @@
 #
 
 #!/usr/bin/env python 
-import visa
+import os
+import sys
 import time
-import numpy as np
 import threading
 
-# Import widgets
+# Import visa and numpy
+import visa
+import numpy as np
+
+# Import custom widgets
 import widgets.QVisaWidget
 import widgets.QDynamicPlot 
 import widgets.QUnitSelector
 
 # Import QT backends
-import os
-import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QPushButton, QLabel, QFileDialog, QLineEdit, QStackedWidget
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
 # Container class to construct sweep measurement widget
 class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
-
 
 	def __init__(self, _config):
 
@@ -76,7 +77,7 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 
 
 	#####################################
-	# BIAS MAIN LAYOUTS
+	# BIAS MODE MAIN LAYOUTS
 	#
 	# *) gem_main_layout()
 	# 	1) gen_bias_ctrl()
@@ -137,13 +138,12 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 		self.inst_select = QComboBox()
 		self.inst_select.setFixedWidth(200)
 	
-
 		# Main mode selctor 
 		self.src_select_label = QLabel("Bias Mode")
 		self.src_select = QComboBox()
 		self.src_select.setFixedWidth(200)
 		self.src_select.addItems(["Voltage", "Current"])	
-		self.src_select.currentTextChanged.connect(self.update_bias_control)
+		self.src_select.currentTextChanged.connect(self.update_bias_ctrl)
 
 		# Generate voltage and current source widgets
 		self.gen_voltage_src()		# self.voltage_src
@@ -325,7 +325,7 @@ class QKeithleyBias(widgets.QVisaWidget.QVisaWidget):
 		 	self.keithley().voltage_cmp( self.current_cmpl.value() )
 	
 	# Update bias control selectors
-	def update_bias_control(self):
+	def update_bias_ctrl(self):
 	
 		# Switch to voltage page
 		if self.src_select.currentText() == "Voltage":

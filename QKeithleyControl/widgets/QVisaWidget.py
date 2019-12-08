@@ -32,7 +32,7 @@ import numpy as np
 # Import QT backends
 import os
 import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog
 
 # The purpouse of this object is to bind a list pyVisaDevices to a QWidget 
 # Thus, it provides a basic framework for constructing user interfaces for 
@@ -50,7 +50,8 @@ class QVisaWidget(QWidget):
 
 		QWidget.__init__(self)
 		self._config = _config 
-		self._data = {}	
+		self._data = {}
+		self._meta = {}
 
 
 	#####################################
@@ -75,6 +76,15 @@ class QVisaWidget(QWidget):
 		if _meas_key in self._data.keys():
 			self._data[_meas_key]={_: [] for _ in _data_keys}
 
+	# Method to add metadata
+	def _set_meta(self, _key, _meta):
+		self._meta[_key]=_meta
+	
+	# Method to get metadata
+	def _get_meta(self, _key):
+		return self._meta[_key] if _key in self._meta.keys() else None
+
+	# Method to reset data	
 	def _reset_data(self):
 		self._data = {}	
 

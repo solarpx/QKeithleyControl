@@ -34,8 +34,7 @@ import drivers.keithley2400
 # Import Keithley control widgets
 import app.QKeithleyConfig
 import app.QKeithleyBias
-
-#import modules.QKeithleySweep 
+import app.QKeithleySweep 
 #import modules.QKeithleySolar
 
 # Import QT backends
@@ -77,13 +76,13 @@ class QKeithleyControl(QMainWindow):
 		
 		# Create QVisaWidget for each measurement mode
 		self.ui_bias   = app.QKeithleyBias.QKeithleyBias(self.ui_config)
-		#self.ui_sweep  = app.QKeithleySweep.QKeithleySweep(self.ui_config)
+		self.ui_sweep  = app.QKeithleySweep.QKeithleySweep(self.ui_config)
 		#self.ui_solar  = app.QKeithleySolar.QKeithleySolar(self.ui_config)
 
 		# Add ui-mode widgets to stack
 		self.ui_stack.addWidget(self.ui_config)
 		self.ui_stack.addWidget(self.ui_bias)
-		#self.ui_stack.addWidget(self.ui_sweep)
+		self.ui_stack.addWidget(self.ui_sweep)
 		#self.ui_stack.addWidget(self.ui_solar)
 
 		# Set window central widget to stacked widget
@@ -107,10 +106,13 @@ class QKeithleyControl(QMainWindow):
 			#	self._gen_warning_box("pyVISA Error","Keitheley GPIB not Initialized")		
 			#	self.ui_stack.setCurrentIndex(0)
 
-		# if q.text() == "IV-Sweep Control" and self.ui_stack.currentIndex() != 2:
+		if q.text() == "IV-Sweep Control" and self.ui_stack.currentIndex() != 2:
 			
 		# 	# Get Keithley handle
 		# 	self.keithley=self.ui_config._get_keithley_handle()
+			self.ui_sweep.refresh()
+			self.ui_stack.setCurrentIndex(2)
+
 
 		# 	# If Keitheley handle is initialized, pass to sweep widget. 
 		# 	if self.keithley is not None:
@@ -164,8 +166,8 @@ class QKeithleyControl(QMainWindow):
 		self.menu_selector.addAction(self.menu_bias)
 
 		# # Sweep Mode
-		# self.menu_sweep = QAction("IV-Sweep Control",self)
-		# self.menu_selector.addAction(self.menu_sweep)
+		self.menu_sweep = QAction("IV-Sweep Control",self)
+		self.menu_selector.addAction(self.menu_sweep)
 
 		# # Solar Mode
 		# self.menu_solar = QAction("PV-Characterization")
