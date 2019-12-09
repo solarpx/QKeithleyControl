@@ -91,13 +91,11 @@ class QVisaDynamicPlot(QWidget):
 		self.mpl_refresh = QPushButton("Clear Data")
 		self.mpl_refresh.clicked.connect(self.refresh_canvas)
 
-	# Add axes object to widget 
-	def add_subplot(self, _key=111):	
+	# Add axes object to widget
+	def add_subplot(self, _key=111, twinx=False):
 		self._axes[str(_key)] = self.mpl_figure.add_subplot(_key)
-
-	# Add twin object for axes on key		 
-	def twin_subplot(self, _key):
-		self._axes[str(_key)+'t'] = self._axes[_key].twinx()
+		if twinx:
+			self._axes[str(_key)+'t'] = self._axes[str(_key)].twinx()
 
 	# Add axes xlabels
 	def set_axes_xlabel(self, _key, _xlabel):
@@ -108,9 +106,9 @@ class QVisaDynamicPlot(QWidget):
 		self._axes[str(_key)].set_ylabel( str(_ylabel) ) 
 
 	# Convenience method to set axes labels
-	def set_axes_labels(self, _xlabel, _ylabel, _key='111'):
-		self.set_axes_xlabel(_key, _xlabel)
-		self.set_axes_ylabel(_key, _ylabel)	
+	def set_axes_labels(self, _key, _xlabel, _ylabel):
+		self.set_axes_xlabel(str(_key), _xlabel)
+		self.set_axes_ylabel(str(_key), _ylabel)	
 
 	# Set axes adjust 
 	def set_axes_adjust(self, _left, _right, _top, _bottom):

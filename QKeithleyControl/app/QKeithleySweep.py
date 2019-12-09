@@ -406,12 +406,13 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 	def gen_sweep_plot(self): 		
 
 		# Create QVisaDynamicPlot object (inherits QWidget) 
-		self.plot = widgets.QVisaDynamicPlot.QVisaDynamicPlot()
-		self.plot.set_axes_labels("Voltage (V)", "Current (A)")
-		self.plot.add_axes()
+		self.plot = widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
+		self.plot.add_subplot(111)
+		self.plot.set_axes_labels("111", "Voltage (V)", "Current (A)")
+		self.plot.refresh_canvas(supress_warning=True)		
 
 		# Connect clear plot button to update_sweep_ctrl
-		self.plot.refresh.clicked.connect(self.update_sweep_ctrl)
+		# self.plot.refresh.clicked.connect(self.update_sweep_ctrl)
 
 		# Return the plot
 		return self.plot		
@@ -498,7 +499,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			__delay__ = self.current_delay.value()
 
 		# Clear plot and zero arrays
-		handle = self.plot.add_handle()
+		handle = self.plot.add_axes_handle(111, _meas_key)
 		start  = time.time()
 		
 		# Output on
@@ -525,7 +526,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 				self._data[_meas_key]["I"].append( float(_buffer[1]) )
 				self._data[_meas_key]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
 
-				self.plot.update_handle(handle, float(_buffer[0]), float(_buffer[1]))
+				self.plot.append_handle_data(handle, float(_buffer[0]), float(_buffer[1]))
 				self.plot._draw_canvas()	
 		
 		# Reset Keithley

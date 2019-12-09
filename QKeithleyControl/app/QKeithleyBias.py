@@ -297,7 +297,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 		# Create QVisaDynamicPlot Object (inherits QWidget) 
 		self.plot = widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.plot.add_subplot(111)
-		self.plot.set_axes_labels("Time (s)", "Current (A)")
+		self.plot.set_axes_labels("111", "Time (s)", "Current (A)")
 		self.plot.refresh_canvas(supress_warning=True)		
 
 		return self.plot
