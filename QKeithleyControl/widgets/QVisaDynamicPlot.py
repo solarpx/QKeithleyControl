@@ -130,8 +130,15 @@ class QVisaDynamicPlot(QWidget):
 	def get_axes_handles(self):
 		return self._handles
 
-	# Update axes handle
-	def update_axes_handle(self, _handle_key, x_value, y_value):
+	# Update axes handle (set)
+	def set_handle_data(self, _handle_key, x_data, y_data):
+
+		# Set xdata and ydata to handle
+		self._handles[_handle_key].set_xdata(x_data)
+		self._handles[_handle_key].set_ydata(y_data)
+
+	# Update axes handle (append)
+	def append_handle_data(self, _handle_key, x_value, y_value):
 
 		# Append new values to handle data
 		_x = np.append(self._handles[_handle_key].get_xdata(), x_value)

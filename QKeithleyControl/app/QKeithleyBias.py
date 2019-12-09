@@ -410,7 +410,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			self._data[_meas_key]["I"].append( float(_buffer[1]) )
 			self._data[_meas_key]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
 
-			self.plot.update_axes_handle(_meas_key, float(time.time() - start), float(_p))
+			self.plot.append_handle_data(_meas_key, float(time.time() - start), float(_p))
 			self.plot.update_canvas()
 
 
