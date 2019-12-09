@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyControl
+# 	QVisaApplication -> QWidget
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -21,18 +21,20 @@
 # 	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # 	SOFTWARE.
-#
 
 #!/usr/bin/env python 
-import visa
-import time
-import threading 
-import numpy as np
 
 # Import QT backends
-import os
-import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QFileDialog, QLabel, QLineEdit, QPushButton, QComboBox
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtGui import QIcon
+
+# Import QVisaWidgets
+import widgets.QVisaInstWidget
+import widgets.QVisaSaveWidget
+
+#####################################
+#  VISA APPLICATION CLASS
+#	
 
 # The purpouse of the QVisaApplication object is to bind a list pyVisaDevices to a QWidget 
 # It provides a basic framework for constructing user interfaces for nteracting with GPIB 
@@ -109,95 +111,28 @@ class QVisaApplication(QWidget):
 	
 	# Method to generate insturment widget
 	def _gen_inst_widget(self):
-		return QVisaInstWidget(self)
+		return widgets.QVisaInstWidget.QVisaInstWidget(self)
 
 	# Method to generate the standard save widget
 	def _gen_save_widget(self):
-		return QVisaSaveWidget(self)
-
-	# Sace traces method (same as sweep control)	
-	def _gen_data_file(self):
-
-		# If data is empty display warning message
-		if  self._data == {}:
-
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("No measurement data")
-			msg.setWindowTitle("Bias Info")
-			msg.setWindowIcon(self.icon)
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
-
-		# Otherwise save
-		else:
-
-			# Open file dialog
-			dialog = QFileDialog(self)
-			dialog.setFileMode(QFileDialog.AnyFile)
-			dialog.setViewMode(QFileDialog.Detail)
-			filenames = []
-
-			# Select file
-			if dialog.exec_():
-				filenames = dialog.selectedFiles()
-
-
-			# Check if filenames is not empty 
-			# 	*) for cancel button
-			if filenames != []:
-				
-				# Open file pointer	
-				f = open(filenames[0], 'w+')
-
-				# Start write sequence
-				with f:	
-		
-					# Write data header
-					f.write("*! QVisaWidget v1.1\n")
-					if self._save_note.text() != "":
-						f.write("*! NOTE %s\n"%self._save_note.text())
-					
-					# Only save if data exists on a given key
-					for _meas_key, _meas_data in self._data.items():
-
-						# If measurement data exists on key
-						if _meas_data is not None:
-
-							# Write measurement key header
-							f.write("#! %s\n"%str(_meas_key))
-
-							# Write data keys
-							for _data_key in _meas_data.keys():
-								f.write("%s\t\t"%str(_data_key))
-							f.write("\n")
-										
-							# Write data values. 
-							# Use length of first column for index iterator
-							for i in range( len( _meas_data[ list(_meas_data.keys())[0] ] ) ):
-
-								# Go across the dictionary keys on iterator
-								for data_key in _meas_data.keys():
-									f.write("%s\t"%str(_meas_data[data_key][i]))
-								f.write("\n")
-
-							f.write("\n\n")
-
-					f.close()
-
-				# Message box to indicate successful save
-				msg = QMessageBox()
-				msg.setIcon(QMessageBox.Information)
-				msg.setText("Measurement data saved")
-				msg.setWindowTitle("Application Info")
-				msg.setWindowIcon(self.icon)
-				msg.setStandardButtons(QMessageBox.Ok)
-				msg.exec_()		
+		return widgets.QVisaSaveWidget.QVisaSaveWidget(self)
 
 
 	#####################################
 	#  LAYOUT SHORTCUTS
 	#					
+
+	# Helper methods to handle icons
+	def _set_icon(self, _icon):
+		
+		self._icon = _icon
+
+	def _get_icon(self):
+		
+		try:
+			return self._icon
+		except AttributeError:
+			return QIcon()
 
 	# Helper method to pack widgets into hbox
 	def _gen_hbox_widget(self, _widget_list):
@@ -222,78 +157,3 @@ class QVisaApplication(QWidget):
 		_layout.setContentsMargins(0,0,0,0)
 		_widget.setLayout(_layout)
 		return _widget
-
-
-#####################################
-#  HELPER CLASSES
-#	
-
-# Helper class to generate insturment select widgets
-class QVisaInstWidget(QWidget):
-
-	def __init__(self, _app):
-
-		# Extends QWidget
-		QWidget.__init__(self)
-
-		# Inst widget and layout
-		self._layout = QHBoxLayout()
-
-		# Widget label and comboBox
-		self._label  = QLabel("Select Insturment")
-		self._select =  QComboBox()
-		self._select.setFixedWidth(200)
-
-		# Widget select
-		if _app._get_inst_names() is not None:
-			self._select.addItems( _app._get_inst_names() )
-
-		# Add widgets to layout
-		self._layout.addWidget(_app._gen_hbox_widget([self._select, self._label]))
-		self._layout.setContentsMargins(0,0,0,0)
-
-		# Set layout
-		self.setLayout(self._layout)
-
-	# Method to refresh insurment widget
-	def refresh(self,_app):
-	
-		# If there are insturment handles
-		self._select.clear()
-		self._select.addItems( _app._get_inst_names() )	
-
-	# Get insturment text	
-	def currentText(self):
-		return self._select.currentText()
-
-
-# Helper class to generate save widgets
-class QVisaSaveWidget(QWidget):
-
-	def __init__(self, _app):
-
-		QWidget.__init__(self)
-
-		self._layout = QVBoxLayout()
-
-		# Save note
-		self._note_label = QLabel("Measurement Note")
-		self._note = QLineEdit()
-		self._note.setFixedWidth(200)
-		
-		# Save button
-		self._button = QPushButton("Save Data")
-		self._button.clicked.connect(_app._gen_data_file)
-
-		# Pack the widget layout
-		self._layout.addWidget(_app._gen_hbox_widget([self._note, self._note_label]))
-		self._layout.addWidget(self._button)
-		self._layout.setContentsMargins(0,0,0,0)
-
-		# Set layout and return the widget
-		self.setLayout(self._layout)
-
-	# Wrapper method for setEnabled 	
-	def setEnabled(self, _bool):
-
-		self._button.setEnabled(_bool)

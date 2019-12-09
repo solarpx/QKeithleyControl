@@ -36,15 +36,16 @@ import numpy as np
 
 # Import custom widgets
 import widgets.QVisaApplication
-import widgets.QUnitSelector
-import widgets.QDynamicPlot 
+import widgets.QVisaUnitSelector
+import widgets.QVisaDynamicPlot 
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QPushButton, QLabel, QFileDialog, QLineEdit, QStackedWidget
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
-# Container class to construct sweep measurement widget
+
+# Container class to construct bias measurement widget
 class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 
 	def __init__(self, _config):
@@ -62,17 +63,16 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 	# Wrapper method to get keitley write handle
 	# 	Returns the pyVisaDevice object
 	def keithley(self):
-		return self._config._get_inst_byname(self.inst_select.currentText())
+		return self._get_inst_byname( self.inst_widget.currentText() )
 
 	# Method to refresh the widget
 	def refresh(self):
 	
 		# If add insturments have been initialized
-		if self._config._get_inst_handles() is not None:
+		if self._get_inst_handles() is not None:
 
 			# Reset the widget and add insturments
-			self.inst_select.clear()
-			self.inst_select.addItems(self._config._get_inst_names())
+			self.inst_widget.refresh( self )
 
 			# Enable output button
 			self.output_button.setEnabled(True)
@@ -102,7 +102,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 	def gen_main_layout(self):	
 
 		# Create Icon for QMessageBox
-		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
+		self._set_icon( QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico")))
 		
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
@@ -119,6 +119,10 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 		#####################################
 		#  OUTPUT STATE MACHINE AND BUTTON
 		#		
+
+		# Insturement selector and save widget
+		self.inst_widget = self._gen_inst_widget()
+		self.save_widget = self._gen_save_widget()
 
 		# Create QStateMachine for output state
 		self.output = QStateMachine()
@@ -145,11 +149,6 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 		self.output.setInitialState(self.output_off)
 		self.output.start()
 
-		# Add insturement selector
-		self.inst_select_label = QLabel("Select Device")
-		self.inst_select = QComboBox()
-		self.inst_select.setFixedWidth(200)
-	
 		# Main mode selctor 
 		self.src_select_label = QLabel("Bias Mode")
 		self.src_select = QComboBox()
@@ -173,13 +172,13 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 
 		# Main output and controls
 		self.ctl_layout.addWidget(self.output_button)
-		self.ctl_layout.addWidget(self._gen_hbox_widget([self.inst_select, self.inst_select_label]))
+		self.ctl_layout.addWidget(self.inst_widget)
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.src_select, self.src_select_label]))
 		self.ctl_layout.addWidget(self.src_pages)
 		
 		# Spacer and save widget
 		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self._gen_save_widget())
+		self.ctl_layout.addWidget(self.save_widget)
 	
 		# Positioning
 		self.ctl_layout.setContentsMargins(0,15,0,20)
@@ -202,7 +201,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [0.0, ""]
 		} 
-		self.voltage_bias = widgets.QUnitSelector.QUnitSelector(self.voltage_bias_config)
+		self.voltage_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_bias_config)
 		self.voltage_bias.unit_value.valueChanged.connect(self.update_bias)
 		self.voltage_bias.unit_select.currentTextChanged.connect(self.update_bias)
 
@@ -216,7 +215,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [100, "m"]
 		} 
-		self.voltage_cmpl = widgets.QUnitSelector.QUnitSelector(self.voltage_cmpl_config)	
+		self.voltage_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_cmpl_config)	
 		self.voltage_cmpl.unit_value.valueChanged.connect(self.update_cmpl)
 		self.voltage_cmpl.unit_select.currentTextChanged.connect(self.update_cmpl)
 
@@ -228,7 +227,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [0.1]
 		}
-		self.voltage_delay = widgets.QUnitSelector.QUnitSelector(self.voltage_delay_config)
+		self.voltage_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_delay_config)
 
 		# Pack selectors into layout
 		self.voltage_layout.addWidget(self.voltage_bias)
@@ -255,7 +254,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default" 	: [1.0, "m"]
 		} 
-		self.current_bias = widgets.QUnitSelector.QUnitSelector(self.current_bias_config)
+		self.current_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_bias_config)
 		self.current_bias.unit_value.valueChanged.connect(self.update_bias)
 		self.current_bias.unit_select.currentTextChanged.connect(self.update_bias)
 
@@ -269,7 +268,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [1, ""]
 		} 
-		self.current_cmpl = widgets.QUnitSelector.QUnitSelector(self.current_cmpl_config)	
+		self.current_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_cmpl_config)	
 		self.current_cmpl.unit_value.valueChanged.connect(self.update_cmpl)
 		self.current_cmpl.unit_select.currentTextChanged.connect(self.update_cmpl)
 
@@ -281,7 +280,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [0.1]
 		}
-		self.current_delay = widgets.QUnitSelector.QUnitSelector(self.current_delay_config)
+		self.current_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_delay_config)
 
 		# Pack selectors into layout
 		self.current_layout.addWidget(self.current_bias)
@@ -295,10 +294,11 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 	# Dynamic Plotting Capability
 	def gen_bias_plot(self): 		
 
-		# Create QDynamicPlot Object (inherits QWidget) 
-		self.plot = widgets.QDynamicPlot.QDynamicPlot()
+		# Create QVisaDynamicPlot Object (inherits QWidget) 
+		self.plot = widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
+		self.plot.add_subplot(111)
 		self.plot.set_axes_labels("Time (s)", "Current (A)")
-		self.plot.add_axes()
+		self.plot.refresh_canvas(supress_warning=True)		
 
 		return self.plot
 
@@ -338,7 +338,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 
 			# Update plot axes and refresh
 			self.plot.set_axes_labels("Time (s)", "Current (A)")
-			self.plot._refresh_axes() # Here we call the internal method (no dialogue)
+			self.plot.refresh_canvas(supress_warning=True)
 
 		# Switch to current page	
 		if self.src_select.currentText() == "Current":
@@ -352,11 +352,11 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 
 			# Update plot axes and refresh
 			self.plot.set_axes_labels("Time (s)", "Voltage (V)")
-			self.plot._refresh_axes() # Here we call the internal method (no dialogue)
+			self.plot.refresh_canvas(supress_warning=True)
 
 
 		# Enforce data/plot consistency
-		if self.plot.hlist == []:
+		if self.plot.get_axes_handles() == {}:
 			self._reset_data()	
 
 
@@ -369,18 +369,17 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 
 		# Create a unique data key
 		m = hashlib.sha256()
-		m.update(str("bias@%s"%str(time.time())).encode() )		
-		m.hexdigest()[:7]
+		m.update(str("bias@%s"%str(time.time())).encode() )
 
 		# Measurement key
-		_meas_key = "bias %s"%m.hexdigest()[:6]
+		_meas_key = "bias %s"%m.hexdigest()[:7]
 
 		# Add to data
 		self._add_meas_key(_meas_key)
 		self._set_data_fields(_meas_key, ["t", "V", "I", "P"])
 
 		# Voltage and current arrays
-		handle = self.plot.add_handle()
+		handle = self.plot.add_axes_handle(111, _meas_key)
 		start  = time.time()
 		
 		# Thread loop
@@ -411,8 +410,8 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			self._data[_meas_key]["I"].append( float(_buffer[1]) )
 			self._data[_meas_key]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
 
-			self.plot.update_handle(handle, float(time.time() - start), float(_p))
-			self.plot._draw_canvas()
+			self.plot.update_axes_handle(_meas_key, float(time.time() - start), float(_p))
+			self.plot.update_canvas()
 
 
 	# UI output on state (measurement)
@@ -426,7 +425,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			self.src_select.setEnabled(False)
 			
 			# Turn output ON
-			self._enable_save(False)
+			self.save_widget.setEnabled(False)
 			self.keithley().output_on()
 
 			# Create execution thread for measurement
@@ -443,9 +442,9 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			# Update UI for OFF state
 			self.output_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )			
-			
-			self._enable_save(True)
-			self._save_button.setEnabled(True)
+			self.src_select.setEnabled(True)
+
+			self.save_widget.setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False

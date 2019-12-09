@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyConfig -> QVisaConfig
+# 	QKeithleyConfig -> QVisaConfigure
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -31,8 +31,8 @@ import numpy as np
 # Import device drivers
 import drivers.keithley2400
 
-# Import QVisaConfig
-import widgets.QVisaConfig
+# Import QVisaConfigure
+import widgets.QVisaConfigure
 
 # Import QT backends
 import os
@@ -42,11 +42,11 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 
 
-class QKeithleyConfig(widgets.QVisaConfig.QVisaConfig):
+class QKeithleyConfig(widgets.QVisaConfigure.QVisaConfigure):
 
 	def __init__(self):
 
-		# Inherits QVisaConfig -> QWidget
+		# Inherits QVisaConfigure -> QWidget
 		super(QKeithleyConfig, self).__init__(self)	
 
 		# Create Icon for QMessageBox

@@ -36,8 +36,8 @@ import numpy as np
 
 # Import custom widgets
 import widgets.QVisaApplication
-import widgets.QUnitSelector
-import widgets.QDynamicPlot 
+import widgets.QVisaUnitSelector
+import widgets.QVisaDynamicPlot 
 
 
 # Import QT backends
@@ -65,17 +65,16 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 	# Wrapper method to get keitley write handle
 	# 	Returns the pyVisaDevice object
 	def keithley(self):
-		return self._config._get_inst_byname(self.inst_select.currentText())
+		return self._get_inst_byname( self.inst_widget.currentText() )
 
-	# Method to reset sweep on window switch
+	# Method to refresh the widget
 	def refresh(self):
 	
 		# If add insturments have been initialized
-		if self._config._get_inst_handles() is not None:
+		if self._get_inst_handles() is not None:
 
-			# Reset the widget
-			self.inst_select.clear()
-			self.inst_select.addItems(self._config._get_inst_names())
+			# Reset the widget and add insturments
+			self.inst_widget.refresh( self )
 
 			# Update sweep parameters and enable output button
 			self.meas_button.setEnabled(True)
@@ -151,7 +150,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 	def gen_main_layout(self):
 	
 		# Create Icon for QMessageBox
-		self.icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))	
+		self._set_icon( QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico")))	
 		
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
@@ -164,6 +163,10 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 	def gen_sweep_ctrl(self): 
 
 		self.ctl_layout = QVBoxLayout()
+
+		# Insturement selector and save widget
+		self.inst_widget = self._gen_inst_widget()
+		self.save_widget = self._gen_save_widget()
 
 		#####################################
 		#  SWEEP STATE MACHINE AND BUTTON
@@ -237,14 +240,14 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 		self.ctl_layout.addWidget(self.meas_button)
 
 		# Sweep configuration controls
-		self.ctl_layout.addWidget(self._gen_hbox_widget([self.inst_select, self.inst_select_label]))
+		self.ctl_layout.addWidget(self.inst_widget)
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.sweep_select, self.sweep_select_label]))
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.sweep_hist, self.sweep_hist_label]))
 		self.ctl_layout.addWidget(self.sweep_pages)
 
 		# Spacer and save widget
 		self.ctl_layout.addStretch(1)
-		self.ctl_layout.addWidget(self._gen_save_widget())
+		self.ctl_layout.addWidget(self.save_widget)
 	
 		# Positioning
 		self.ctl_layout.setContentsMargins(0,15,0,20)
@@ -267,7 +270,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [-1.0, ""]
 		} 
-		self.voltage_start = widgets.QUnitSelector.QUnitSelector(self.voltage_start_config)
+		self.voltage_start = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_start_config)
 
 		# Sweep Stop
 		self.voltage_stop_config={
@@ -279,7 +282,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [1.0, ""]
 		} 
-		self.voltage_stop = widgets.QUnitSelector.QUnitSelector(self.voltage_stop_config)
+		self.voltage_stop = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_stop_config)
 
 		# Compliance Spinbox
 		self.voltage_cmpl_config={
@@ -291,7 +294,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [100, "m"]
 		} 
-		self.voltage_cmpl = widgets.QUnitSelector.QUnitSelector(self.voltage_cmpl_config)	
+		self.voltage_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_cmpl_config)	
 
 		# Number of points
 		self.voltage_npts_config={
@@ -301,7 +304,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [11.0]
 		}
-		self.voltage_npts = widgets.QUnitSelector.QUnitSelector(self.voltage_npts_config)
+		self.voltage_npts = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_npts_config)
 
 		# Measurement Delay
 		self.voltage_delay_config={
@@ -311,7 +314,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [0.1]
 		}
-		self.voltage_delay = widgets.QUnitSelector.QUnitSelector(self.voltage_delay_config)
+		self.voltage_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_delay_config)
 
 		# Pack selectors into layout
 		self.voltage_layout.addWidget(self.voltage_start)
@@ -341,7 +344,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [0.0, "m"]
 		} 
-		self.current_start = widgets.QUnitSelector.QUnitSelector(self.current_start_config)
+		self.current_start = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_start_config)
 
 		# Sweep Stop
 		self.current_stop_config={
@@ -353,7 +356,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [100, "m"]
 		} 
-		self.current_stop = widgets.QUnitSelector.QUnitSelector(self.current_stop_config)
+		self.current_stop = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_stop_config)
 
 		# Compliance Spinbox
 		self.current_cmpl_config={
@@ -365,7 +368,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [1.0, ""]
 		} 
-		self.current_cmpl = widgets.QUnitSelector.QUnitSelector(self.current_cmpl_config)
+		self.current_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_cmpl_config)
 
 		# Number of points
 		self.current_npts_config={
@@ -375,7 +378,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [11.0]
 		}
-		self.current_npts = widgets.QUnitSelector.QUnitSelector(self.current_npts_config)
+		self.current_npts = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_npts_config)
 
 		# Measurement Delay
 		self.current_delay_config={
@@ -385,7 +388,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [0.1]
 		}
-		self.current_delay = widgets.QUnitSelector.QUnitSelector(self.current_delay_config)			
+		self.current_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_delay_config)			
 
 		# Pack selectors into layout
 		self.current_layout.addWidget(self.current_start)
@@ -402,8 +405,8 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 	# Dynamic Plotting Capability
 	def gen_sweep_plot(self): 		
 
-		# Create QDynamicPlot object (inherits QWidget) 
-		self.plot = widgets.QDynamicPlot.QDynamicPlot()
+		# Create QVisaDynamicPlot object (inherits QWidget) 
+		self.plot = widgets.QVisaDynamicPlot.QVisaDynamicPlot()
 		self.plot.set_axes_labels("Voltage (V)", "Current (A)")
 		self.plot.add_axes()
 
@@ -546,7 +549,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			# Update UI button to abort 
 			self.meas_button.setStyleSheet(
 				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
-			self._enable_save(False)
+			self.save_widget.setEnabled(False)
 
 	 		# Run the measurement thread function
 			self.thread = threading.Thread(target=self.exec_sweep_thread, args=())
@@ -561,7 +564,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			msg.setIcon(QMessageBox.Warning)
 			msg.setText("Keithley not configured")
 			msg.setWindowTitle("Sweep Info")
-			msg.setWindowIcon(self.icon)
+			msg.setWindowIcon(self._get_icon())
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()
 
@@ -574,7 +577,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			# Update UI button to start state
 			self.meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-			self._enable_save(True)
+			self.save_widget.setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False

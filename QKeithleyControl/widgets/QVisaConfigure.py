@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyControl
+# 	QKeithleyConnfigure -> QWidget
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -40,7 +40,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
 # object to QVisaWidget objects which can interact with the insturments
 #
 
-class QVisaConfig(QWidget):
+class QVisaConfigure(QWidget):
 
 	# Initialization
 	def __init__(self, *args, **kwargs):

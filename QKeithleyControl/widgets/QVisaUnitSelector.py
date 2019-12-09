@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QUnitSelector.py
+# 	QVisaUnitSelector -> QWidget
 # 	Copyright (C) 2019 mwchalmers
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QComboBox, QSpinB
 from PyQt5.QtCore import Qt, QSize
 
 # Unit selector widget
-class QUnitSelector(QWidget):
+class QVisaUnitSelector(QWidget):
 
 	def __init__(self, config):
 
