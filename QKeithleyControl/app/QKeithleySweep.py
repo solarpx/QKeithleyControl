@@ -27,7 +27,6 @@
 import os
 import sys
 import time
-import hashlib
 import threading
 
 # Import visa and numpy
@@ -327,7 +326,6 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 		# Set layout 
 		self.voltage_sweep.setLayout(self.voltage_layout)	
 
-
 	def gen_current_sweep(self):
 	
 		# New QWidget
@@ -411,8 +409,8 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 		self.plot.set_axes_labels("111", "Voltage (V)", "Current (A)")
 		self.plot.refresh_canvas(supress_warning=True)		
 
-		# Connect clear plot button to update_sweep_ctrl
-		# self.plot.refresh.clicked.connect(self.update_sweep_ctrl)
+		# Connect plot refresh button to application _reset_data method
+		self.plot.set_mpl_refresh_callback( "_reset_data" )
 
 		# Return the plot
 		return self.plot		
@@ -424,20 +422,38 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 	# Sweep control dynamic update
 	def update_sweep_ctrl(self):
 
-		# Enforce data/plot consistency
-		self.plot.refresh_axes()
-		if self.plot.hlist == []:
-			self._reset_data()
+		# If we answer yes to the data clear dialoge
+		if self.plot.refresh_canvas(supress_warning=False):
 
-		# Switch to voltage sweep page
-		if self.sweep_select.currentText() == "Voltage":
-			self.sweep_pages.setCurrentIndex(0)
-			self.update_sweep_params()
+			# Switch to voltage sweep page
+			if self.sweep_select.currentText() == "Voltage":
+				self.sweep_pages.setCurrentIndex(0)
+				self.update_sweep_params()
 
-		# Switch to current sweep page
-		if self.sweep_select.currentText() == "Current":		
-			self.sweep_pages.setCurrentIndex(1)
-			self.update_sweep_params()
+			# Switch to current sweep page
+			if self.sweep_select.currentText() == "Current":		
+				self.sweep_pages.setCurrentIndex(1)
+				self.update_sweep_params()
+
+		# Otherwise revert sweep_select and block signals to 
+		# prevent update_sweep_ctrl loop
+		else: 		
+
+			if self.sweep_select.currentText() == "Current":
+
+				self.sweep_select.blockSignals(True)
+				self.sweep_select.setCurrentText("Voltage")
+				self.sweep_select.blockSignals(False)
+
+			elif self.sweep_select.currentText() == "Voltage":
+
+				self.sweep_select.blockSignals(True)
+				self.sweep_select.setCurrentText("Current")
+				self.sweep_select.blockSignals(False)
+
+			else:
+				pass	
+
 
 	# Create Measurement 
 	def update_sweep_params(self):
@@ -445,29 +461,37 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 		# Set up v-source(i-compliance) on keithley 
 		if self.sweep_select.currentText() == "Voltage":
 			
-			self.keithley().voltage_src()
-			self.keithley().set_voltage(0.0)
-			self.keithley().current_cmp(self.voltage_cmpl.value())
-
 			# Set sweeep paramaters
 			self.set_sweep_params(
 				self.voltage_start.value(), 
 				self.voltage_stop.value(), 
 				self.voltage_npts.value())
 
+			# Set keithley as voltage source
+			if self.keithley() is not None:
+	
+				self.keithley().voltage_src()
+				self.keithley().set_voltage(0.0)
+				self.keithley().current_cmp(self.voltage_cmpl.value())
+
+	
 
 		# Set up i-source(v-compliance) on keithley 
 		if self.sweep_select.currentText() == "Current":
-
-			self.keithley().current_src()
-			self.keithley().set_current(0.0)
-			self.keithley().voltage_cmp(self.current_cmpl.value())
 
 			# Set sweeep paramaters
 			self.set_sweep_params(
 				self.current_start.value(), 
 				self.current_stop.value(), 
 				self.current_npts.value())
+
+	
+			# Set keithley as voltage source
+			if self.keithley() is not None:
+			
+				self.keithley().current_src()
+				self.keithley().set_current(0.0)
+				self.keithley().voltage_cmp(self.current_cmpl.value())
 
 
 	#####################################
@@ -545,24 +569,18 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			# Update UI button to abort 
 			self.meas_button.setStyleSheet(
 				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
+
+			# Disable controls
+			self.sweep_select.setEnabled(False)
+			self.inst_widget.setEnabled(False)
 			self.save_widget.setEnabled(False)
+			self.plot.mpl_refresh_setEnabled(False)
 
 	 		# Run the measurement thread function
 			self.thread = threading.Thread(target=self.exec_sweep_thread, args=())
 			self.thread.daemon = True						# Daemonize thread
 			self.thread.start()         					# Start the execution
 			self.thread_running = True
-
-		# Otherwise show infobox and revert state
-		else:
-			self.meas_button.click()
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("Keithley not configured")
-			msg.setWindowTitle("Sweep Info")
-			msg.setWindowIcon(self._get_icon())
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
 
 	# Function we run when we enter abort state
 	def exec_sweep_stop(self):
@@ -573,7 +591,12 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 			# Update UI button to start state
 			self.meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+
+			# Enable controls
+			self.sweep_select.setEnabled(True)
+			self.inst_widget.setEnabled(True)
 			self.save_widget.setEnabled(True)
+			self.plot.mpl_refresh_setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False

@@ -96,7 +96,7 @@ class QVisaSaveWidget(QWidget):
 				with f:	
 		
 					# Write data header
-					f.write("*! QVisaWidget v1.1\n")
+					f.write("*! QVisaDatafile v1.1\n")
 					if self._note.text() != "":
 						f.write("*! NOTE %s\n"%self._note.text())
 					

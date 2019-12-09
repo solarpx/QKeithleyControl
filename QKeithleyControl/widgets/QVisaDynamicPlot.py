@@ -92,6 +92,10 @@ class QVisaDynamicPlot(QWidget):
 		self.mpl_refresh.clicked.connect(self.refresh_canvas)
 		self.mpl_refresh_callback = None
 
+	# Method to enable and disable mpl_refresh button
+	def mpl_refresh_setEnabled(self, _bool):
+		self.mpl_refresh.setEnabled(_bool)	
+
 	# Add mechanism to pass app method to run on mpl_refresh.clicked
 	def set_mpl_refresh_callback(self, __func__):	
 		self.mpl_refresh_callback = str(__func__)

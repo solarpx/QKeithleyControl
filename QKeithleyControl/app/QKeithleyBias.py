@@ -444,17 +444,17 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			self.src_select.setEnabled(False)
 			self.inst_widget.setEnabled(False)
 			self.save_widget.setEnabled(False)
-
 			self.voltage_cmpl.setEnabled(False)
 			self.current_cmpl.setEnabled(False)
+			self.plot.mpl_refresh_setEnabled(False)
 
 			# Turn output ON
 			self.keithley().output_on()
 
 			# Create execution thread for measurement
 			self.thread = threading.Thread(target=self.exec_output_thread, args=())
-			self.thread.daemon = True						# Daemonize thread
-			self.thread.start()         					# Start the execution
+			self.thread.daemon = True		# Daemonize thread
+			self.thread.start()				# Start the execution
 			self.thread_running = True
 
 	# UI output on state
@@ -470,9 +470,9 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			self.src_select.setEnabled(True)
 			self.inst_widget.setEnabled(True)
 			self.save_widget.setEnabled(True)
-
 			self.voltage_cmpl.setEnabled(True)
 			self.current_cmpl.setEnabled(True)
+			self.plot.mpl_refresh_setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False
