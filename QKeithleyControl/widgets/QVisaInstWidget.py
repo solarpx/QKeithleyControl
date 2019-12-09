@@ -62,6 +62,12 @@ class QVisaInstWidget(QWidget):
 		self._select.clear()
 		self._select.addItems( _app._get_inst_names() )	
 
-	# Get insturment text	
+	# Wrapper method for currentText	
 	def currentText(self):
 		return self._select.currentText()
+	
+	# Wrapper method for setEnabled 	
+	def setEnabled(self, _bool):
+
+		self._select.setEnabled(_bool)
+	

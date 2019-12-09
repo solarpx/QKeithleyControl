@@ -478,16 +478,11 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 	def exec_sweep_thread(self):
 
 		# Create a unique data key
-		m = hashlib.sha256()
-		m.update(str("sweep@%s"%str(time.time())).encode() )		
-		m.hexdigest()[:7]
-
-		# Measurement key
-		_meas_key = "sweep %s"%m.hexdigest()[:6]
+		_meas_key, _meas_str = self._meas_keygen(_key="sweep")
 
 		# Add to data
-		self._add_meas_key(_meas_key)
-		self._set_data_fields(_meas_key, ["t", "V", "I", "P"])
+		self._add_meas_key(_meas_str)
+		self._set_data_fields(_meas_str, ["t", "V", "I", "P"])
 
 		# Generate function pointer for voltage/current mode
 		if self.sweep_select.currentText() == "Voltage":
@@ -521,13 +516,13 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 					time.sleep(__delay__)
 
 				# Extract data from buffer
-				self._data[_meas_key]["t"].append( float( time.time() - start ) )
-				self._data[_meas_key]["V"].append( float(_buffer[0]) )
-				self._data[_meas_key]["I"].append( float(_buffer[1]) )
-				self._data[_meas_key]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
+				self._data[_meas_str]["t"].append( float( time.time() - start ) )
+				self._data[_meas_str]["V"].append( float(_buffer[0]) )
+				self._data[_meas_str]["I"].append( float(_buffer[1]) )
+				self._data[_meas_str]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
 
-				self.plot.append_handle_data(handle, float(_buffer[0]), float(_buffer[1]))
-				self.plot._draw_canvas()	
+				self.plot.append_handle_data(_meas_key, float(_buffer[0]), float(_buffer[1]))
+				self.plot.update_canvas()	
 		
 		# Reset Keithley
 		__func__(0.0)

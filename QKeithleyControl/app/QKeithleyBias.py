@@ -27,7 +27,6 @@
 import os
 import sys
 import time
-import hashlib
 import threading
 
 # Import visa and numpy
@@ -40,7 +39,7 @@ import widgets.QVisaUnitSelector
 import widgets.QVisaDynamicPlot 
 
 # Import QT backends
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QPushButton, QLabel, QFileDialog, QLineEdit, QStackedWidget
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QPushButton, QLabel, QStackedWidget
 from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
@@ -300,6 +299,9 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 		self.plot.set_axes_labels("111", "Time (s)", "Current (A)")
 		self.plot.refresh_canvas(supress_warning=True)		
 
+		# Connect plot refresh button to application _reset_data method
+		self.plot.set_mpl_refresh_callback( "_reset_data" )
+
 		return self.plot
 
 	#####################################
@@ -327,39 +329,58 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 	# Update bias control selectors
 	def update_bias_ctrl(self):
 	
-		# Switch to voltage page
-		if self.src_select.currentText() == "Voltage":
-			self.src_pages.setCurrentIndex(0)
+		# If we answer yes to the data clear dialoge
+		if self.plot.refresh_canvas(supress_warning=False):
 
-			# Keithley to voltage source
-			self.keithley().voltage_src()
-			self.update_bias()
-			self.update_cmpl()
+			# Switch to voltage page
+			if self.src_select.currentText() == "Voltage":
 
-			# Update plot axes and refresh
-			self.plot.set_axes_labels("Time (s)", "Current (A)")
-			self.plot.refresh_canvas(supress_warning=True)
+				# Update src_pages and plot
+				self.src_pages.setCurrentIndex(0)
+				self.plot.set_axes_labels("111", "Time (s)", "Current (A)")
+				self.plot.refresh_canvas(supress_warning=True)
+				
+				# Keithley to voltage source
+				if self.keithley() is not None:
 
-		# Switch to current page	
-		if self.src_select.currentText() == "Current":
+					self.keithley().voltage_src()
+					self.update_bias()
+					self.update_cmpl()
 
-			self.src_pages.setCurrentIndex(1)
+			# Switch to current page	
+			if self.src_select.currentText() == "Current":
 
-			# Keithley to current source
-			self.keithley().current_src()
-			self.update_bias()
-			self.update_cmpl()
+				# Update src_pages and plot
+				self.src_pages.setCurrentIndex(1)
+				self.plot.set_axes_labels("111", "Time (s)", "Voltage (V)")
+				self.plot.refresh_canvas(supress_warning=True)
 
-			# Update plot axes and refresh
-			self.plot.set_axes_labels("Time (s)", "Voltage (V)")
-			self.plot.refresh_canvas(supress_warning=True)
+				# Keithley to current source
+				if self.keithley() is not None:
+	
+					self.keithley().current_src()
+					self.update_bias()
+					self.update_cmpl()
 
+		# Otherwise revert src_select and block signals to 
+		# prevent update_bias_ctrl loop
+		else: 		
 
-		# Enforce data/plot consistency
-		if self.plot.get_axes_handles() == {}:
-			self._reset_data()	
+			if self.src_select.currentText() == "Current":
 
+				self.src_select.blockSignals(True)
+				self.src_select.setCurrentText("Voltage")
+				self.src_select.blockSignals(False)
 
+			elif self.src_select.currentText() == "Voltage":
+
+				self.src_select.blockSignals(True)
+				self.src_select.setCurrentText("Current")
+				self.src_select.blockSignals(False)
+
+			else:
+				pass
+			
 	#####################################
 	#  MEASUREMENT EXECUTION THREADS
 	#			
@@ -368,15 +389,11 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 	def exec_output_thread(self):	
 
 		# Create a unique data key
-		m = hashlib.sha256()
-		m.update(str("bias@%s"%str(time.time())).encode() )
-
-		# Measurement key
-		_meas_key = "bias %s"%m.hexdigest()[:7]
+		_meas_key, _meas_str = self._meas_keygen(_key="bias")
 
 		# Add to data
-		self._add_meas_key(_meas_key)
-		self._set_data_fields(_meas_key, ["t", "V", "I", "P"])
+		self._add_meas_key(_meas_str)
+		self._set_data_fields(_meas_str, ["t", "V", "I", "P"])
 
 		# Voltage and current arrays
 		handle = self.plot.add_axes_handle(111, _meas_key)
@@ -405,10 +422,10 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 					time.sleep(self.voltage_delay.value())
 
 			# Extract data from buffer
-			self._data[_meas_key]["t"].append( float( time.time() - start ) )
-			self._data[_meas_key]["V"].append( float(_buffer[0]) )
-			self._data[_meas_key]["I"].append( float(_buffer[1]) )
-			self._data[_meas_key]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
+			self._data[_meas_str]["t"].append( float( time.time() - start ) )
+			self._data[_meas_str]["V"].append( float(_buffer[0]) )
+			self._data[_meas_str]["I"].append( float(_buffer[1]) )
+			self._data[_meas_str]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
 
 			self.plot.append_handle_data(_meas_key, float(time.time() - start), float(_p))
 			self.plot.update_canvas()
@@ -422,10 +439,16 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			# Update UI for ON state
 			self.output_button.setStyleSheet(
 				"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
-			self.src_select.setEnabled(False)
 			
-			# Turn output ON
+			# Disable controls
+			self.src_select.setEnabled(False)
+			self.inst_widget.setEnabled(False)
 			self.save_widget.setEnabled(False)
+
+			self.voltage_cmpl.setEnabled(False)
+			self.current_cmpl.setEnabled(False)
+
+			# Turn output ON
 			self.keithley().output_on()
 
 			# Create execution thread for measurement
@@ -442,9 +465,14 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			# Update UI for OFF state
 			self.output_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )			
-			self.src_select.setEnabled(True)
 
+			# Enable controls
+			self.src_select.setEnabled(True)
+			self.inst_widget.setEnabled(True)
 			self.save_widget.setEnabled(True)
+
+			self.voltage_cmpl.setEnabled(True)
+			self.current_cmpl.setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False

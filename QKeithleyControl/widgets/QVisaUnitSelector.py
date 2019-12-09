@@ -218,3 +218,8 @@ class QVisaUnitSelector(QWidget):
 		
 		else:
 			return self.unit_value.value()
+
+	# Wrapper method for setEnabled 	
+	def setEnabled(self, _bool):
+		self.unit_value.setEnabled(_bool)
+		self.unit_select.setEnabled(_bool)

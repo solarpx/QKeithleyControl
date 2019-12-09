@@ -532,10 +532,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Create a unique data key
 		m = hashlib.sha256()
 		m.update(str("sweep@%s"%str(time.time())).encode() )		
-		m.hexdigest()[:7]
-
-		# Measurement key
-		_meas_key = "sweep %s"%m.hexdigest()[:6]
+		_meas_key = "sweep %s"%m.hexdigest()[:7]
 
 		# Add to data
 		self._add_meas_key(_meas_key)
@@ -622,13 +619,15 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	#	
 	def exec_voc_thread(self):
 		
+
 		pass
+
 
 		# # Initialize Voc data-structure
 		# self._data["Voc"] = {"t" : [], "Voc" : [], "Ioc" : []}
 
 		# # Initialize Voc plot
-		# self.voc_plot._refresh_axes()
+		# self.voc_plot.refresh_axes()
 		# self.plot_select.setCurrentIndex(1)
 		# handle = self.voc_plot.add_handle()
 		# start  = float(time.time())

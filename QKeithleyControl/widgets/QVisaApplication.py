@@ -23,6 +23,8 @@
 # 	SOFTWARE.
 
 #!/usr/bin/env python 
+import time
+import hashlib 
 
 # Import QT backends
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
@@ -87,6 +89,11 @@ class QVisaApplication(QWidget):
 	def _reset_data(self):
 		self._data = {}	
 
+	# Keygen
+	def _meas_keygen(self, _key):
+		m = hashlib.sha256()
+		m.update( str( "%s@%s"%( _key, str(time.time())) ).encode() )
+		return ( str(m.hexdigest()[:7]) ,"%s %s"%(_key, str( m.hexdigest()[:7] ) ) )
 
 	#####################################
 	#  CONFIG WRAPPER METHODS

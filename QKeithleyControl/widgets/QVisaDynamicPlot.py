@@ -90,6 +90,17 @@ class QVisaDynamicPlot(QWidget):
 		# Refresh button
 		self.mpl_refresh = QPushButton("Clear Data")
 		self.mpl_refresh.clicked.connect(self.refresh_canvas)
+		self.mpl_refresh_callback = None
+
+	# Add mechanism to pass app method to run on mpl_refresh.clicked
+	def set_mpl_refresh_callback(self, __func__):	
+		self.mpl_refresh_callback = str(__func__)
+
+	# Run app method attached to mpl_refresh.clicked
+	def _run_mpl_refresh_callback(self):	
+		if self.mpl_refresh_callback is not None:					
+			__func__ = getattr(self._app, self.mpl_refresh_callback)
+			__func__()	
 
 	# Add axes object to widget
 	def add_subplot(self, _key=111, twinx=False):
@@ -182,10 +193,17 @@ class QVisaDynamicPlot(QWidget):
 			self.msg_clear = msg.exec_()
 
 			if self.msg_clear == QMessageBox.Yes:
-				self._refresh_canvas()		
-	
+				self._run_mpl_refresh_callback()
+				self._refresh_canvas()
+				return True
+
+			else:
+				return False
+
 		else:
+			self._run_mpl_refresh_callback()
 			self._refresh_canvas()		
+			return True
 
 	# Internal method to clear axes		
 	def _refresh_canvas(self):
