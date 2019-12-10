@@ -29,10 +29,10 @@ import time
 import numpy as np
 
 # Import device drivers
-from pyQtVisa.drivers import keithley2400
+from PyQtVisa.drivers import keithley2400
 
 # Import QVisaConfigure
-from pyQtVisa import QVisaConfigure
+from PyQtVisa import QVisaConfigure
 
 # Import QKeithleyWidget
 import app.QKeithleyWidget

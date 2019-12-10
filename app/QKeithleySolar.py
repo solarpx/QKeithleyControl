@@ -35,11 +35,11 @@ import visa
 import numpy as np
 
 # Import QVisaApplication
-from pyQtVisa import QVisaApplication
+from PyQtVisa import QVisaApplication
 
-# Import pyQtVisa widgets
-from pyQtVisa.widgets import QVisaUnitSelector
-from pyQtVisa.widgets import QVisaDynamicPlot 
+# Import PyQtVisa widgets
+from PyQtVisa.widgets import QVisaUnitSelector
+from PyQtVisa.widgets import QVisaDynamicPlot 
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QSizePolicy, QLineEdit
