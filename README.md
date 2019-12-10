@@ -23,26 +23,24 @@ Integration Time | `0.01-10.0`        | Specified in *Power Line Cycles*(PLCs). 
 
 # IV-Bias Mode
 
-IV bias mode allows one to use the Keithley as a **voltage source** or a **current source**. To enter IV-Bias mode, use the 
-**IV-Bias Control** option in the **Select Measurement** menu. To operate the sourcemeter, select the level and corresponding compliance value in the configuration panel and click **Change Bias** followed by **Output**. Be sure to set a corresponding current(voltage) compliance level when operating in voltage(current) source mode respectively. The **compliance level** determines the maximum amount of current(voltage) to apply when operating the sourcementer in voltage(current) source mode. Voltage source or current source mode operation can be selected in the dropdown menu in the configuration panel.
-
-### IV-Bias Controls
-![QKeithleyControl_IVBias](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyBias.png)
+IV bias mode allows one to use the Keithley as a programable **voltage source** or a **current source**. To enter IV-Bias mode, 
+select the **IV-Bias Control** application option in the **Select Measurement** menu. To operate the sourcemeter, select the level 
+and corresponding compliance value in the configuration panel. These values will be transmitted dynamically to the Keithley. To turn 
+on the output and monitor data, click the **Output** button. To turn off the output, simply clicking **Output** when operating. Since, the measurement will terminate after the next data point is aquired. The **Measurement Interval** setting can be used to determine how often the sourcemeter aquires data. Note that in the case of long, **Measurement Intervals** it will take one measurement interval before the output terminates. Be sure to set a corresponding current(voltage) compliance level when operating in voltage(current) source mode respectively. The **compliance level** determines the maximum amount of current(voltage) to apply when operating the sourcementer in voltage(current) source mode. Voltage source or current source mode operation can be selected in the dropdown menu in the configuration panel. The compliance cannot be changed dynamically while the output is on and measuring. 
 
 ### IV-Bias Operation
-The **Output** button reflects the state of the output on the insturment. When operating, it is possible to dynamically change
-the output level without turning off the output. The plot shows the corresponding measured value as a function of time for the 
-bias applied. To update a bias level and compliance, simply edit the corresponding values and click on **Change Bias**. The 
-**Measurement Interval** parameter allows one to control the time between individual sense samples. When set to zero, the delay will reflect the insuturment integration time assinged in **Configuration** along with software runtime. In order to protect the unit, the 
-following `20W` hard limits are placed on bias mode operation.
+![QKeithleyControl_IVBias](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyBias.png)
 
+The **Output** button reflects the state of the output on the insturment. When operating, it is possible to dynamically change
+the output level without turning off the output by editing the **Bias Level** parameter. The plot shows the corresponding measured value as a function of time. The **Measurement Interval** parameter allows one to control the time between individual sense samples. When set to zero, the delay will reflect the insuturment integration time assinged in **Configuration** along with software runtime. 
+In order to protect the unit, the following `20W` hard limits are placed on bias mode operation.
+ 
 Mode             | Limit              | Compliance  
 ------------     | -------------      | -------------
 Voltage Source   | `+/-20V`           | `1A`  
 Current Source   | `+/-1A`            | `+/-20V`
 
-### Saving Data
-After performing a measurement in bias mode, QKeithleyControl gives you the option to save your data traces. This is done by 
+After performing a measurement in bias mode, QKeithleyBias gives you the option to save your data traces. This is done by 
 selecting **Save Data**. Bias mode data will be saved in a *tab deliminated* with four columns: **elapsed time(s)**, **voltage(V)**, **current (A)**, **dissapated power (W)**. 
 
 **NOTE:** The data will be saved is tied to the traces that are shown in plot. When axes are cleared by invoking **Clear Data** in 
@@ -56,7 +54,7 @@ sweep to go from start value to stop value to start value in a forward sweep fol
 time delay parameter between sweep measurement points of up to ten minutes. 
 
 ### IV-Sweep Controls
-![QKeithleyControl_IVSweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleySweep.PNG)
+![QKeithleyControl_IVSweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleySweep.png)
 
 ### IV-Sweep Operation
 To create a sweep, enter your desired sweep parameters and select **Configure Sweep**. After this, click **Measure Sweep** to 
