@@ -120,7 +120,10 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 		#		
 
 		# Insturement selector and save widget
+		self.inst_widget_label = QLabel("Select Device")
 		self.inst_widget = self._gen_inst_widget()
+		self.inst_widget.setFixedWidth(200)
+
 		self.save_widget = self._gen_save_widget()
 
 		# Create QStateMachine for output state
@@ -171,7 +174,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 
 		# Main output and controls
 		self.ctl_layout.addWidget(self.output_button)
-		self.ctl_layout.addWidget(self.inst_widget)
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.inst_widget,self.inst_widget_label]))
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.src_select, self.src_select_label]))
 		self.ctl_layout.addWidget(self.src_pages)
 		

@@ -27,7 +27,7 @@
 import os
 
 # Import Keithley control widgets
-import app.QKeithleyConfig
+import app.QKeithleyConfigure
 import app.QKeithleyBias
 import app.QKeithleySweep 
 import app.QKeithleySolar
@@ -60,7 +60,7 @@ class QKeithleyControl(QMainWindow):
 		self.ui_stack = QStackedWidget(self)
 
 		# Create QVisaWidget for configuration mode
-		self.ui_config = app.QKeithleyConfig.QKeithleyConfig()
+		self.ui_config = app.QKeithleyConfigure.QKeithleyConfigure()
 		
 		# Create QVisaWidget for each measurement mode
 		self.ui_bias   = app.QKeithleyBias.QKeithleyBias(self.ui_config)

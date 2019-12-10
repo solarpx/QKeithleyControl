@@ -34,6 +34,9 @@ import os
 import sys
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QMessageBox 
 
+# Import QVisaWidgets
+import widgets.QVisaInstWidget
+
 # The purpouse of this object is to bind a list pyVisaDevices to a QWidget 
 # in a configuration context. The idea is to first construct a QVisaConifg
 # object which contains the list of insturment handles, and then pass the 
@@ -118,3 +121,7 @@ class QVisaConfigure(QWidget):
 		_layout.setContentsMargins(0,0,0,0)
 		_widget.setLayout(_layout)
 		return _widget
+
+	# Method to generate insturment widget
+	def _gen_inst_widget(self):
+		return widgets.QVisaInstWidget.QVisaInstWidget(self)

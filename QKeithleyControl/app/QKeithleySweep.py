@@ -164,7 +164,9 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 		self.ctl_layout = QVBoxLayout()
 
 		# Insturement selector and save widget
+		self.inst_widget_label = QLabel("Select Device")
 		self.inst_widget = self._gen_inst_widget()
+		self.inst_widget.setFixedWidth(200)
 		self.save_widget = self._gen_save_widget()
 
 		#####################################
@@ -239,7 +241,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 		self.ctl_layout.addWidget(self.meas_button)
 
 		# Sweep configuration controls
-		self.ctl_layout.addWidget(self.inst_widget)
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.inst_widget,self.inst_widget_label]))
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.sweep_select, self.sweep_select_label]))
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.sweep_hist, self.sweep_hist_label]))
 		self.ctl_layout.addWidget(self.sweep_pages)

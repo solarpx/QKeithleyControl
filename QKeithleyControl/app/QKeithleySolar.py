@@ -123,7 +123,9 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		self.ctl_layout = QVBoxLayout()
 
 		# Add insturement selector
+		self.inst_widget_label = QLabel("Select Device")
 		self.inst_widget = self._gen_inst_widget()
+		self.inst_widget.setFixedWidth(200)
 		self.save_widget = self._gen_save_widget()
 
 		# Generate (IV, Voc, MPP) container widgets
@@ -154,7 +156,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Add measurement select and measurement pages
 		self.ctl_layout.addWidget(self.meas_pages)
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.meas_select, self.meas_select_label]))
-		self.ctl_layout.addWidget(self.inst_widget)
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.inst_widget,self.inst_widget_label]))
 
 		# Pack the standard save widget
 		self.ctl_layout.addStretch(1)

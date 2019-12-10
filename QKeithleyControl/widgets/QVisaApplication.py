@@ -39,10 +39,8 @@ import widgets.QVisaSaveWidget
 #	
 
 # The purpouse of the QVisaApplication object is to bind a list pyVisaDevices to a QWidget 
-# It provides a basic framework for constructing user interfaces for nteracting with GPIB 
-# hardware. QVisaApplication also contains a structure to manipulate data and some basic 
-# tools to render controls. QVisaAppication also embeds two standard widget templates for 
-# saving data and to managing insturments.
+# It provides a basic framework for constructing user interfaces for interacting with GPIB 
+# hardware. 
 
 class QVisaApplication(QWidget):
 
@@ -149,6 +147,7 @@ class QVisaApplication(QWidget):
 		for _w in _widget_list:
 			_layout.addWidget(_w)
 
+		_layout.addStretch(1)
 		_layout.setContentsMargins(0,0,0,0)
 		_widget.setLayout(_layout)
 		return _widget	
@@ -161,6 +160,7 @@ class QVisaApplication(QWidget):
 		for _w in _widget_list:
 			_layout.addWidget(_w)
 
+		_layout.addStretch(1)
 		_layout.setContentsMargins(0,0,0,0)
 		_widget.setLayout(_layout)
 		return _widget

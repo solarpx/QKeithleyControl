@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyControl
+# 	keithley2400 insturment driver
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -36,6 +36,10 @@ class keithley2400(drivers.pyVisaDevice.pyVisaDevice):
 	def __init__(self, _addr, _name="Keithley"):
 
 		super(keithley2400, self).__init__(_addr, _name)
+
+	# Identify command
+	def idn(self):
+		return self.query('*IDN?')
 
 	# Reset command
 	def reset(self):

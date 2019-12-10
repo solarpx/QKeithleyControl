@@ -26,7 +26,7 @@
 #!/usr/bin/env python 
 
 # Import QT backends
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QComboBox, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QComboBox, QLabel
 
 # Helper class to generate insturment select widgets
 class QVisaInstWidget(QWidget):
@@ -37,23 +37,38 @@ class QVisaInstWidget(QWidget):
 		QWidget.__init__(self)
 
 		# Inst widget and layout
-		self._layout = QHBoxLayout()
+		self._layout = QVBoxLayout()
 
 		# Widget label and comboBox
-		self._label  = QLabel("Select Insturment")
-		self._select =  QComboBox()
-		self._select.setFixedWidth(200)
+		self._select = QComboBox()
+		self._select.currentTextChanged.connect(self._run_callback)
 
-		# Widget select
+		# Widget select add items
 		if _app._get_inst_names() is not None:
 			self._select.addItems( _app._get_inst_names() )
 
 		# Add widgets to layout
-		self._layout.addWidget(_app._gen_hbox_widget([self._select, self._label]))
+		self._layout.addWidget(self._select)
 		self._layout.setContentsMargins(0,0,0,0)
 
 		# Set layout
 		self.setLayout(self._layout)
+
+		# Callback function on text changed 
+		self._callback = None
+
+		# Cache reference to _app for callback
+		self._app = _app 
+
+	# Expose textChanged slot
+	def set_callback(self, __func__):	
+		self._callback = str(__func__)	
+
+	# Run the callback	
+	def _run_callback(self):
+		if self._callback is not None:					
+			__func__ = getattr(self._app, self._callback)
+			__func__()	
 
 	# Method to refresh insurment widget
 	def refresh(self,_app):
@@ -68,6 +83,12 @@ class QVisaInstWidget(QWidget):
 	
 	# Wrapper method for setEnabled 	
 	def setEnabled(self, _bool):
-
 		self._select.setEnabled(_bool)
-	
+
+	# Wrapper method for blockSignals	
+	def blockSignals(self, _bool):
+		self._select.blockSignals(_bool)
+
+	# Wrapper method for setFixedWidth
+	def setFixedWidth(self, _width):
+		self._select.setFixedWidth(int(_width))

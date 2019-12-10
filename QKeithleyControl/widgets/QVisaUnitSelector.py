@@ -39,16 +39,16 @@ class QVisaUnitSelector(QWidget):
 		QWidget.__init__(self)
 		self._base = collections.OrderedDict({"G" : 1e9, "M" : 1e6, "k" : 1e3, "": 1, "m" : 1e-3, "u" : 1e-6, "n" : 1e-9 })
 			 
-		# QUnitSelector configuration dictionary example
+		# QVisaUnitSelector configuration dictionary example
 		# {
-		#		"unit" 		: "V",
-		#		"min"		: "u",
-		#		"max"		: "",
-		#		"label"		: "Bias Level",
-		#		"limit"		: 20.0,
-		#		"signed"	: True,
-		#		"default"	: 0.0
-		# } 
+		# 	"unit" 		: "V", 
+		# 	"min"		: "u",
+		# 	"max"		: "",
+		# 	"label"		: "Voltage (V)",
+		# 	"limit"		: 1.0, 
+		# 	"signed"	: True,
+		# 	"default"	: [100, "m"]
+		# }
 		self.config = config
 	
 		# If not generating a unitless value _gen_unit_range

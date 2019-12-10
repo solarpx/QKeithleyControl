@@ -36,7 +36,7 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
 
-
+# Dynamic plotting library for QtApplications
 class QVisaDynamicPlot(QWidget):
 
 	def __init__(self, _app):

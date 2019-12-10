@@ -28,7 +28,7 @@
 # Import QT backends
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit, QLabel, QFileDialog, QMessageBox
 
-# Helper class to generate save widgets
+# Helper class to generate save widgets 
 class QVisaSaveWidget(QWidget):
 
 	def __init__(self, _app):
