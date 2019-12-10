@@ -1,16 +1,18 @@
 # QKeithleyControl
 QKeithleyControl is a user interface designed for automation of common laboratory measurement routines using Keithley 2400 
-sourcemeters. The software offers three operational modes to interact with the Keithely: **hardware configuration mode**, **IV-bias mode**, and **IV-Sweep mode**. The program flow is designed to be intuitive, allowing for users to easily configure and operate laboratory hardware. 
+sourcemeters. QKeithleyControl currently offers three applications which interact with the Keithely: The **IV-bias** application 
+allows one to use the Keithley as a programable variable voltage(current) source, and the **IV-sweep** application allows one to make current/voltage sweeps of electronic devices and test structures. The **PV-characterization** application is oriented towards 
+the characterization of photovoltaic devices. QKeithleyControl also contains a **Hardware Configuration** application which allows 
+one to initialize and configure one or more Keithley sourcemeters for use in other applications.
 
 # Hardware Configuration
-When first running the program, the user will first be greeted with basic hardware configuration options as shown in the screenshot 
-below. To initialize your Keithley sourcemeter, simply enter the GPIB address and click on **Initialize Keithley GPIB**. 
+When first running the program, the user will first be greeted with the hardware configuration application. This mode allows one 
+to initialize Keithley sourcemeters. To initialize a device,  simply enter the GPIB address and click on **Initialize Keithley GPIB**. 
+The device will then appear as selectable in the **Select Insturment** dropdown menu. 
 
-![QKeithleyControl_Config](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_Config.png)
+![QKeithleyControl_Config](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyConfiguration.png)
 
-After initialization, this page allows the user to configure essential hardware globals for insturment operation. Note that 
-configuration parameters cannot be modified prior to initialization. The configuration page allows one to modify the following
-system level parameters.
+When an insuremnt is selected, the user can modify several of its system parameters dynamically. For each Keithley initialized in the software, one has access to the following the following system level parameters.
 
 Control          | Input              | Comment  
 ------------     | -------------      | -------------
@@ -25,7 +27,7 @@ IV bias mode allows one to use the Keithley as a **voltage source** or a **curre
 **IV-Bias Control** option in the **Select Measurement** menu. To operate the sourcemeter, select the level and corresponding compliance value in the configuration panel and click **Change Bias** followed by **Output**. Be sure to set a corresponding current(voltage) compliance level when operating in voltage(current) source mode respectively. The **compliance level** determines the maximum amount of current(voltage) to apply when operating the sourcementer in voltage(current) source mode. Voltage source or current source mode operation can be selected in the dropdown menu in the configuration panel.
 
 ### IV-Bias Controls
-![QKeithleyControl_IVBias](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_IVBias.PNG)
+![QKeithleyControl_IVBias](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyBias.png)
 
 ### IV-Bias Operation
 The **Output** button reflects the state of the output on the insturment. When operating, it is possible to dynamically change
@@ -41,20 +43,8 @@ Current Source   | `+/-1A`            | `+/-20V`
 
 ### Saving Data
 After performing a measurement in bias mode, QKeithleyControl gives you the option to save your data traces. This is done by 
-selecting **Save Traces**. Bias mode data will be saved in a *tab deliminated file* with four columns: **elapsed time(s)**, **voltage(V)**, **current (A)**, **dissapated power (W)**. If multiple traces have been performed, each data trace will be saved 
-in the selected file. Below is shown an extract of data produced via an IV Bias mode measurement. Note that it is not possible 
-to save data while the device output is on.
-```
-*bias
-t			V		I		P		
-0.29004812240600586	0.7205986	0.001000028	0.0007206187767608	
-0.6402521133422852	0.7205721	0.001000029	0.0007205929965909	
-0.9899940490722656	0.720544	0.001000029	0.000720564895776	
-1.320244550704956	0.7205217	0.00100003	0.000720543315651	
-1.6602511405944824	0.7204945	0.001000029	0.0007205153943405	
-2.0056159496307373	0.7204689	0.001000029	0.0007204897935980999	
-2.3556177616119385	0.7204462	0.001000029	0.0007204670929398	
-```
+selecting **Save Data**. Bias mode data will be saved in a *tab deliminated* with four columns: **elapsed time(s)**, **voltage(V)**, **current (A)**, **dissapated power (W)**. 
+
 **NOTE:** The data will be saved is tied to the traces that are shown in plot. When axes are cleared by invoking **Clear Data** in 
 the plot, data will be deleted from memory. Be sure to save your data before clearing plots. Also, changing operation from voltage source to current source mode will invoke **Clear Data**. A dialogue is always presented to the user if data is to be deleted.
 
@@ -66,7 +56,7 @@ sweep to go from start value to stop value to start value in a forward sweep fol
 time delay parameter between sweep measurement points of up to ten minutes. 
 
 ### IV-Sweep Controls
-![QKeithleyControl_IVSweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyControl_IVSweep.PNG)
+![QKeithleyControl_IVSweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleySweep.PNG)
 
 ### IV-Sweep Operation
 To create a sweep, enter your desired sweep parameters and select **Configure Sweep**. After this, click **Measure Sweep** to 
@@ -86,6 +76,29 @@ t			V	I		P
 2.1475539207458496	0.5	6.955527e-05	3.4777635e-05	
 2.59263277053833	0.6	0.0003307777	0.00019846662	
 ```
+
+
+# QVisaData Files
+ When saving data using  
+ 
+ 
+  If multiple traces have been performed, all data traces will be saved in the selected file. Below is shown an extract of data produced via an IV Bias mode measurement. 
+```
+*! QVisaDatafile v1.1
+#! sweep 5168f9e
+t		V		I		P		
+0.3414440155029297	-1.0	-2.83979e-09	2.83979e-09	
+0.6617891788482666	-0.99215	-2.830153e-09	2.80793629895e-09	
+0.9994220733642578	-0.9843	-2.822867e-09	2.7785479881e-09	
+1.3298373222351074	-0.97645	-2.817607e-09	2.7512523551500003e-09	
+1.659815788269043	-0.96865	-2.80258e-09	2.714719117e-09	
+1.989814043045044	-0.9608	-2.803379e-09	2.6934865431999998e-09	
+2.3198494911193848	-0.95295	-2.790033e-09	2.6587619473499998e-09	
+2.6498541831970215	-0.9451	-2.795675e-09	2.6421924425e-09	
+2.9677672386169434	-0.93725	-2.790242e-09	2.6151543145e-09
+```
+ 
+ 
  
  
 # Installation
