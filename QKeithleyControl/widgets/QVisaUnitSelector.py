@@ -166,6 +166,7 @@ class QVisaUnitSelector(QWidget):
 			self.unit_value = QSpinBox()
 			self.unit_value.setFixedWidth(200)
 			self.unit_value.setValue(int(self.config["default"][0]))
+			self._update_unit_selector() 		# for limits on init
 
 		# General case (physical units)
 		else: 
