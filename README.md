@@ -10,7 +10,7 @@ When first running the program, the user will first be greeted with the hardware
 to initialize Keithley sourcemeters. To initialize a device,  simply enter the GPIB address and click on **Initialize Keithley GPIB**. 
 The device will then appear as selectable in the **Select Insturment** dropdown menu. 
 
-![QKeithleyControl_Config](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyConfiguration.png)
+![QKeithleyConfiguration](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyConfiguration.png)
 
 When an insuremnt is selected, the user can modify several of its system parameters dynamically. For each Keithley initialized in the software, one has access to the following the following system level parameters.
 
@@ -29,7 +29,7 @@ and corresponding compliance value in the configuration panel. These values will
 on the output and monitor data, click the **Output** button. To turn off the output, simply clicking **Output** when operating. Since, the measurement will terminate after the next data point is aquired. The **Measurement Interval** setting can be used to determine how often the sourcemeter aquires data. Note that in the case of long, **Measurement Intervals** it will take one measurement interval before the output terminates. Be sure to set a corresponding current(voltage) compliance level when operating in voltage(current) source mode respectively. The **compliance level** determines the maximum amount of current(voltage) to apply when operating the sourcementer in voltage(current) source mode. Voltage source or current source mode operation can be selected in the dropdown menu in the configuration panel. The compliance cannot be changed dynamically while the output is on and measuring. 
 
 ### IV-Bias Operation
-![QKeithleyControl_IVBias](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyBias.png)
+![QKeithleyBias](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyBias.png)
 
 The **Output** button reflects the state of the output on the insturment. When operating, it is possible to dynamically change
 the output level without turning off the output by editing the **Bias Level** parameter. The plot shows the corresponding measured value as a function of time. The **Measurement Interval** parameter allows one to control the time between individual sense samples. When set to zero, the delay will reflect the insuturment integration time assinged in **Configuration** along with software runtime. 
@@ -54,7 +54,7 @@ sweep to go from start value to stop value to start value in a forward sweep fol
 time delay parameter between sweep measurement points of up to ten minutes. 
 
 ### IV-Sweep Controls
-![QKeithleyControl_IVSweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleySweep.png)
+![QKeithleySweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithelySweep.png)
 
 ### IV-Sweep Operation
 To create a sweep, enter your desired sweep parameters and select **Configure Sweep**. After this, click **Measure Sweep** to 
