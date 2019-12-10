@@ -56,7 +56,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 		self.gen_main_layout()
 
 	#####################################
-	# WIDGET HELPER METHODS
+	# APPLICATION HELPER METHODS
 	#
 
 	# Wrapper method to get keitley write handle
@@ -123,7 +123,6 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 		self.inst_widget_label = QLabel("Select Device")
 		self.inst_widget = self._gen_inst_widget()
 		self.inst_widget.setFixedWidth(200)
-
 		self.save_widget = self._gen_save_widget()
 
 		# Create QStateMachine for output state

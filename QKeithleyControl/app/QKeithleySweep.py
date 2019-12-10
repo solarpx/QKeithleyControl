@@ -58,7 +58,7 @@ class QKeithleySweep(widgets.QVisaApplication.QVisaApplication):
 
 
 	#####################################
-	# WIDGET HELPER METHODS
+	# APPLICATION HELPER METHODS
 	#
 
 	# Wrapper method to get keitley write handle

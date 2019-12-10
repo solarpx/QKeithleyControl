@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyConnfigure -> QWidget
+# 	QVIsaConnfigure -> QWidget
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------

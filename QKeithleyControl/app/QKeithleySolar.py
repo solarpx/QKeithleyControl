@@ -47,7 +47,6 @@ from PyQt5.QtGui import QIcon
 # Container class to construct photovoltaic characterization widget
 class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 
-	
 	def __init__(self, _config):
 
 		# Inherits QVisaApplication -> QWidget
@@ -58,7 +57,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 
 
 	#####################################
-	# WIDGET HELPER METHODS
+	# APPLICATION HELPER METHODS
 	#
 
 	# Wrapper method to get keitley write handle
