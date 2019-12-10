@@ -98,7 +98,7 @@ class QVisaSaveWidget(QWidget):
 					# Write data header
 					f.write("*! QVisaDatafile v1.1\n")
 					if self._note.text() != "":
-						f.write("*! NOTE %s\n"%self._note.text())
+						f.write("*! %s\n"%self._note.text())
 					
 					# Only save if data exists on a given key
 					for _meas_key, _meas_data in self._app._data.items():
