@@ -422,12 +422,14 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 					time.sleep(self.voltage_delay.value())
 
 			# Extract data from buffer
-			self._data[_meas_str]["t"].append( float( time.time() - start ) )
+			_now = float(time.time() - start)
+
+			self._data[_meas_str]["t"].append( _now )
 			self._data[_meas_str]["V"].append( float(_buffer[0]) )
 			self._data[_meas_str]["I"].append( float(_buffer[1]) )
 			self._data[_meas_str]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
 
-			self.plot.append_handle_data(_meas_key, float(time.time() - start), float(_p))
+			self.plot.append_handle_data(_meas_key, _now, float(_p))
 			self.plot.update_canvas()
 
 

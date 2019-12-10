@@ -183,7 +183,7 @@ class QVisaDynamicPlot(QWidget):
 		self.mpl_canvas.flush_events()
 
 	# Refresh canvas. Note callback will expose args as False
-	def refresh_canvas(self, supress_warning=False):
+	def refresh_canvas(self, supress_warning=False, supress_callback=False):
 		
 		# Only ask to redraw if there is data present
 		if (self._handles != {}) and (supress_warning == False):
@@ -197,7 +197,11 @@ class QVisaDynamicPlot(QWidget):
 			self.msg_clear = msg.exec_()
 
 			if self.msg_clear == QMessageBox.Yes:
-				self._run_mpl_refresh_callback()
+
+				# Optionally supress callback execution
+				if supress_callback == False:
+					self._run_mpl_refresh_callback()
+	
 				self._refresh_canvas()
 				return True
 
@@ -205,7 +209,10 @@ class QVisaDynamicPlot(QWidget):
 				return False
 
 		else:
-			self._run_mpl_refresh_callback()
+			
+			if supress_callback == False:
+				self._run_mpl_refresh_callback()
+
 			self._refresh_canvas()		
 			return True
 

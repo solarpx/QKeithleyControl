@@ -77,9 +77,8 @@ class QVisaUnitSelector(QWidget):
 			if _append:
 				self._units[ str(_k) + str( self.config["unit"]) ] = _v
 
-
 	# Function to update spinbox range on unit maximum
-	def _update_unit_limits(self):
+	def _update_unit_selector(self):
 
 		# If we are working with physical units
 		if self.unit_select is not None:
@@ -87,17 +86,29 @@ class QVisaUnitSelector(QWidget):
 			# This if is needed so clear() in update does not trigger this method
 			if self.unit_select.currentText() != "":
 
-				_limit = float(self.config["limit"]) / float( self._units[self.unit_select.currentText()] ) 
+				# Calculate unit limit in updated units
+				_limit = float(self.config["limit"]) / float( self._units[self.unit_select.currentText()] )
+				
+				# Calculate ratio between previous and current units
+				_ratio = float( self._units[ self._selected ] ) / float( self._units[ self.unit_select.currentText() ] )
 
-				# Set minimum takeing into account signed/unsigned input
+				# Calculate value in updated units
+				_value = self.unit_value.value() * _ratio
+
+				# Taking into account signed/unsigned input set maximum and minimum 
 				if self.config["signed"] == True:
-					self.unit_value.setMinimum( max( -1.0  * _limit, -1000) ) 
-				else: 
-					self.unit_value.setMinimum( 0.0 )
+					self.unit_value.setMaximum(  1.0 * _limit ) 
+					self.unit_value.setMinimum( -1.0 * _limit ) 
+					self.unit_value.setValue( _value ) 
 
 				# Set minimum takeing into account signed/unsigned input
-				self.unit_value.setMaximum( min(  1.0  * _limit,  1000) ) 
-	
+				else: 
+					self.unit_value.setMaximum(  1.0 * _limit ) 
+					self.unit_value.setMinimum(  0.0 )
+					self.unit_value.setValue( _value ) 
+				
+				# Cache new value for next ratio calculation
+				self._selected = self.unit_select.currentText()
 
 		# Otherwise ints or doubles		
 		else:
@@ -120,6 +131,7 @@ class QVisaUnitSelector(QWidget):
 				else: 
 					self.unit_value.setMinimum( 0 )
 
+					
 	# Generate unit selector
 	def _gen_unit_selector(self):
 
@@ -132,12 +144,13 @@ class QVisaUnitSelector(QWidget):
 
 			# Unit select first (see below)
 			self.unit_select = None
+			self._selected = None
 
 			# Unit value Spinbox
 			self.unit_value = QDoubleSpinBox()
 			self.unit_value.setDecimals(3)		
 			self.unit_value.setSingleStep(0.1)	
-			self._update_unit_limits()
+			self._update_unit_selector()
 			self.unit_value.setValue(self.config["default"][0])
 			self.unit_value.setFixedWidth(200)
 
@@ -147,6 +160,7 @@ class QVisaUnitSelector(QWidget):
 
 			# Unit select first (see below)
 			self.unit_select = None
+			self._selected = None
 
 			# Unit value Spinbox
 			self.unit_value = QSpinBox()
@@ -162,13 +176,16 @@ class QVisaUnitSelector(QWidget):
 			self.unit_select.setFixedWidth(80)
 			self.unit_select.addItems( list(self._units.keys()) )
 			self.unit_select.setCurrentText(self.config["default"][1] + self.config["unit"])
-			self.unit_select.currentTextChanged.connect(self._update_unit_limits)
+			self.unit_select.currentTextChanged.connect(self._update_unit_selector)
+
+			# Cache current value of base
+			self._selected = self.unit_select.currentText()
 
 			# Unit value Spinbox
 			self.unit_value = QDoubleSpinBox()
 			self.unit_value.setDecimals(3)		
 			self.unit_value.setSingleStep(0.1)	
-			self._update_unit_limits()
+			self._update_unit_selector() 		# for limits on init
 			self.unit_value.setValue(self.config["default"][0])
 			self.unit_value.setFixedWidth(200)			
 	

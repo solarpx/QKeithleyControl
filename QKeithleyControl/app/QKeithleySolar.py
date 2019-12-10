@@ -27,7 +27,7 @@
 import os
 import sys
 import time
-import hashlib
+import html
 import threading 
 
 # Import visa and numpy
@@ -66,6 +66,11 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	def keithley(self):
 		return self._get_inst_byname( self.inst_widget.currentText() )
 
+	# Update bias on keithley
+	def update_bias(self, _value):
+		if self.keithley() is not None:
+			self.keithley().set_voltage(_value)	
+
 	# Method to refresh the widget
 	def refresh(self):
 	
@@ -85,34 +90,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Disable measurement buttons
 			self.iv_meas_button.setEnabled(False)
 			self.voc_meas_button.setEnabled(False)
-			self.mpp_meas_button.setEnabled(False)	
-
-
-
-	#def set_sweep_params(self):
-	# 	_start = self.iv_start.value()
-	# 	_stop  = self.iv_stop.value()
-	# 	_npts  = self.iv_npts.value()
-	# 	return np.linspace(float(_start), float(_stop), int(_npts))
-
-
-	# # Reset data function
-	# def _reset_data(self):		
-
-	# 	# Refresh data dictionary
-	# 	self.iv_plot._refresh_axes()
-	# 	self.voc_plot._refresh_axes()
-	# 	self.mpp_plot._refresh_axes()
-	# 	self._data = {"IV" : None, "Voc" : None, "MPP" : None}
-	# # Set sweep parameters
-	
-	# # Get sweep parameters
-	# def _get_sweep_params(self):
-	# 	return self.sweep if self.sweep != [] else None	
-
-	# # Update bias from spinbox
-	# def _update_bias(self, _value):
-	# 	self.keithley.set_voltage(_value)		
+			self.mpp_meas_button.setEnabled(False)
 
 
 	#####################################
@@ -257,7 +235,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"label"		: "Compliance (A)",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: [20, "u"]
+			"default"	: [100, "m"]
 		} 
 		self.iv_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.iv_cmpl_config)	
 
@@ -327,15 +305,27 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"default"	: [0.3,""]
 		} 
 		self.voc_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_bias_config)
-		self.voc_bias.unit_value.valueChanged.connect(lambda arg=self.voc_bias.value(): self._update_bias(arg))
+		self.voc_bias.unit_value.valueChanged.connect(lambda arg=self.voc_bias.value(): self.update_bias(arg))
 		
+		# Compliance Spinbox
+		self.voc_cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance (A)",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: [100, "m"]
+		} 
+		self.voc_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_cmpl_config)	
+
 		# Tracking mode convergence
 		self.voc_conv_config={
 			"unit" 		: "A", 
 			"min"		: "n",
-			"max"		: "u",
+			"max"		: "m",
 			"label"		: "Voc Convergence (A)",
-			"limit"		: 100, 
+			"limit"		: 0.05, 
 			"signed"	: False,
 			"default"	: [0.05,"u"]
 		} 
@@ -344,10 +334,10 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Delay
 		self.voc_gain_config={
 			"unit" 		: "__DOUBLE__", 
-			"label"		: "Proportional Gain (%)",
-			"limit"		: 100, 
+			"label"		: html.unescape("Proportional Gain (&permil;)"),
+			"limit"		: 1000, 
 			"signed"	: False,
-			"default"	: [3]
+			"default"	: [30.0]
 		}
 		self.voc_gain = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_gain_config)
 
@@ -365,6 +355,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Add voc widgets to layout
 		self.voc_ctrl_layout.addWidget(self.voc_meas_button)
 		self.voc_ctrl_layout.addWidget(self.voc_bias)
+		self.voc_ctrl_layout.addWidget(self.voc_cmpl)
 		self.voc_ctrl_layout.addWidget(self.voc_conv)
 		self.voc_ctrl_layout.addWidget(self.voc_gain)
 		self.voc_ctrl_layout.addWidget(self.voc_delay)
@@ -409,8 +400,6 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		self.mpp_state.setInitialState(self.mpp_meas_off)
 		self.mpp_state.start()
 
-
-
 		# Tracking mode initialization
 		# Note this example of passing arguments to a callback
 		self.mpp_bias_config={
@@ -420,11 +409,23 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"label"		: "MPP Initialization (V)",
 			"limit"		: 2.0, 
 			"signed"	: True,
-			"default"	: [0.25,""]
+			"default"	: [0.30,""]
 		} 
 		self.mpp_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_bias_config)
-		self.mpp_bias.unit_value.valueChanged.connect(lambda arg=self.mpp_bias.value(): self._update_bias(arg))
+		self.mpp_bias.unit_value.valueChanged.connect(lambda arg=self.mpp_bias.value(): self.update_bias(arg))
 		
+		# Compliance Spinbox
+		self.mpp_cmpl_config={
+			"unit" 		: "A", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance (A)",
+			"limit"		: 1.0, 
+			"signed"	: False,
+			"default"	: [100, "m"]
+		} 
+		self.mpp_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_cmpl_config)	
+
 		# Tracking mode convergence
 		self.mpp_ampl_config={
 			"unit" 		: "V", 
@@ -440,10 +441,10 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Delay
 		self.mpp_gain_config={
 			"unit" 		: "__DOUBLE__", 
-			"label"		: "Proportional Gain (%)",
-			"limit"		: 100, 
+			"label"		: html.unescape("Proportional Gain (&permil;)"),
+			"limit"		: 1000, 
 			"signed"	: False,
-			"default"	: [3]
+			"default"	: [30.0]
 		}
 		self.mpp_gain = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_gain_config)
 
@@ -461,6 +462,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		# Add mpp widgets to layout
 		self.mpp_ctrl_layout.addWidget(self.mpp_meas_button)
 		self.mpp_ctrl_layout.addWidget(self.mpp_bias)
+		self.mpp_ctrl_layout.addWidget(self.mpp_cmpl)
 		self.mpp_ctrl_layout.addWidget(self.mpp_ampl)
 		self.mpp_ctrl_layout.addWidget(self.mpp_gain)
 		self.mpp_ctrl_layout.addWidget(self.mpp_delay)
@@ -483,19 +485,24 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		self.iv_plot.set_axes_labels("111" , "Voltage (V)", "Current (mA)")
 		self.iv_plot.set_axes_labels("111t", "Voltage (V)", "Power (mW)")
 		self.iv_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
-		self.iv_plot.refresh_canvas(supress_warning=True)		
+		self.iv_plot.refresh_canvas(supress_warning=True)
+		self.iv_plot.set_mpl_refresh_callback( "_reset_data" )
 
 		self.voc_plot =  widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
-		self.voc_plot.add_subplot(111)
-		self.voc_plot.set_axes_labels("111", "Time (s)", "MPP (V)")
+		self.voc_plot.add_subplot(111, twinx=True)
+		self.voc_plot.set_axes_labels("111", "Time (s)", "Voc (V)")
+		self.voc_plot.set_axes_labels("111t", "Time (s)", "Ioc (V)")
 		self.voc_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.voc_plot.refresh_canvas(supress_warning=True)		
+		self.voc_plot.set_mpl_refresh_callback( "_reset_data" )
 
 		self.mpp_plot =  widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
-		self.mpp_plot.add_subplot(111)
-		self.mpp_plot.set_axes_labels("111", "Time (s)", "Voc (V)")
+		self.mpp_plot.add_subplot(111, twinx=True)
+		self.mpp_plot.set_axes_labels("111", "Time (s)", "Vmpp (V)")
+		self.mpp_plot.set_axes_labels("111t", "Time (s)", "Pmpp (mW)")
 		self.mpp_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.mpp_plot.refresh_canvas(supress_warning=True)		
+		self.mpp_plot.set_mpl_refresh_callback( "_reset_data" )
 
 		# Add QVisaDynamicPlots to QStackedWidget
 		self.plot_stack.addWidget(self.iv_plot)
@@ -511,12 +518,15 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		
 		if self.meas_select.currentText() == "IV":		
 			self.meas_pages.setCurrentIndex(0)
+			self.plot_stack.setCurrentIndex(0)
 
 		if self.meas_select.currentText() == "Voc":
 			self.meas_pages.setCurrentIndex(1)
+			self.plot_stack.setCurrentIndex(1)
 
 		if self.meas_select.currentText() == "MPP":
 			self.meas_pages.setCurrentIndex(2)
+			self.plot_stack.setCurrentIndex(2)
 
 
 	#####################################
@@ -526,17 +536,23 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	# Sweep measurement EXECUTION
 	def exec_iv_thread(self):
 		
+		# Refresh plot. supress_warning and supress_callback options will
+		# just refresh plot so there will be no interaction with class data
+		self.iv_plot.refresh_canvas(supress_warning=True, supress_callback=True)
+
 		# Set sweep parameters as simple linspace
-		_params = np.linspace( float( self.iv_start.value() ), float( self.iv_stop.value() ), int( self.iv_npts.value() ) )
+		_params = np.linspace( 
+			float( self.iv_start.value() ), 
+			float( self.iv_stop.value() ), 
+			int( self.iv_npts.value() ) 
+		)
 
 		# Create a unique data key
-		m = hashlib.sha256()
-		m.update(str("sweep@%s"%str(time.time())).encode() )		
-		_meas_key = "sweep %s"%m.hexdigest()[:7]
+		_meas_key, _meas_str = self._meas_keygen(_key="pv-bias")
 
 		# Add to data
-		self._add_meas_key(_meas_key)
-		self._set_data_fields(_meas_key, ["t", "V", "I", "P"])
+		self._add_meas_key(_meas_str)
+		self._set_data_fields(_meas_str, ["t", "V", "I", "P"])
 
 		# Clear plot and zero arrays
 		h = self.iv_plot.add_axes_handle('111' , _meas_key, _color='b')
@@ -561,10 +577,10 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 				_buffer = self.keithley().meas().split(",")
 
 				# Extract data from buffer
-				self._data[_meas_key]["t"].append( float( time.time() - start ) )
-				self._data[_meas_key]["V"].append( float(_buffer[0]) )
-				self._data[_meas_key]["I"].append( float(_buffer[1]) )
-				self._data[_meas_key]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
+				self._data[_meas_str]["t"].append( float( time.time() - start ) )
+				self._data[_meas_str]["V"].append( float(_buffer[0]) )
+				self._data[_meas_str]["I"].append( -1.0 * float(_buffer[1]) )
+				self._data[_meas_str]["P"].append( -1.0 * float(_buffer[1]) * float(_buffer[0]) )
 
 				self.iv_plot.append_handle_data( _meas_key    , float(_buffer[0]), -1.0 * float(_buffer[1]))
 				self.iv_plot.append_handle_data( _meas_key+'t', float(_buffer[0]), -1.0 * float(_buffer[0]) * float(_buffer[1]))
@@ -587,8 +603,14 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Put measurement button in abort state
 			self.iv_meas_button.setStyleSheet(
 				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
+
+			# Disable controls
 			self.save_widget.setEnabled(False)
+			self.inst_widget.setEnabled(False)
 			self.meas_select.setEnabled(False)
+			self.iv_plot.mpl_refresh_setEnabled(False)
+			self.voc_plot.mpl_refresh_setEnabled(False)	
+			self.mpp_plot.mpl_refresh_setEnabled(False)
 				
 			# Run the measurement thread function
 			self.iv_thread = threading.Thread(target=self.exec_iv_thread, args=())
@@ -604,8 +626,14 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Put measurement button in measure state
 			self.iv_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+			
+			# Enable controls
 			self.save_widget.setEnabled(True)
+			self.inst_widget.setEnabled(True)
 			self.meas_select.setEnabled(True)
+			self.iv_plot.mpl_refresh_setEnabled(True)
+			self.voc_plot.mpl_refresh_setEnabled(True)	
+			self.mpp_plot.mpl_refresh_setEnabled(True)
 
 			# Set thread running to False. This will break the sweep measurements
 			# execution loop on next iteration.  
@@ -613,84 +641,94 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			self.iv_thread.join()  # Waits for thread to complete
 
 
-
 	#####################################
 	#  VOC-MONITOR MEASUREMENT MODE
 	#	
 	def exec_voc_thread(self):
 		
+		# Create a unique data key
+		_meas_key, _meas_str = self._meas_keygen(_key="pv-voc")
 
-		pass
+		# Add to data
+		self._add_meas_key(_meas_str)
+		self._set_data_fields(_meas_str, ["t", "Voc", "Ioc"])
 
+		# Initialize Voc plot
+		self.voc_plot.add_axes_handle('111'  , _meas_key, _color='b')
+		self.voc_plot.add_axes_handle('111t' , _meas_key+'t', _color='r')
 
-		# # Initialize Voc data-structure
-		# self._data["Voc"] = {"t" : [], "Voc" : [], "Ioc" : []}
+		# Thread start time
+		start  = float(time.time())
 
-		# # Initialize Voc plot
-		# self.voc_plot.refresh_axes()
-		# self.plot_select.setCurrentIndex(1)
-		# handle = self.voc_plot.add_handle()
-		# start  = float(time.time())
+		# Set bias to initial value in voltas and turn output ON
+		self.keithley().set_voltage( self.voc_bias.value() )
+		self.keithley().current_cmp( self.voc_cmpl.value() )
+		self.keithley().output_on()
 
-		# # Set bias to initial value in voltas and turn output ON
-		# self.keithley.current_cmp( self.iv_cmpl.value() )	 	# Using sweep compliance
-		# self.keithley.set_voltage( self.voc_bias.value() )
-		# self.keithley.output_on()
+		# Thread loop
+		while self.voc_thread_running is True:
 
-		# # Thread loop
-		# while self.monitor_thread_running is True:
-			
-		# 	# Voc TRACKING ALGORITHM LOOP GOES HERE
-		# 	_iter_start = float(time.time())
-		# 	while True:
+			# Iteration timer
+			_iter_start = float(time.time())
+
+			# Covvergence loop
+			while True:
 				
-		# 		# Get data from buffer
-		# 		_buffer = self.keithley.meas().split(",")
+				# Get data from buffer
+				_buffer = self.keithley().meas().split(",")
 				
-		# 		# Check if current is below convergence value
-		# 		# note that convergence is specified in mA 
-		# 		if (abs(float( _buffer[1]))) <= float(self.voc_conv.value()):					
-		# 			break
+				# Check if current is below convergence value
+				# note that convergence is specified in mA 
+				if (abs(float( _buffer[1]))) <= float(self.voc_conv.value()):					
+					break
 				
-		# 		# If convergence takes too long paint a value (10s)
-		# 		elif  float( time.time() - _iter_start ) >= 3.0:
-		# 			break
+				# If convergence takes too long paint a value (10s)
+				elif  float( time.time() - _iter_start ) >= 3.0:
+					break
 
-		# 		# Otherwise, adjust the voltage proportionally
-		# 		else:
+				# Otherwise, adjust the voltage proportionally
+				else:
 
-		# 			# Create 1mV sense amplitude
-		# 			_v, _i = np.add(float(_buffer[0]), np.linspace(-0.0005, 0.0005, 3)), []
+					# Create 1mV sense amplitude
+					_v, _i = np.add(float(_buffer[0]), np.linspace(-0.0005, 0.0005, 3)), []
 					
-		# 			# Measure current over sense amplitude
-		# 			for _ in _v:
-		# 				self.keithley.set_voltage(_)
-		# 				_b = self.keithley.meas().split(",")
-		# 				_i.append( float( _b[1] ) )
+					# Measure current over sense amplitude array
+					for _ in _v:
+						self.keithley().set_voltage(_)
+						_b = self.keithley().meas().split(",")
+						_i.append( -1.0 * float( _b[1] ) )
 
-		# 			# Reset the voltage
-		# 			self.keithley.set_voltage( float(_buffer[0] ) )
+					# Reset the voltage
+					self.keithley().set_voltage( float(_buffer[0] ) )
 
-		# 			# Porportional gain controller
-		# 			if np.mean(_i) >= 0.0:
-		# 				self._update_bias( float(_buffer[0]) * float( 1.0 - self.voc_gain.value()/100. ) ) 
+					# Adjust bias in direction of lower current
+					# If current is positive (photo-current) increase voltage
+					if np.mean(_i) >= 0.0:
+						self.update_bias( float(_buffer[0]) * float( 1.0 + self.voc_gain.value()/1000. ) ) 
 
-		# 			else:
-		# 				self._update_bias( float(_buffer[0]) * float( 1.0 + self.voc_gain.value()/100. ) )	
+					else:
+						self.update_bias( float(_buffer[0]) * float( 1.0 - self.voc_gain.value()/1000. ) )	
 
-		# 	# Extract data from buffer
-		# 	self._data["Voc"]["t"].append(float( time.time() - start ))
-		# 	self._data["Voc"]["Voc"].append( float(_buffer[0]) )
-		# 	self._data["Voc"]["Ioc"].append( float(_buffer[1]) ) # Sanity check
+			# Extract data from buffer
+			_now = float(time.time() - start)
 
-		# 	self.voc_plot.update_handle(handle, float(time.time() - start), float(_buffer[0]))
-		# 	self.voc_plot._draw_canvas()
-	
-		# 	# Measurement delay	
-		# 	if self.voc_delay.value() != 0: 
-		# 		time.sleep(self.voc_delay.value())
+			self._data[_meas_str]["t"].append(_now)
+			self._data[_meas_str]["Voc"].append( float(_buffer[0]) )
+			self._data[_meas_str]["Ioc"].append( -1.0 * float(_buffer[1]) ) # Sanity check
 
+			# Append handle data and update canvas
+			self.voc_plot.append_handle_data(_meas_key    , _now, float(_buffer[0]))
+			self.voc_plot.append_handle_data(_meas_key+'t', _now, -1.0 * float(_buffer[1]) )
+			self.voc_plot.update_canvas()	
 
+			# Measurement delay	
+			if self.voc_delay.value() != 0: 
+				time.sleep(self.voc_delay.value())
+
+		# Cleanup after thread termination
+		self.keithley().set_voltage(0.0)
+		self.keithley().output_off()	
+		
 	# Tracking measurement ON
 	def exec_voc_run(self):
 		
@@ -699,8 +737,16 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Update UI for ON state
 			self.voc_meas_button.setStyleSheet(
 				"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
+			
+			# Disable controls
 			self.save_widget.setEnabled(False)
+			self.inst_widget.setEnabled(False)
 			self.meas_select.setEnabled(False)
+			self.voc_bias.setEnabled(False)
+			self.voc_cmpl.setEnabled(False)
+			self.iv_plot.mpl_refresh_setEnabled(False)
+			self.voc_plot.mpl_refresh_setEnabled(False)	
+			self.mpp_plot.mpl_refresh_setEnabled(False)
 
 			# Run the measurement thread function
 			self.voc_thread = threading.Thread(target=self.exec_voc_thread, args=())
@@ -717,9 +763,17 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Put measurement button in measure state
 			self.voc_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )	
+
+			# Enable controls
 			self.save_widget.setEnabled(True)
 			self.meas_select.setEnabled(True)
-
+			self.inst_widget.setEnabled(True)
+			self.voc_bias.setEnabled(True)
+			self.voc_cmpl.setEnabled(True)
+			self.iv_plot.mpl_refresh_setEnabled(True)
+			self.voc_plot.mpl_refresh_setEnabled(True)	
+			self.mpp_plot.mpl_refresh_setEnabled(True)
+	
 			# Set thread running to False. This will break the sweep measurements
 			# execution loop on next iteration.  
 			self.voc_thread_running = False	
@@ -730,88 +784,92 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 	#  MPP-MONITOR MEASUREMENT MODE
 	#	
 
-
 	def exec_mpp_thread(self):
-		pass
 		
-		# # Initialize IV Sweep dictionary and plot
-		# self._data["MPP"] = {"t" : [], "VMPP" : [], "IMPP" : [], "MPP" : []}
-	
-		# # Initialize MPP plot
-		# self.mpp_plot._refresh_axes()
-		# self.plot_select.setCurrentIndex(2)
-		# handle = self.mpp_plot.add_handle()
-		# start  = float(time.time())
+		# Create a unique data key
+		_meas_key, _meas_str = self._meas_keygen(_key="pv-mpp")
 
-		# # Set bias to initial value in voltas and turn output ON
-		# self.keithley.current_cmp( self.iv_cmpl.value() )	 	# Using sweep compliance
-		# self.keithley.set_voltage( self.mpp_bias.value() )
-		# self.keithley.output_on()
+		# Add to data
+		self._add_meas_key(_meas_str)
+		self._set_data_fields(_meas_str, ["t", "Vmpp", "Impp", "Pmpp"])
 
-		# # Thread loop
-		# while self.monitor_thread_running is True:
-			
-		# 	# Voc TRACKING ALGORITHM LOOP GOES HERE
-		# 	_iter_start = float(time.time())
+		# Initialize Voc plot
+		self.mpp_plot.add_axes_handle('111'  , _meas_key, _color='b')
+		self.mpp_plot.add_axes_handle('111t' , _meas_key+'t', _color='r')
 
-		# 	# Derivative array for checking convergence
-		# 	_d = [] 
-		# 	while True:
+		# Thread start time
+		start  = float(time.time())
+
+		# Set bias to initial value in voltas and turn output ON
+		self.keithley().set_voltage( self.mpp_bias.value() )
+		self.keithley().current_cmp( self.mpp_cmpl.value() )
+		self.keithley().output_on()
+
+		# Thread loop
+		while self.mpp_thread_running is True:
+
+			# Iteration timer
+			_iter_start = float(time.time())
+
+			# Covvergence loop
+			_d = [] 
+			while True:
 				
-		# 		# Get data from buffer
-		# 		_buffer = self.keithley.meas().split(",")
+				# Get data from buffer
+				_buffer = self.keithley().meas().split(",")
 				
-		# 		# Check if current is below convergence value
-		# 		# note that convergence is specified in mA 
-		# 		#if _d is not []:
-		# 		#	break
-				
-		# 		# If convergence takes too long paint a value (10s)
-		# 		if  float( time.time() - _iter_start ) >= 3.0:
-		# 			break
+				# If convergence takes too long paint a value (10s)
+				if  float( time.time() - _iter_start ) >= 3.0:
+					break
 
-		# 		# Otherwise, adjust the voltage proportionally
-		# 		else:
+				# Otherwise, adjust the voltage proportionally
+				else:
 
-		# 			# Create signal amplitude
-		# 			_amplitude = self.mpp_ampl.value()
-		# 			_v, _i = np.add(float(_buffer[0]), np.linspace(-1.0 * _amplitude, _amplitude, 5)), []
-					
-		# 			# Measure current over sense amplitude
-		# 			for _ in _v:
-		# 				self.keithley.set_voltage(_)
-		# 				_b = self.keithley.meas().split(",")
-		# 				_i.append( -1.0*float( _b[1] ) )
+					# Create 1mV sense amplitude
+					_amplitude = self.mpp_ampl.value()
+					_v, _i = np.add(float(_buffer[0]), np.linspace(-1.0 * _amplitude, _amplitude, 5)), []
 
-		# 			# Reset the voltage
-		# 			self.keithley.set_voltage( float(_buffer[0] ) )
+					# Measure current over sense amplitude array
+					for _ in _v:
+						self.keithley().set_voltage(_)
+						_b = self.keithley().meas().split(",")
+						_i.append( -1.0 * float( _b[1] ) )
 
-		# 			# Calculate derivative
-		# 			_p = np.multiply(_i, _v)
-		# 			_d = np.gradient(np.multiply(_i, _v))
-		# 			_d = np.divide(_d, _amplitude)
+					# Reset the voltage
+					self.keithley().set_voltage( float(_buffer[0] ) )
 
-		# 			# Differntial gain controller
-		# 			if np.mean(_d) <= 0.0:
-		# 				self._update_bias( float(_buffer[0]) * float( 1.0 - self.mpp_gain.value()/100. ) )  
+					# Calculate derivative
+					_p = np.multiply(_i, _v)
+					_d = np.gradient(np.multiply(_i, _v))
+					_d = np.divide(_d, _amplitude)
 
-		# 			else:
-		# 				self._update_bias( float(_buffer[0]) * float( 1.0 + self.mpp_gain.value()/100. ) )
+					# Differntial gain controller
+					if np.mean(_d) <= 0.0:
+						self.update_bias( float(_buffer[0]) * float( 1.0 - self.mpp_gain.value()/1000. ) )  
 
-		# 	# Extract data from buffer
-		# 	self._data["MPP"]["t"].append(float( time.time() - start ))
-		# 	self._data["MPP"]["VMPP"].append( float(_buffer[0]) )
-		# 	self._data["MPP"]["IMPP"].append( float(_buffer[1]) )
-		# 	self._data["MPP"]["MPP"].append( -1.0 * float(_buffer[0]) * float(_buffer[1]) )
-				
-		# 	self.mpp_plot.update_handle(handle, float(time.time() - start), float(_buffer[0]))
-		# 	self.mpp_plot._draw_canvas()
-	
-		# 	# Measurement delay	
-		# 	if self.mpp_delay.value() != 0: 
-		# 		time.sleep(self.mpp_delay.value())			
+					else:
+						self.update_bias( float(_buffer[0]) * float( 1.0 + self.mpp_gain.value()/1000. ) )
 
+			# Extract data from buffer
+			_now = float(time.time() - start)
 
+			self._data[_meas_str]["t"].append(_now)
+			self._data[_meas_str]["Vmpp"].append( float(_buffer[0]) )
+			self._data[_meas_str]["Impp"].append( -1.0 * float(_buffer[1]) ) 
+			self._data[_meas_str]["Pmpp"].append( -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+
+			# Append handle data and update canvas
+			self.mpp_plot.append_handle_data(_meas_key    , _now, float(_buffer[0]))
+			self.mpp_plot.append_handle_data(_meas_key+'t', _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
+			self.mpp_plot.update_canvas()	
+
+			# Measurement delay	
+			if self.mpp_delay.value() != 0: 
+				time.sleep(self.mpp_delay.value())
+
+		# Cleanup after thread termination
+		self.keithley().set_voltage(0.0)
+		self.keithley().output_off()	
 
 	# Tracking measurement ON
 	def exec_mpp_run(self):
@@ -821,15 +879,22 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Update UI for ON state
 			self.mpp_meas_button.setStyleSheet(
 				"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
+			
+			# Disable widgets
 			self.save_widget.setEnabled(False)
 			self.meas_select.setEnabled(False)
-	
+			self.inst_widget.setEnabled(False)
+			self.mpp_bias.setEnabled(False)
+			self.mpp_cmpl.setEnabled(False)
+			self.iv_plot.mpl_refresh_setEnabled(False)
+			self.voc_plot.mpl_refresh_setEnabled(False)	
+			self.mpp_plot.mpl_refresh_setEnabled(False)
+			
 			# Run the measurement thread function
 			self.mpp_thread = threading.Thread(target=self.exec_mpp_thread, args=())
 			self.mpp_thread.daemon = True		# Daemonize thread
 			self.mpp_thread.start()				# Start the execution
-			self.mpp_thread_running = True		# Set execution flag	
-			
+			self.mpp_thread_running = True		# Set execution flag				
 
 	# Tracking measurement OFF
 	def exec_mpp_stop(self):
@@ -839,8 +904,16 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			# Put measurement button in measure state
 			self.mpp_meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )	
+			
+			# Enable widgets 
 			self.save_widget.setEnabled(True)
 			self.meas_select.setEnabled(True)
+			self.inst_widget.setEnabled(True)
+			self.mpp_bias.setEnabled(True)
+			self.mpp_cmpl.setEnabled(True)
+			self.iv_plot.mpl_refresh_setEnabled(True)
+			self.voc_plot.mpl_refresh_setEnabled(True)	
+			self.mpp_plot.mpl_refresh_setEnabled(True)
 
 			# Set thread running to False. This will break the sweep measurements
 			# execution loop on next iteration.  
