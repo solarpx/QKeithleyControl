@@ -29,11 +29,10 @@ import time
 import numpy as np
 
 # Import device drivers
-import drivers.keithley2400
+from pyQtVisa.drivers import keithley2400
 
 # Import QVisaConfigure
-import widgets.QVisaConfigure
-import widgets.QVisaInstWidget
+from pyQtVisa import QVisaConfigure
 
 # Import QKeithleyWidget
 import app.QKeithleyWidget
@@ -48,12 +47,12 @@ from PyQt5.QtGui import QIcon
 # Configuration application to initalize and manage multiple Keithley insturments 
 # in a single context handles. Devices are uniquely addressable via QVisaConfigure
 # built-ins
-class QKeithleyConfigure(widgets.QVisaConfigure.QVisaConfigure):
+class QKeithleyConfigure(QVisaConfigure.QVisaConfigure):
 
 	def __init__(self):
 
 		# Inherits QVisaConfigure -> QWidget
-		super(QKeithleyConfigure, self).__init__(self)	
+		super(QKeithleyConfigure, self).__init__()	
 
 		# Create Icon for QMessageBox
 		self.gen_main_layout()
@@ -139,7 +138,7 @@ class QKeithleyConfigure(widgets.QVisaConfigure.QVisaConfigure):
 			else:
 
 				# Initialize insturment driver
-				_inst = drivers.keithley2400.keithley2400(_addr, _name)
+				_inst = keithley2400.keithley2400(_addr, _name)
 	
 				# Check if insturement is actially a keithley 24xx	
 				if "KEITHLEY INSTRUMENTS INC.,MODEL 24" not in str(_inst.idn()):

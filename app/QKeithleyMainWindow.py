@@ -38,12 +38,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
 # Subclass QMainWindow to customise your application's main window
-class QKeithleyControl(QMainWindow):
+class QKeithleyMainWindow(QMainWindow):
 
 	def __init__(self, _application, *args, **kwargs):
 		
 		# Instantiate super
-		super(QKeithleyControl, self).__init__(*args, **kwargs)
+		super(QKeithleyMainWindow, self).__init__(*args, **kwargs)
 
 		# Application handle and window title	
 		self.app = _application

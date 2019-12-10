@@ -34,10 +34,12 @@ import threading
 import visa
 import numpy as np
 
-# Import widgets
-import widgets.QVisaApplication
-import widgets.QVisaUnitSelector
-import widgets.QVisaDynamicPlot 
+# Import QVisaApplication
+from pyQtVisa import QVisaApplication
+
+# Import pyQtVisa widgets
+from pyQtVisa.widgets import QVisaUnitSelector
+from pyQtVisa.widgets import QVisaDynamicPlot 
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QStackedWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QSpinBox, QDoubleSpinBox, QPushButton, QCheckBox, QLabel, QFileDialog, QSizePolicy, QLineEdit
@@ -45,7 +47,7 @@ from PyQt5.QtCore import Qt, QStateMachine, QState, QObject
 from PyQt5.QtGui import QIcon
 
 # Container class to construct photovoltaic characterization widget
-class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
+class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 	def __init__(self, _config):
 
@@ -213,7 +215,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [-0.5, ""]
 		} 
-		self.iv_start = widgets.QVisaUnitSelector.QVisaUnitSelector(self.iv_start_config)
+		self.iv_start = QVisaUnitSelector.QVisaUnitSelector(self.iv_start_config)
 
 		# Sweep stop
 		self.iv_stop_config={
@@ -225,7 +227,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [0.5, ""]
 		} 
-		self.iv_stop = widgets.QVisaUnitSelector.QVisaUnitSelector(self.iv_stop_config)
+		self.iv_stop = QVisaUnitSelector.QVisaUnitSelector(self.iv_stop_config)
 
 		
 		# Compliance Spinbox
@@ -238,7 +240,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [100, "m"]
 		} 
-		self.iv_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.iv_cmpl_config)	
+		self.iv_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.iv_cmpl_config)	
 
 		# Compliance
 		self.iv_npts_config={
@@ -248,7 +250,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [51.0]
 		}
-		self.iv_npts = widgets.QVisaUnitSelector.QVisaUnitSelector(self.iv_npts_config)		
+		self.iv_npts = QVisaUnitSelector.QVisaUnitSelector(self.iv_npts_config)		
 
 		# Add sweep widgets to layout
 		self.iv_ctrl_layout.addWidget(self.iv_meas_button)
@@ -305,7 +307,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [0.3,""]
 		} 
-		self.voc_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_bias_config)
+		self.voc_bias = QVisaUnitSelector.QVisaUnitSelector(self.voc_bias_config)
 		self.voc_bias.unit_value.valueChanged.connect(lambda arg=self.voc_bias.value(): self.update_bias(arg))
 		
 		# Compliance Spinbox
@@ -318,7 +320,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [100, "m"]
 		} 
-		self.voc_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_cmpl_config)	
+		self.voc_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voc_cmpl_config)	
 
 		# Tracking mode convergence
 		self.voc_conv_config={
@@ -330,7 +332,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [0.05,"u"]
 		} 
-		self.voc_conv = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_conv_config)
+		self.voc_conv = QVisaUnitSelector.QVisaUnitSelector(self.voc_conv_config)
 
 		# Delay
 		self.voc_gain_config={
@@ -340,7 +342,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [30.0]
 		}
-		self.voc_gain = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_gain_config)
+		self.voc_gain = QVisaUnitSelector.QVisaUnitSelector(self.voc_gain_config)
 
 
 		# Delay
@@ -351,7 +353,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [1.0]
 		}
-		self.voc_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voc_delay_config)
+		self.voc_delay = QVisaUnitSelector.QVisaUnitSelector(self.voc_delay_config)
 
 		# Add voc widgets to layout
 		self.voc_ctrl_layout.addWidget(self.voc_meas_button)
@@ -412,7 +414,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [0.30,""]
 		} 
-		self.mpp_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_bias_config)
+		self.mpp_bias = QVisaUnitSelector.QVisaUnitSelector(self.mpp_bias_config)
 		self.mpp_bias.unit_value.valueChanged.connect(lambda arg=self.mpp_bias.value(): self.update_bias(arg))
 		
 		# Compliance Spinbox
@@ -425,7 +427,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [100, "m"]
 		} 
-		self.mpp_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_cmpl_config)	
+		self.mpp_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.mpp_cmpl_config)	
 
 		# Tracking mode convergence
 		self.mpp_ampl_config={
@@ -437,7 +439,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [20.0,"m"]
 		} 
-		self.mpp_ampl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_ampl_config)
+		self.mpp_ampl = QVisaUnitSelector.QVisaUnitSelector(self.mpp_ampl_config)
 
 		# Delay
 		self.mpp_gain_config={
@@ -447,7 +449,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [30.0]
 		}
-		self.mpp_gain = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_gain_config)
+		self.mpp_gain = QVisaUnitSelector.QVisaUnitSelector(self.mpp_gain_config)
 
 
 		# Delay
@@ -458,7 +460,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [1.0]
 		}
-		self.mpp_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.mpp_delay_config)
+		self.mpp_delay = QVisaUnitSelector.QVisaUnitSelector(self.mpp_delay_config)
 
 		# Add mpp widgets to layout
 		self.mpp_ctrl_layout.addWidget(self.mpp_meas_button)
@@ -481,7 +483,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		self.plot_stack = QStackedWidget()
 
 		# Plot IV-Sweep mode
-		self.iv_plot =  widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
+		self.iv_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.iv_plot.add_subplot(111, twinx=True)
 		self.iv_plot.set_axes_labels("111" , "Voltage (V)", "Current (mA)")
 		self.iv_plot.set_axes_labels("111t", "Voltage (V)", "Power (mW)")
@@ -489,7 +491,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		self.iv_plot.refresh_canvas(supress_warning=True)
 		self.iv_plot.set_mpl_refresh_callback( "_reset_data" )
 
-		self.voc_plot =  widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
+		self.voc_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.voc_plot.add_subplot(111, twinx=True)
 		self.voc_plot.set_axes_labels("111", "Time (s)", "Voc (V)")
 		self.voc_plot.set_axes_labels("111t", "Time (s)", "Ioc (V)")
@@ -497,7 +499,7 @@ class QKeithleySolar(widgets.QVisaApplication.QVisaApplication):
 		self.voc_plot.refresh_canvas(supress_warning=True)		
 		self.voc_plot.set_mpl_refresh_callback( "_reset_data" )
 
-		self.mpp_plot =  widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
+		self.mpp_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.mpp_plot.add_subplot(111, twinx=True)
 		self.mpp_plot.set_axes_labels("111", "Time (s)", "Vmpp (V)")
 		self.mpp_plot.set_axes_labels("111t", "Time (s)", "Pmpp (mW)")

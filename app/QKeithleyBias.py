@@ -33,10 +33,12 @@ import threading
 import visa
 import numpy as np
 
-# Import custom widgets
-import widgets.QVisaApplication
-import widgets.QVisaUnitSelector
-import widgets.QVisaDynamicPlot 
+# Import QVisaApplication
+from pyQtVisa import QVisaApplication
+
+# Import pyQtVisa widgets
+from pyQtVisa.widgets import QVisaUnitSelector
+from pyQtVisa.widgets import QVisaDynamicPlot 
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QComboBox, QPushButton, QLabel, QStackedWidget
@@ -45,7 +47,7 @@ from PyQt5.QtGui import QIcon
 
 
 # Container class to construct bias measurement widget
-class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
+class QKeithleyBias(QVisaApplication.QVisaApplication):
 
 	def __init__(self, _config):
 
@@ -202,7 +204,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default"	: [0.0, ""]
 		} 
-		self.voltage_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_bias_config)
+		self.voltage_bias = QVisaUnitSelector.QVisaUnitSelector(self.voltage_bias_config)
 		self.voltage_bias.unit_value.valueChanged.connect(self.update_bias)
 		self.voltage_bias.unit_select.currentTextChanged.connect(self.update_bias)
 
@@ -216,7 +218,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [100, "m"]
 		} 
-		self.voltage_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_cmpl_config)	
+		self.voltage_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_cmpl_config)	
 		self.voltage_cmpl.unit_value.valueChanged.connect(self.update_cmpl)
 		self.voltage_cmpl.unit_select.currentTextChanged.connect(self.update_cmpl)
 
@@ -228,7 +230,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [0.1]
 		}
-		self.voltage_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.voltage_delay_config)
+		self.voltage_delay = QVisaUnitSelector.QVisaUnitSelector(self.voltage_delay_config)
 
 		# Pack selectors into layout
 		self.voltage_layout.addWidget(self.voltage_bias)
@@ -255,7 +257,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: True,
 			"default" 	: [1.0, "m"]
 		} 
-		self.current_bias = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_bias_config)
+		self.current_bias = QVisaUnitSelector.QVisaUnitSelector(self.current_bias_config)
 		self.current_bias.unit_value.valueChanged.connect(self.update_bias)
 		self.current_bias.unit_select.currentTextChanged.connect(self.update_bias)
 
@@ -269,7 +271,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [1, ""]
 		} 
-		self.current_cmpl = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_cmpl_config)	
+		self.current_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.current_cmpl_config)	
 		self.current_cmpl.unit_value.valueChanged.connect(self.update_cmpl)
 		self.current_cmpl.unit_select.currentTextChanged.connect(self.update_cmpl)
 
@@ -281,7 +283,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 			"signed"	: False,
 			"default"	: [0.1]
 		}
-		self.current_delay = widgets.QVisaUnitSelector.QVisaUnitSelector(self.current_delay_config)
+		self.current_delay = QVisaUnitSelector.QVisaUnitSelector(self.current_delay_config)
 
 		# Pack selectors into layout
 		self.current_layout.addWidget(self.current_bias)
@@ -296,7 +298,7 @@ class QKeithleyBias(widgets.QVisaApplication.QVisaApplication):
 	def gen_bias_plot(self): 		
 
 		# Create QVisaDynamicPlot Object (inherits QWidget) 
-		self.plot = widgets.QVisaDynamicPlot.QVisaDynamicPlot(self)
+		self.plot = QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.plot.add_subplot(111)
 		self.plot.set_axes_labels("111", "Time (s)", "Current (A)")
 		self.plot.refresh_canvas(supress_warning=True)		

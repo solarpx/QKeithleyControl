@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	pyVisaDevice
+# 	QKeithleyControl
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -24,47 +24,16 @@
 #
 
 #!/usr/bin/env python 
-import visa
+import sys
+from PyQt5.QtWidgets import QApplication
+import app.QKeithleyMainWindow
 
-# Basic driver file for insturment
-class pyVisaDevice:
+# Main event loop handler instance
+_app = QApplication(sys.argv)
 
-	# Initialize
-	def __init__(self, _addr, _name):	
+# Instantiate the application
+window = app.QKeithleyMainWindow.QKeithleyMainWindow(_app)
+window.show()
 
-		# Extract SPCI handle for Keithley
-		rm = visa.ResourceManager()
-
-		# Attempt to open resource. 
-		# __init__ should appear in try except block
-		self.inst = rm.open_resource('GPIB0::%s::INSTR'%_addr)
-		self.inst.timeout = 2000
-		self.inst.clear()
-
-		# GPIB address and name
-		self.addr = int(_addr)
-		self.name = str(_name)
-
-		# Create buffer object
-		self.buffer = ""
-
-	# Close instrument on program termination
-	def close(self): 
-		self.inst.close()
-
-	# Write command
-	def write(self, _data):
-		self.inst.write(_data)
-	
-	# Query command. Only use when reading data	
-	def query(self, _data, print_buffer=False):
-
-		# Try to communicate with device
-		self.buffer = self.inst.query(_data)
-
-		# Option to print buffer
-		if print_buffer:
-			print(self.buffer)
-
-		# Return buffer	
-		return self.buffer
+# Enter event loop
+_app.exec_()
