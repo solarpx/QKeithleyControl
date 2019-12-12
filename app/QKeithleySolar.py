@@ -541,7 +541,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		
 		# Refresh plot. supress_warning and supress_callback options will
 		# just refresh plot so there will be no interaction with class data
-		self.iv_plot.refresh_canvas(supress_warning=True, supress_callback=True)
+		# self.iv_plot.refresh_canvas(supress_warning=True, supress_callback=True)
 
 		# Set sweep parameters as simple linspace
 		_params = np.linspace( 
@@ -550,16 +550,19 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			int( self.iv_npts.value() ) 
 		)
 
-		# Create a unique data key
-		_meas_key, _meas_str = self._meas_keygen(_key="pv-bias")
 
-		# Add to data
-		self._add_meas_key(_meas_str)
-		self._set_data_fields(_meas_str, ["t", "V", "I", "P"])
+		# Get QVisaDataObject
+		data = self._get_data()
+		key = data.gen_data_key(_salt="_pv_bias")
+
+		# Add data fields to key
+		data.add_data_fields(key, ["t", "V", "I", "P"])
+		data.add_meta(key, "__type__", "pv-bias")
+
 
 		# Clear plot and zero arrays
-		h = self.iv_plot.add_axes_handle('111' , _meas_key, _color='b')
-		t = self.iv_plot.add_axes_handle('111t', _meas_key+'t', _color='r')
+		h = self.iv_plot.add_axes_handle('111' , key 	, _color='b')
+		t = self.iv_plot.add_axes_handle('111t', key+'t', _color='r')
 		start  = time.time()
 		
 		# Output on
@@ -580,13 +583,16 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 				_buffer = self.keithley().meas().split(",")
 
 				# Extract data from buffer
-				self._data[_meas_str]["t"].append( float( time.time() - start ) )
-				self._data[_meas_str]["V"].append( float(_buffer[0]) )
-				self._data[_meas_str]["I"].append( -1.0 * float(_buffer[1]) )
-				self._data[_meas_str]["P"].append( -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+				_now = float(time.time() - start)
 
-				self.iv_plot.append_handle_data( _meas_key    , float(_buffer[0]), -1.0 * float(_buffer[1]))
-				self.iv_plot.append_handle_data( _meas_key+'t', float(_buffer[0]), -1.0 * float(_buffer[0]) * float(_buffer[1]))
+				# Append measured values to data arrays
+				data.append_data_value(key, "t", _now )
+				data.append_data_value(key, "V", float(_buffer[0]) )
+				data.append_data_value(key, "I", -1.0 * float(_buffer[1]) )
+				data.append_data_value(key, "P", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+
+				self.iv_plot.append_handle_data( key    , float(_buffer[0]), -1.0 * float(_buffer[1]))
+				self.iv_plot.append_handle_data( key+'t', float(_buffer[0]), -1.0 * float(_buffer[0]) * float(_buffer[1]))
 				self.iv_plot.update_canvas()	
 
 		self.keithley().set_voltage(0.0)
@@ -649,16 +655,17 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	#	
 	def exec_voc_thread(self):
 		
-		# Create a unique data key
-		_meas_key, _meas_str = self._meas_keygen(_key="pv-voc")
+		# Get QVisaDataObject
+		data = self._get_data()
+		key = data.gen_data_key(_salt="_pv_voc")
 
-		# Add to data
-		self._add_meas_key(_meas_str)
-		self._set_data_fields(_meas_str, ["t", "Voc", "Ioc"])
+		# Add data fields to key
+		data.add_data_fields(key, ["t", "Voc", "Ioc"])
+		data.add_meta(key, "__type__", "pv-voc")
 
 		# Initialize Voc plot
-		self.voc_plot.add_axes_handle('111'  , _meas_key, _color='b')
-		self.voc_plot.add_axes_handle('111t' , _meas_key+'t', _color='r')
+		self.voc_plot.add_axes_handle('111'  , key 		, _color='b')
+		self.voc_plot.add_axes_handle('111t' , key+'t'	, _color='r')
 
 		# Thread start time
 		start  = float(time.time())
@@ -715,13 +722,13 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Extract data from buffer
 			_now = float(time.time() - start)
 
-			self._data[_meas_str]["t"].append(_now)
-			self._data[_meas_str]["Voc"].append( float(_buffer[0]) )
-			self._data[_meas_str]["Ioc"].append( -1.0 * float(_buffer[1]) ) # Sanity check
+			data.append_data_value(key, "t"  , _now)
+			data.append_data_value(key, "Voc",  1.0 * float(_buffer[0]) )
+			data.append_data_value(key, "Ioc", -1.0 * float(_buffer[1]) ) # Sanity check
 
 			# Append handle data and update canvas
-			self.voc_plot.append_handle_data(_meas_key    , _now, float(_buffer[0]))
-			self.voc_plot.append_handle_data(_meas_key+'t', _now, -1.0 * float(_buffer[1]) )
+			self.voc_plot.append_handle_data(key    , _now,  1.0 * float(_buffer[0]) )
+			self.voc_plot.append_handle_data(key+'t', _now, -1.0 * float(_buffer[1]) )
 			self.voc_plot.update_canvas()	
 
 			# Measurement delay	
@@ -789,16 +796,17 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 	def exec_mpp_thread(self):
 		
-		# Create a unique data key
-		_meas_key, _meas_str = self._meas_keygen(_key="pv-mpp")
+			# Get QVisaDataObject
+		data = self._get_data()
+		key = data.gen_data_key(_salt="_pv_mpp")
 
-		# Add to data
-		self._add_meas_key(_meas_str)
-		self._set_data_fields(_meas_str, ["t", "Vmpp", "Impp", "Pmpp"])
+		# Add data fields to key
+		data.add_data_fields(key, ["t", "Vmpp", "Impp", "Pmpp"])
+		data.add_meta(key, "__type__", "pv-mpp")
 
 		# Initialize Voc plot
-		self.mpp_plot.add_axes_handle('111'  , _meas_key, _color='b')
-		self.mpp_plot.add_axes_handle('111t' , _meas_key+'t', _color='r')
+		self.mpp_plot.add_axes_handle('111'  , key		, _color='b')
+		self.mpp_plot.add_axes_handle('111t' , key+'t'	, _color='r')
 
 		# Thread start time
 		start  = float(time.time())
@@ -856,14 +864,14 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Extract data from buffer
 			_now = float(time.time() - start)
 
-			self._data[_meas_str]["t"].append(_now)
-			self._data[_meas_str]["Vmpp"].append( float(_buffer[0]) )
-			self._data[_meas_str]["Impp"].append( -1.0 * float(_buffer[1]) ) 
-			self._data[_meas_str]["Pmpp"].append( -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+			data.append_data_value(key, "t"	, _now)
+			data.append_data_value(key, "Vmpp",  1.0 * float(_buffer[0]) )
+			data.append_data_value(key, "Impp", -1.0 * float(_buffer[1]) ) 
+			data.append_data_value(key, "Pmpp", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
 
 			# Append handle data and update canvas
-			self.mpp_plot.append_handle_data(_meas_key    , _now, float(_buffer[0]))
-			self.mpp_plot.append_handle_data(_meas_key+'t', _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
+			self.mpp_plot.append_handle_data(key    , _now, float(_buffer[0]))
+			self.mpp_plot.append_handle_data(key+'t', _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
 			self.mpp_plot.update_canvas()	
 
 			# Measurement delay	

@@ -87,11 +87,15 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 	# Method to set sweep parameters
 	def set_sweep_params(self, start, stop, npts):
-		
+
+		# Get data object 		
+		data = self._get_data()
+		key  = data.get_hash()
+
 		# No hysteresis	
 		if self.sweep_hist.currentText() == "None": 	
 			sp = np.linspace(float(start), float(stop), int(npts) )
-			self._set_meta( "sweep", sp)
+			data.add_meta(key, "__sweep__", sp)
 
 		# Prepare reverse sweep
 		if self.sweep_hist.currentText() == "Reverse-sweep":
@@ -99,7 +103,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			# Sweep centered hysteresis
 			sp = np.linspace(float(start), float(stop), int(npts) )
 			sp = np.concatenate( (sp, sp[-2::-1]) )
-			self._set_meta( "sweep", sp)
+			data.add_meta(key, "__sweep__", sp)
 
 		# Prepare a zero centered hysteresis
 		if self.sweep_hist.currentText() == "Zero-centered":
@@ -129,13 +133,14 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				sp = np.concatenate( (sp, sp[-2::-1]) )	
 
 			# Set meta field
-			self._set_meta( "sweep", sp)
+			data.add_meta(key, "__sweep__", sp)
 
 
 	# Method to get sweep parameters
 	def get_sweep_params(self):
-		return self._get_meta("sweep")	
-
+		data = self._get_data()
+		key  = data.get_hash()
+		return data.get_meta(key, "__sweep__")
 
 	#####################################
 	# SWEEP MODE MAIN LAYOUTS
@@ -504,12 +509,13 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 	# Execute Sweep Measurement
 	def exec_sweep_thread(self):
 
-		# Create a unique data key
-		_meas_key, _meas_str = self._meas_keygen(_key="sweep")
+		# Get QVisaDataObject
+		data = self._get_data()
+		key = data.gen_data_key(_salt="_sweep")
 
-		# Add to data
-		self._add_meas_key(_meas_str)
-		self._set_data_fields(_meas_str, ["t", "V", "I", "P"])
+		# Add data fields to key
+		data.add_data_fields(key, ["t", "V", "I", "P"])
+		data.add_meta(key, "__type__", "sweep")
 
 		# Generate function pointer for voltage/current mode
 		if self.sweep_select.currentText() == "Voltage":
@@ -521,7 +527,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			__delay__ = self.current_delay.value()
 
 		# Clear plot and zero arrays
-		handle = self.plot.add_axes_handle(111, _meas_key)
+		handle = self.plot.add_axes_handle(111, key)
 		start  = time.time()
 		
 		# Output on
@@ -543,12 +549,15 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 					time.sleep(__delay__)
 
 				# Extract data from buffer
-				self._data[_meas_str]["t"].append( float( time.time() - start ) )
-				self._data[_meas_str]["V"].append( float(_buffer[0]) )
-				self._data[_meas_str]["I"].append( float(_buffer[1]) )
-				self._data[_meas_str]["P"].append( float(_buffer[0]) * float(_buffer[1]) )
+				_now = float(time.time() - start)
 
-				self.plot.append_handle_data(_meas_key, float(_buffer[0]), float(_buffer[1]))
+				# Append measured values to data arrays	
+				data.append_data_value(key,"t", _now )
+				data.append_data_value(key,"V", float(_buffer[0]) )
+				data.append_data_value(key,"I", float(_buffer[1]) )
+				data.append_data_value(key,"P", float(_buffer[0]) * float(_buffer[1]) )
+
+				self.plot.append_handle_data(key, float(_buffer[0]), float(_buffer[1]))
 				self.plot.update_canvas()	
 		
 		# Reset Keithley
