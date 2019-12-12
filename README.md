@@ -110,7 +110,7 @@ The following python dependencies are also required.
 2. [PyQt5](https://wiki.python.org/moin/PyQt) Python bindings for Qt development framework
 3. [numpy](https://numpy.org/) Python numerics library
 4. [matplotlib](https://matplotlib.org/) Python plotting library
-5. [QVisaFramework](https://github.com/mwchalmers/QKeithleyControl/tree/master/QKeithleyControl/widgets) Qt Framework for building pyVisa applications (in repo).
+5. [PyQtVisa](https://github.com/mwchalmers/PyQtVisa) Qt Framework for building pyVisa applications (in repo).
 
 The python modules can be installed using pip. To get pip run the following commands:
 ```
@@ -124,4 +124,5 @@ pip install pyvisa
 pip install PyQt5
 pip install numpy
 pip install matplotlib
+pip install PyQtVisa
 ```
