@@ -552,12 +552,12 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 
 		# Get QVisaDataObject
-		data = self._get_data()
-		key = data.gen_data_key(_salt="_pv_bias")
+		data = self._get_data_object()
+		key  = self._gen_data_key("pv-bias")
 
 		# Add data fields to key
 		data.add_data_fields(key, ["t", "V", "I", "P"])
-		data.add_meta(key, "__type__", "pv-bias")
+		data.set_meta(key, "__type__", "pv-bias")
 
 
 		# Clear plot and zero arrays
@@ -656,12 +656,12 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	def exec_voc_thread(self):
 		
 		# Get QVisaDataObject
-		data = self._get_data()
-		key = data.gen_data_key(_salt="_pv_voc")
+		data = self._get_data_object()
+		key  = self._gen_data_key("pv-voc")
 
 		# Add data fields to key
 		data.add_data_fields(key, ["t", "Voc", "Ioc"])
-		data.add_meta(key, "__type__", "pv-voc")
+		data.set_meta(key, "__type__", "pv-voc")
 
 		# Initialize Voc plot
 		self.voc_plot.add_axes_handle('111'  , key 		, _color='b')
@@ -796,13 +796,13 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 	def exec_mpp_thread(self):
 		
-			# Get QVisaDataObject
-		data = self._get_data()
-		key = data.gen_data_key(_salt="_pv_mpp")
+		# Get QVisaDataObject
+		data = self._get_data_object()
+		key  = self._gen_data_key("pv-mpp")
 
 		# Add data fields to key
 		data.add_data_fields(key, ["t", "Vmpp", "Impp", "Pmpp"])
-		data.add_meta(key, "__type__", "pv-mpp")
+		data.set_meta(key, "__type__", "pv-mpp")
 
 		# Initialize Voc plot
 		self.mpp_plot.add_axes_handle('111'  , key		, _color='b')

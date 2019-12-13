@@ -393,12 +393,12 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 	def exec_output_thread(self):	
 
 		# Get QVisaDataObject
-		data = self._get_data()
-		key  = data.gen_data_key(_salt="_bias")
+		data = self._get_data_object()
+		key  = self._gen_data_key("bias")
 
 		# Add data fields to key
 		data.add_data_fields(key, ["t", "V", "I", "P"])
-		data.add_meta(key, "__type__", "bias")
+		data.set_meta(key, "__type__", "bias")
 	
 		# Voltage and current arrays
 		handle = self.plot.add_axes_handle(111, key)
