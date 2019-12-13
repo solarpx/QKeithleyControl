@@ -589,8 +589,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.plot.set_axes_labels("111", "Voltage (V)", "Current (A)")
 		self.plot.refresh_canvas(supress_warning=True)		
 
-		# Connect plot refresh button to application _reset_data method
-		self.plot.set_mpl_refresh_callback( "_reset_data" )
+		# Connect plot refresh button to application _reset_data_object method
+		self.plot.set_mpl_refresh_callback( "_reset_data_object" )
 
 		# Return the plot
 		return self.plot

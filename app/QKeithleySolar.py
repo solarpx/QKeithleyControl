@@ -489,7 +489,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.iv_plot.set_axes_labels("111t", "Voltage (V)", "Power (mW)")
 		self.iv_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.iv_plot.refresh_canvas(supress_warning=True)
-		self.iv_plot.set_mpl_refresh_callback( "_reset_data" )
+		self.iv_plot.set_mpl_refresh_callback( "_reset_data_object" )
 
 		self.voc_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.voc_plot.add_subplot(111, twinx=True)
@@ -497,7 +497,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_plot.set_axes_labels("111t", "Time (s)", "Ioc (V)")
 		self.voc_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.voc_plot.refresh_canvas(supress_warning=True)		
-		self.voc_plot.set_mpl_refresh_callback( "_reset_data" )
+		self.voc_plot.set_mpl_refresh_callback( "_reset_data_object" )
 
 		self.mpp_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.mpp_plot.add_subplot(111, twinx=True)
@@ -505,7 +505,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_plot.set_axes_labels("111t", "Time (s)", "Pmpp (mW)")
 		self.mpp_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.mpp_plot.refresh_canvas(supress_warning=True)		
-		self.mpp_plot.set_mpl_refresh_callback( "_reset_data" )
+		self.mpp_plot.set_mpl_refresh_callback( "_reset_data_object" )
 
 		# Add QVisaDynamicPlots to QStackedWidget
 		self.plot_stack.addWidget(self.iv_plot)
