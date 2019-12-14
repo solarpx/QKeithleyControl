@@ -556,14 +556,19 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		key  = self._gen_data_key("pv-bias")
 
 		# Add data fields to key
-		data.add_data_fields(key, ["t", "V", "I", "P"])
+		data.set_data_fields(key, ["t", "V", "I", "P"])
 		data.set_meta(key, "__type__", "pv-bias")
 
+		# Generate colors
+		_c0 = self.iv_plot.gen_next_color()
+		_c1 = self.iv_plot.gen_next_color()
 
 		# Clear plot and zero arrays
-		h = self.iv_plot.add_axes_handle('111' , key 	, _color='b')
-		t = self.iv_plot.add_axes_handle('111t', key+'t', _color='r')
-		start  = time.time()
+		self.iv_plot.add_axes_handle('111' , key, _color=_c0)
+		self.iv_plot.add_axes_handle('111t', key, _color=_c1)
+		
+		# Thread start time
+		start  = float(time.time())
 		
 		# Output on
 		self.keithley().voltage_src()
@@ -591,8 +596,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 				data.append_data_value(key, "I", -1.0 * float(_buffer[1]) )
 				data.append_data_value(key, "P", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
 
-				self.iv_plot.append_handle_data( key    , float(_buffer[0]), -1.0 * float(_buffer[1]))
-				self.iv_plot.append_handle_data( key+'t', float(_buffer[0]), -1.0 * float(_buffer[0]) * float(_buffer[1]))
+				self.iv_plot.append_handle_data( "111" , key, float(_buffer[0]), -1.0 * float(_buffer[1]))
+				self.iv_plot.append_handle_data( "111t", key, float(_buffer[0]), -1.0 * float(_buffer[0]) * float(_buffer[1]))
 				self.iv_plot.update_canvas()	
 
 		self.keithley().set_voltage(0.0)
@@ -660,12 +665,16 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		key  = self._gen_data_key("pv-voc")
 
 		# Add data fields to key
-		data.add_data_fields(key, ["t", "Voc", "Ioc"])
+		data.set_data_fields(key, ["t", "Voc", "Ioc"])
 		data.set_meta(key, "__type__", "pv-voc")
 
-		# Initialize Voc plot
-		self.voc_plot.add_axes_handle('111'  , key 		, _color='b')
-		self.voc_plot.add_axes_handle('111t' , key+'t'	, _color='r')
+		# Generate colors
+		_c0 = self.voc_plot.gen_next_color()
+		_c1 = self.voc_plot.gen_next_color()
+
+		# Clear plot and zero arrays
+		self.voc_plot.add_axes_handle('111' , key, _color=_c0)
+		self.voc_plot.add_axes_handle('111t', key, _color=_c1)
 
 		# Thread start time
 		start  = float(time.time())
@@ -727,8 +736,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			data.append_data_value(key, "Ioc", -1.0 * float(_buffer[1]) ) # Sanity check
 
 			# Append handle data and update canvas
-			self.voc_plot.append_handle_data(key    , _now,  1.0 * float(_buffer[0]) )
-			self.voc_plot.append_handle_data(key+'t', _now, -1.0 * float(_buffer[1]) )
+			self.voc_plot.append_handle_data("111" , key, _now,  1.0 * float(_buffer[0]) )
+			self.voc_plot.append_handle_data("111t", key, _now, -1.0 * float(_buffer[1]) )
 			self.voc_plot.update_canvas()	
 
 			# Measurement delay	
@@ -801,13 +810,17 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		key  = self._gen_data_key("pv-mpp")
 
 		# Add data fields to key
-		data.add_data_fields(key, ["t", "Vmpp", "Impp", "Pmpp"])
+		data.set_data_fields(key, ["t", "Vmpp", "Impp", "Pmpp"])
 		data.set_meta(key, "__type__", "pv-mpp")
 
-		# Initialize Voc plot
-		self.mpp_plot.add_axes_handle('111'  , key		, _color='b')
-		self.mpp_plot.add_axes_handle('111t' , key+'t'	, _color='r')
+		# Generate colors
+		_c0 = self.mpp_plot.gen_next_color()
+		_c1 = self.mpp_plot.gen_next_color()
 
+		# Clear plot and zero arrays
+		self.mpp_plot.add_axes_handle('111' , key, _color=_c0)
+		self.mpp_plot.add_axes_handle('111t', key, _color=_c1)
+		
 		# Thread start time
 		start  = float(time.time())
 
@@ -870,8 +883,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			data.append_data_value(key, "Pmpp", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
 
 			# Append handle data and update canvas
-			self.mpp_plot.append_handle_data(key    , _now, float(_buffer[0]))
-			self.mpp_plot.append_handle_data(key+'t', _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
+			self.mpp_plot.append_handle_data("111" , key, _now, float(_buffer[0]))
+			self.mpp_plot.append_handle_data("111t", key, _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
 			self.mpp_plot.update_canvas()	
 
 			# Measurement delay	
