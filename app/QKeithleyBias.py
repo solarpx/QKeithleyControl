@@ -299,7 +299,7 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 
 		# Create QVisaDynamicPlot Object (inherits QWidget) 
 		self.plot = QVisaDynamicPlot.QVisaDynamicPlot(self)
-		self.plot.add_subplot(111)
+		self.plot.add_subplot("111")
 		self.plot.set_axes_labels("111", "Time (s)", "Current (A)")
 		self.plot.refresh_canvas(supress_warning=True)		
 
@@ -397,13 +397,13 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 		key  = self._gen_data_key("bias")
 
 		# Add data fields to key
-		data.add_data_fields(key, ["t", "V", "I", "P"])
+		data.set_data_fields(key, ["t", "V", "I", "P"])
 		data.set_meta(key, "__type__", "bias")
-	
-		# Voltage and current arrays
-		handle = self.plot.add_axes_handle(111, key)
-		start  = time.time()
 		
+		# Voltage and current arrays	
+		handle = self.plot.add_axes_handle("111", key)
+		start  = time.time()
+
 		# Thread loop
 		while self.thread_running:
 
@@ -435,7 +435,8 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 			data.append_data_value(key, "I", float(_buffer[1]) )
 			data.append_data_value(key, "P", float(_buffer[0]) * float(_buffer[1]) ) 
 
-			self.plot.append_handle_data(key, _now, float(_p))
+			# Append data to handle
+			self.plot.append_handle_data("111", key, _now, float(_p))
 			self.plot.update_canvas()
 
 

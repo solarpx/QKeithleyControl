@@ -769,7 +769,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		key  = self._gen_data_key("iv-sweep-v-step")
 
 		# Add data fields to key	
-		data.add_data_fields(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
+		data.set_data_fields(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
 		data.set_meta(key, "__type__", "iv-sweep-v-step")
 
 		# Generate function pointer for voltage/current mode
@@ -788,17 +788,16 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.keithley(self.step_inst).output_on()
 		self.keithley(self.sweep_inst).output_on()
 
-		# Get base color so all traces are the same
-		_c = self.plot.get_base_color()
+		# Use generator function so all traces have same color
+		_c = self.plot.gen_next_color()
+		_handle_index = 0 
 
 		# Loop through step variables
 		for _step in self._get_app_meta("__step__"):
 
-
 			# Set step voltage
 			self.keithley(self.step_inst).set_voltage(_step)
-			_step_key 	 = "%s_%sV"%(key, str(_step))
-			_step_handle = self.plot.add_axes_handle(111, _step_key, _color=_c)
+			self.plot.add_axes_handle("111", key, _color=_c)
 
 			# Bias settle
 			if __delay__ != 0: 
@@ -834,9 +833,12 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 					data.append_data_value(key,"P1", float(_b1[0]) * float(_b1[1]) )
 
 					# Add data to plot
-					self.plot.append_handle_data(_step_key, float(_b0[0]), float(_b0[1]))
-					self.plot.update_canvas()	
-
+					self.plot.append_handle_data("111", key, float(_b0[0]), float(_b0[1]), _handle_index)
+					self.plot.update_canvas()
+			
+			# Increment handle index
+			_handle_index += 1
+	
 
 		# Reset Keithleys
 		__func__(0.0)
@@ -859,7 +861,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		key  = self._gen_data_key("iv-sweep")
 
 		# Add data fields to key	
-		data.add_data_fields(key, ["t", "V", "I", "P"])
+		data.set_data_fields(key, ["t", "V", "I", "P"])
 		data.set_meta(key, "__type__", "iv-sweep")
 
 		# Generate function pointer for voltage/current mode
@@ -872,7 +874,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			__delay__ = self.current_sweep_delay.value()
 
 		# Clear plot and zero arrays
-		handle = self.plot.add_axes_handle(111, key)
+		handle = self.plot.add_axes_handle("111", key)
 		start  = time.time()
 		
 		# Output on
@@ -902,7 +904,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				data.append_data_value(key,"I", float(_b[1]) )
 				data.append_data_value(key,"P", float(_b[0]) * float(_b[1]) )
 
-				self.plot.append_handle_data(key, float(_b[0]), float(_b[1]))
+				self.plot.append_handle_data("111", key, float(_b[0]), float(_b[1]))
 				self.plot.update_canvas()	
 		
 		# Reset Keithley
