@@ -553,11 +553,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 		# Get QVisaDataObject
 		data = self._get_data_object()
-		key  = self._gen_data_key("pv-bias")
+		key  = data.add_hash_key("pv-bias")
 
 		# Add data fields to key
-		data.set_data_fields(key, ["t", "V", "I", "P"])
-		data.set_meta(key, "__type__", "pv-bias")
+		data.set_subkeys(key, ["t", "V", "I", "P"])
+		data.set_metadata(key, "__type__", "pv-bias")
 
 		# Generate colors
 		_c0 = self.iv_plot.gen_next_color()
@@ -591,10 +591,10 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 				_now = float(time.time() - start)
 
 				# Append measured values to data arrays
-				data.append_data_value(key, "t", _now )
-				data.append_data_value(key, "V", float(_buffer[0]) )
-				data.append_data_value(key, "I", -1.0 * float(_buffer[1]) )
-				data.append_data_value(key, "P", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+				data.append_subkey_data(key, "t", _now )
+				data.append_subkey_data(key, "V", float(_buffer[0]) )
+				data.append_subkey_data(key, "I", -1.0 * float(_buffer[1]) )
+				data.append_subkey_data(key, "P", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
 
 				self.iv_plot.append_handle_data( "111" , key, float(_buffer[0]), -1.0 * float(_buffer[1]))
 				self.iv_plot.append_handle_data( "111t", key, float(_buffer[0]), -1.0 * float(_buffer[0]) * float(_buffer[1]))
@@ -662,11 +662,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		
 		# Get QVisaDataObject
 		data = self._get_data_object()
-		key  = self._gen_data_key("pv-voc")
+		key  = data.add_hash_key("pv-voc")
 
 		# Add data fields to key
-		data.set_data_fields(key, ["t", "Voc", "Ioc"])
-		data.set_meta(key, "__type__", "pv-voc")
+		data.set_subkeys(key, ["t", "Voc", "Ioc"])
+		data.set_metadata(key, "__type__", "pv-voc")
 
 		# Generate colors
 		_c0 = self.voc_plot.gen_next_color()
@@ -731,9 +731,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Extract data from buffer
 			_now = float(time.time() - start)
 
-			data.append_data_value(key, "t"  , _now)
-			data.append_data_value(key, "Voc",  1.0 * float(_buffer[0]) )
-			data.append_data_value(key, "Ioc", -1.0 * float(_buffer[1]) ) # Sanity check
+			data.append_subkey_data(key, "t"  , _now)
+			data.append_subkey_data(key, "Voc",  1.0 * float(_buffer[0]) )
+			data.append_subkey_data(key, "Ioc", -1.0 * float(_buffer[1]) ) # Sanity check
 
 			# Append handle data and update canvas
 			self.voc_plot.append_handle_data("111" , key, _now,  1.0 * float(_buffer[0]) )
@@ -807,11 +807,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		
 		# Get QVisaDataObject
 		data = self._get_data_object()
-		key  = self._gen_data_key("pv-mpp")
+		key  = data.add_hash_key("pv-mpp")
 
 		# Add data fields to key
-		data.set_data_fields(key, ["t", "Vmpp", "Impp", "Pmpp"])
-		data.set_meta(key, "__type__", "pv-mpp")
+		data.set_subkeys(key, ["t", "Vmpp", "Impp", "Pmpp"])
+		data.set_metadata(key, "__type__", "pv-mpp")
 
 		# Generate colors
 		_c0 = self.mpp_plot.gen_next_color()
@@ -877,10 +877,10 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Extract data from buffer
 			_now = float(time.time() - start)
 
-			data.append_data_value(key, "t"	, _now)
-			data.append_data_value(key, "Vmpp",  1.0 * float(_buffer[0]) )
-			data.append_data_value(key, "Impp", -1.0 * float(_buffer[1]) ) 
-			data.append_data_value(key, "Pmpp", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+			data.append_subkey_data(key, "t"	, _now)
+			data.append_subkey_data(key, "Vmpp",  1.0 * float(_buffer[0]) )
+			data.append_subkey_data(key, "Impp", -1.0 * float(_buffer[1]) ) 
+			data.append_subkey_data(key, "Pmpp", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
 
 			# Append handle data and update canvas
 			self.mpp_plot.append_handle_data("111" , key, _now, float(_buffer[0]))

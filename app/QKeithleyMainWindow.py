@@ -120,7 +120,7 @@ class QKeithleyMainWindow(QMainWindow):
 		self.app_sweep = QAction("IV-Sweep Control",self)
 		self.app_submenu.addAction(self.app_sweep)
 
-		# # Solar Mode
+		# Solar Mode
 		self.app_solar = QAction("PV-Characterization")
 		self.app_submenu.addAction(self.app_solar)
 

@@ -394,11 +394,11 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 
 		# Get QVisaDataObject
 		data = self._get_data_object()
-		key  = self._gen_data_key("bias")
+		key  = data.add_hash_key("bias")
 
 		# Add data fields to key
-		data.set_data_fields(key, ["t", "V", "I", "P"])
-		data.set_meta(key, "__type__", "bias")
+		data.set_subkeys(key, ["t", "V", "I", "P"])
+		data.set_metadata(key, "__type__", "bias")
 		
 		# Voltage and current arrays	
 		handle = self.plot.add_axes_handle("111", key)
@@ -430,10 +430,10 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 			_now = float(time.time() - start)
 
 			# Append measured values to data arrays
-			data.append_data_value(key, "t", _now )
-			data.append_data_value(key, "V", float(_buffer[0]) )
-			data.append_data_value(key, "I", float(_buffer[1]) )
-			data.append_data_value(key, "P", float(_buffer[0]) * float(_buffer[1]) ) 
+			data.append_subkey_data(key, "t", _now )
+			data.append_subkey_data(key, "V", float(_buffer[0]) )
+			data.append_subkey_data(key, "I", float(_buffer[1]) )
+			data.append_subkey_data(key, "P", float(_buffer[0]) * float(_buffer[1]) ) 
 
 			# Append data to handle
 			self.plot.append_handle_data("111", key, _now, float(_p))
