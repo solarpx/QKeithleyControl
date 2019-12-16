@@ -31,17 +31,23 @@ Mode             | Limit              | Compliance
 Voltage Source   | `+/-20V`           | `1A`  
 Current Source   | `+/-1A`            | `+/-20V`
 
-After performing a measurement in bias mode, QKeithleyBias gives you the option to save your data traces. This is done by selecting **Save Data**. Bias mode data will be saved in a *tab deliminated* with four columns: **elapsed time(s)**, **voltage(V)**, **current (A)**, **dissapated power (W)**. **NOTE:** The data will be saved is tied to the traces that are shown in plot. When axes are cleared by invoking **Clear Data** in the plot, data will be deleted from memory. Be sure to save your data before clearing plots. Also, changing operation from voltage source to current source mode will invoke **Clear Data**. A dialogue is always presented to the user if data is to be deleted.
+After performing a measurement in bias mode, QKeithleyBias gives you the option to save your data traces. This is done by selecting **Save Data**. Bias mode data will be saved in a *tab deliminated* with four columns: **elapsed time(s)**, **voltage(V)**, **current (A)**, **dissapated power (W)**. **NOTE:** The data will be saved is tied to the traces that are shown in plot. When axes are cleared by invoking **Clear Data** in the plot, data will be deleted from application memory. Be sure to save your data before clearing plots. Also, changing operation from voltage source to current source mode will invoke **Clear Data**. A dialogue is always presented to the user if data is to be deleted.
 
-# IV-Sweep Mode
+# IV-Characterization Mode
 
-Operation of the sourcemeter in sweep mode is similar to bias mode operation. Sweep mode allows one to specify a **start value**, **stop value** and the **number of points** to sweep. To measure a sweep, enter your desired sweep parameters. After this, click **Measure Sweep** to acquire data from your device under test. Note that in sweep mode, it is always possible to abort measurements by clicking the **Abort Sweep** button mid measurement. In case of measurements with long measurement intervals, the measurement will terminate after the next data point has been collected. In order to save data traces, click on **Save Data**. Note that it isnot possible to save data while measurements are underway. Below is shown an extract of data produced via an IV-Sweep mode measurement. Note that the data format is identical to that of the IV-Bias mode measurement.
+IV-characterization mode may be used to acquire the DC charachteristics of electronic devices and test circutis. Basic operation in this mode is similar to bias mode operation. To measure a device characteristic, first enter your desired parameters. After reviewing your measurement parameters, click **Measure Sweep** to acquire data from your device under test. Note that in IV-characterization mode, it is always possible to abort measurements by clicking the **Abort Sweep** button mid measurement. In case of measurements with long measurement intervals, the measurement will terminate after the next data point has been collected. In order to save data traces, click on **Save Data**. Note that it is not possible to save data while measurements are underway. Below is shown an extract of data produced via an IV-Sweep mode measurement. 
 
 ### IV-Sweep Operation
 ![QKeithleySweep](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithelySweep.png)
 
+IV-characterization mode may be used to charachterize both two terminal (Resistances, Diodes, PV devices) and three terminal devices (FET, BJT). For two terminal devices, only one Keithley sourcemeter is required whereas for three terminal devices two Keithleys are required. In two terminal operation, a range of voltages(currents) is applied and the corresponding current(voltage) is measured for each bias point respectively. In basic two terminal operation, one only needs to specify a **start value**, **stop value** and the **number of points** in the controller. 
+
+To measure a three terminal device such as a field effect transistor, one would like to perform repeated two terminal **IV-sweeps** while varying the voltage of the gate of the device via a **V-step**. This behaviour of **IV-sweep** and **V-step** can be configured independently via the **Configure Parameters** dropdown menu. By default, the three terminal **V-step** behaviour is disabled thus providing two terminal operation. To enable **V-step** simply toggle the **V-step (ON/OFF)** button. 
+
+In order to perform a three terminal measurement, it is important that one first initializes two Keithley sourcemeters in the **Hardware Configuration**. These devices will then appear in the **Select Device**´dropdown in the IV-characterization application. Take note of the GPIB addresses of your IV-sweep and V-step sourcemeters when you are initializing your insturments. Note that the application will allow for the selection of the same device for the IV-sweep and V-step parameters. However, in this case, a warning message will be displayed indicating that the same sourcemeter has been selected for sweep and step operation and hardware operation will default to multiple identical sweeps.
+
 ### IV-Hysteresis Measurements 
-The QKeithleySweep application also offers a **Hysteresis Mode** selector allowing one to configure a variety of sweep conditions. Hysteresis measurements can be useful to characterize electronic devices that are unstable due to electronic trapping effects. The application summarizes the hysteresis modes available in QKeithleySweep. Note that the number of points in hysteresis modes is approximately `2n`.
+The QKeithleySweep application has a **Hysteresis Mode** selector embedded into the **IV-sweep** controller allowing one to configure a variety of sweep conditions. Hysteresis measurements can be useful to characterize electronic devices that are unstable due to electronic trapping effects. The application summarizes the hysteresis modes available in QKeithleySweep. Note that the number of points in hysteresis modes is approximately `2n`.
 
 Hysteresis Mode    | Bias Operation               |  nPoints  
 ------------       | -------------                | -------------
@@ -49,9 +55,18 @@ Hysteresis Mode    | Bias Operation               |  nPoints
 `Reverse-sweep`    | `start - stop - start`       | `2*n - 1`
 `Zero-centered`    | `0V - start - 0V -stop - 0V` | `2*n + 2`
 
+### Measuring Unstable Devices
+
+Keithley sourcemeters can only supply starcase sweeps in which the voltage(current) is stepped from value to value in a discrete fashion. In the case of unstable devices, a sudden change in voltage may generate some transient behaviour in the current. However, IV-characterization mode only measures once for each applied bias, leaving integration of unstable currents and voltages up to the hardware itself. In all cases, the software will measure the current as soon as possible (i.e. before applying the measurement dealy cycle) such that the measuremnt settle time is determined by the hardware integration time. To investivate slow transients when quickly changing the bias, it is advised to use IV-bias mode with a short hardware integration time.
+
+# PV-Characterization Mode
+
+### Voc and MPP tracking modes
+
+
 
 # Data Format 
-All applicaitons are built using the [QVisaFramework](https://github.com/mwchalmers/QKeithleyControl/tree/master/QKeithleyControl/widgets). This allows for a unified method of handling data for all application modes. The file below shows an example measurement consisting of two IV-sweeps. The data format is *tab-deliminated* and is designed to be easy to manipulate in commercial software. Data header lines are always preceeded by the `*!` prefix. Measurement header lines will always take the following form `#! <type> <hash>`. The type wiil injected by the calling application (e.g. QKeithleyBias, QKeithleySweep, etc.), and the hash value provides for a cryptographically unique stamp which can be used to identify the data in user built postprocessing applications. 
+QKeithleyControl is built upon the [QVisaFramework](https://github.com/mesoic/PyQtVisa). This allows for a unified method of handling data for all application modes. The file below shows an example measurement consisting of two IV-sweeps. The data format is *tab-deliminated* and is designed to be easy to manipulate in commercial software. Data header lines are always preceeded by the `*!` prefix. Measurement header lines will always take the following form `#! <type> <hash>`. The type wiil injected by the calling application (e.g. QKeithleyBias, QKeithleySweep, etc.), and the hash value provides for a cryptographically unique stamp which can be used to identify the data in user built postprocessing applications. 
 
 ```
 *! QVisaDatafile v1.1
@@ -62,7 +77,7 @@ t		V		I		P
 0.664708137512207	-0.97	-2.702644e-09	2.62156468e-09	
 0.9892799854278564	-0.94	-2.690437e-09	2.52901078e-09	
 1.315497875213623	-0.91	-2.672253e-09	2.43175023e-09	
-1.627976894378662	-0.88	-2.657855e-09	2.3389123999999997e-09	
+1.627976894378662	-0.88	-2.657855e-09	2.3389123999999997e-09	 
 1.9469718933105469	-0.85	-2.637861e-09	2.24218185e-09	
 2.2590084075927734	-0.82	-2.619003e-09	2.14758246e-09	
 2.578735589981079	-0.79	-2.606122e-09	2.05883638e-09	
@@ -86,15 +101,15 @@ t		V		I		P
 
 # Installation
 
-Since QKeithleyControl is written in [python](https://www.python.org/downloads/), be sure to install [python](https://www.python.org/downloads/) before continuing. To get QKeithleyControl, simply clone this [repository](https://github.com/mwchalmers/QKeithleyControl). Alternatively you can download `.zip` file. Assuming you have all dependencies installed properly you can run QKeithleyControl directly out of the source directory. 
+Since QKeithleyControl is written in [python](https://www.python.org/downloads/), be sure to install [python](https://www.python.org/downloads/) before continuing. To get QKeithleyControl, simply clone this [repository](https://github.com/mesoic/QKeithleyControl). Alternatively you can download `.zip` file. Assuming you have all dependencies installed properly you can run QKeithleyControl directly out of the source directory. 
 
 ```
 cd QKeithleyControl/
-python QKeithleyControl
+python QKeithleyControl.py
 ```
-It may be desired to create a softlink shortcut to the program contol. To do this in Windows, navigate to your `QKeithleyControl` directory, left click on `__main__.py` and create your shortcut. In Linux, execute the following commands with your specific source and destination paths.
+It may be desired to create a softlink shortcut to the program contol. To do this in Windows, navigate to your `QKeithleyControl` directory, left click on `QKeithleyControl.py` and create your shortcut. In Linux, execute the following commands with your specific source and destination paths.
 ```
-ln -s <src_path>/QKeithleyControl/__main__.py <dest_path>/QKeithleyControl.py
+ln -s <src_path>/QKeithleyControl/QKeithleyControl.py <dest_path>/QKeithleyControl.py
 ```
 
 # Dependencies
@@ -110,7 +125,7 @@ The following python dependencies are also required.
 2. [PyQt5](https://wiki.python.org/moin/PyQt) Python bindings for Qt development framework
 3. [numpy](https://numpy.org/) Python numerics library
 4. [matplotlib](https://matplotlib.org/) Python plotting library
-5. [PyQtVisa](https://github.com/mwchalmers/PyQtVisa) Qt Framework for building pyVisa applications.
+5. [PyQtVisa](https://github.com/mesoic/PyQtVisa) Qt Framework for building pyVisa applications.
 
 The python modules can be installed using pip. To get pip run the following commands:
 ```
