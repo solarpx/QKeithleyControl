@@ -34,8 +34,8 @@ from src.app.QKeithleySolar import QKeithleySolar
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QMessageBox, QMenu
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QUrl
+from PyQt5.QtGui import QIcon, QDesktopServices
 
 # Subclass QMainWindow to customise your application's main window
 class QKeithleyMain(QMainWindow):
@@ -76,8 +76,8 @@ class QKeithleyMain(QMainWindow):
 		# Set window central widget to stacked widget
 		self.setCentralWidget(self.ui_stack)
 
-	# Callback to update menu
-	def menu_callback(self, q):		
+	# Callback to handle main menu actions
+	def main_menu_callback(self, q):
 
 		if q.text() == "Hardware Config" and self.ui_stack.currentIndex() != 0: 
 			self.ui_stack.setCurrentIndex(0)
@@ -99,6 +99,23 @@ class QKeithleyMain(QMainWindow):
 
 		if q.text() == "Exit": 
 			self.app.exit()		
+
+
+	# Callback to handle help menu actions
+	def help_menu_callback(self, q):
+
+		if q.text() == "Documentation":
+			QDesktopServices.openUrl( QUrl( "https://github.com/mesoic/QKeithleyControl") )
+		
+		if q.text() == "About":
+		
+			# Message box to display error
+			msg = QMessageBox()
+			msg.setWindowTitle("QKeithleyControl")
+			msg.setWindowIcon(self.icon)
+			msg.setText("<h2>QKeithleyControl</h2><p>Version 1.1 &copy;2019-2020 by github.com/mesoic</p><p>QKeithleyControl is open source software built on the PyQtVisa framework.</p>")
+			msg.setStandardButtons(QMessageBox.Ok)
+			msg.exec_()	
 
 	# Generate Menu
 	def _gen_menu(self):
@@ -135,8 +152,19 @@ class QKeithleyMain(QMainWindow):
 		self.app_exit = QAction("Exit",self)
 		self.main_menu.addAction(self.app_exit)
 
-		# Callback Trigge
-		self.main_menu.triggered[QAction].connect(self.menu_callback)
+		# Add a selector menu items
+		self.help_menu = self.menu_bar.addMenu('Help')
+
+		self.app_docs = QAction("Documentation",self)
+		self.help_menu.addAction(self.app_docs)
+
+		self.app_about = QAction("About",self)
+		self.help_menu.addAction(self.app_about)
+
+		# Callback Triggered
+		self.main_menu.triggered[QAction].connect(self.main_menu_callback)
+		self.help_menu.triggered[QAction].connect(self.help_menu_callback)
+
 
 	# Method to generate warning box
 	def _gen_warning_box(self, _title, _text): 
