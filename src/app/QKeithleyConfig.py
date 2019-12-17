@@ -24,8 +24,8 @@
 #
 
 #!/usr/bin/env python 
-import visa
 import time
+import pyvisa
 import numpy as np
 
 # Import device drivers
@@ -174,7 +174,7 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 					msg.exec_()
 
 		# Display error message if connection error
-		except visa.VisaIOError:
+		except pyvisa.VisaIOError:
 
 			# Message box to display error
 			msg = QMessageBox()

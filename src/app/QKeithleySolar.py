@@ -30,8 +30,7 @@ import time
 import html
 import threading 
 
-# Import visa and numpy
-import visa
+# Import numpy
 import numpy as np
 
 # Import QVisaApplication
