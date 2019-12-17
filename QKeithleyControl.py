@@ -26,13 +26,13 @@
 #!/usr/bin/env python 
 import sys
 from PyQt5.QtWidgets import QApplication
-import app.QKeithleyMainWindow
+from src.QKeithleyMain import QKeithleyMain
 
 # Main event loop handler instance
 _app = QApplication(sys.argv)
 
 # Instantiate the application
-window = app.QKeithleyMainWindow.QKeithleyMainWindow(_app)
+window = QKeithleyMain(_app)
 window.show()
 
 # Enter event loop

@@ -112,8 +112,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
-		self.layout.addLayout(self.gen_solar_ctrl())
-		self.layout.addWidget(self.gen_solar_plot())
+		self.layout.addLayout(self.gen_solar_ctrl(), 1)
+		self.layout.addWidget(self.gen_solar_plot(), 3)
 		self.setLayout(self.layout)
 		
 
@@ -458,7 +458,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"label"		: "Measurement Interval (s)",
 			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: [1.0]
+			"default"	: [0.1]
 		}
 		self.mpp_delay = QVisaUnitSelector.QVisaUnitSelector(self.mpp_delay_config)
 
@@ -489,7 +489,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.iv_plot.set_axes_labels("111t", "Voltage (V)", "Power (mW)")
 		self.iv_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.iv_plot.refresh_canvas(supress_warning=True)
-		self.iv_plot.set_mpl_refresh_callback( "_reset_data_object" )
 
 		self.voc_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.voc_plot.add_subplot(111, twinx=True)
@@ -497,7 +496,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_plot.set_axes_labels("111t", "Time (s)", "Ioc (V)")
 		self.voc_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.voc_plot.refresh_canvas(supress_warning=True)		
-		self.voc_plot.set_mpl_refresh_callback( "_reset_data_object" )
 
 		self.mpp_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.mpp_plot.add_subplot(111, twinx=True)
@@ -505,7 +503,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_plot.set_axes_labels("111t", "Time (s)", "Pmpp (mW)")
 		self.mpp_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.mpp_plot.refresh_canvas(supress_warning=True)		
-		self.mpp_plot.set_mpl_refresh_callback( "_reset_data_object" )
+
+		# Sync plot clear data buttons with application data
+		self.iv_plot.sync_application_data(True)
+		self.voc_plot.sync_application_data(True)
+		self.mpp_plot.sync_application_data(True)
 
 		# Add QVisaDynamicPlots to QStackedWidget
 		self.plot_stack.addWidget(self.iv_plot)
@@ -531,6 +533,16 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			self.meas_pages.setCurrentIndex(2)
 			self.plot_stack.setCurrentIndex(2)
 
+	# Callback method to delete data when traces are cleared
+	def sync_mpl_clear(self):
+		
+		# Extract plot and data object
+		_plot = self.plot_stack.currentWidget()
+		_data = self._get_data_object()
+
+		# Note that plot subkeys map to data keys
+		for _subkey in _plot.get_axes_handles().subkeys("111"):
+			_data.del_key(_subkey)
 
 	#####################################
 	#  IV-SWEEP MEASUREMENT MODE
@@ -539,10 +551,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	# Sweep measurement EXECUTION
 	def exec_iv_thread(self):
 		
-		# Refresh plot. supress_warning and supress_callback options will
-		# just refresh plot so there will be no interaction with class data
-		# self.iv_plot.refresh_canvas(supress_warning=True, supress_callback=True)
-
 		# Set sweep parameters as simple linspace
 		_params = np.linspace( 
 			float( self.iv_start.value() ), 

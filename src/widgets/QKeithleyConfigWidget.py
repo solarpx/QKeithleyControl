@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------
-# 	QKeithleyWidget -> QWidget
+# 	QKeithleyConfigWidget -> QWidget
 # 	Copyright (C) 2019 Michael Winters
 #	mwchalmers@protonmail.com
 # ---------------------------------------------------------------------------------
@@ -33,9 +33,9 @@ from PyQt5.QtGui import QIcon
 # Container class for Keithley to render keithley controls in the configuration script. 
 # Note that _app must be QVisaConfigure widget or QVisaApplication widget
 
-class QKeithleyWidget(QWidget):
+class QKeithleyConfigWidget(QWidget):
 
-	def __init__(self, _name, _app):
+	def __init__(self, _app, _name):
 
 		# Extends QWidget
 		QWidget.__init__(self)

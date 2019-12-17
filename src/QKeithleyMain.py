@@ -27,10 +27,10 @@
 import os
 
 # Import Keithley control widgets
-import app.QKeithleyConfigure
-import app.QKeithleyBias
-import app.QKeithleySweep 
-import app.QKeithleySolar
+from src.app.QKeithleyConfig import QKeithleyConfig
+from src.app.QKeithleyBias import QKeithleyBias
+from src.app.QKeithleySweep import QKeithleySweep 
+from src.app.QKeithleySolar import QKeithleySolar
 
 # Import QT backends
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QAction, QStackedWidget, QMessageBox, QMenu
@@ -38,12 +38,12 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
 # Subclass QMainWindow to customise your application's main window
-class QKeithleyMainWindow(QMainWindow):
+class QKeithleyMain(QMainWindow):
 
 	def __init__(self, _application, *args, **kwargs):
 		
 		# Instantiate super
-		super(QKeithleyMainWindow, self).__init__(*args, **kwargs)
+		super(QKeithleyMain, self).__init__(*args, **kwargs)
 
 		# Application handle and window title	
 		self.app = _application
@@ -60,12 +60,12 @@ class QKeithleyMainWindow(QMainWindow):
 		self.ui_stack = QStackedWidget(self)
 
 		# Create QVisaWidget for configuration mode
-		self.ui_config = app.QKeithleyConfigure.QKeithleyConfigure()
+		self.ui_config = QKeithleyConfig()
 		
 		# Create QVisaWidget for each measurement mode
-		self.ui_bias   = app.QKeithleyBias.QKeithleyBias(self.ui_config)
-		self.ui_sweep  = app.QKeithleySweep.QKeithleySweep(self.ui_config)
-		self.ui_solar  = app.QKeithleySolar.QKeithleySolar(self.ui_config)
+		self.ui_bias   = QKeithleyBias(self.ui_config)
+		self.ui_sweep  = QKeithleySweep(self.ui_config)
+		self.ui_solar  = QKeithleySolar(self.ui_config)
 
 		# Add ui-mode widgets to stack
 		self.ui_stack.addWidget(self.ui_config)

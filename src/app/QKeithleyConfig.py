@@ -35,7 +35,7 @@ from PyQtVisa.drivers import keithley2400
 from PyQtVisa import QVisaConfigure
 
 # Import QKeithleyWidget
-import app.QKeithleyWidget
+from src.widgets.QKeithleyConfigWidget import QKeithleyConfigWidget
 
 # Import QT backends
 import os
@@ -47,12 +47,12 @@ from PyQt5.QtGui import QIcon
 # Configuration application to initalize and manage multiple Keithley insturments 
 # in a single context handles. Devices are uniquely addressable via QVisaConfigure
 # built-ins
-class QKeithleyConfigure(QVisaConfigure.QVisaConfigure):
+class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 
 	def __init__(self):
 
 		# Inherits QVisaConfigure -> QWidget
-		super(QKeithleyConfigure, self).__init__()	
+		super(QKeithleyConfig, self).__init__()	
 
 		# Create Icon for QMessageBox
 		self.gen_main_layout()
@@ -103,7 +103,7 @@ class QKeithleyConfigure(QVisaConfigure.QVisaConfigure):
 		if _name is not None:
 			
 			# Loop through QStacked widget children
-			for _inst in list( self._inst_pages.findChildren(app.QKeithleyWidget.QKeithleyWidget) ):
+			for _inst in list( self._inst_pages.findChildren(QKeithleyWidget) ):
 
 				# If insturment name matches name
 				if _inst._name == _name:
@@ -162,7 +162,7 @@ class QKeithleyConfigure(QVisaConfigure.QVisaConfigure):
 					self._inst_widget.refresh( self )
 					self._inst_widget.blockSignals(False)
 					
-					self._inst_pages.addWidget( app.QKeithleyWidget.QKeithleyWidget( _name, self ) )
+					self._inst_pages.addWidget( QKeithleyConfigWidget( self, _name ) )
 
 					# Message box to display success
 					msg = QMessageBox()

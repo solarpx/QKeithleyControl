@@ -152,8 +152,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		
 		# Create layout objects and set layout
 		self.layout = QHBoxLayout()
-		self.layout.addWidget(self.gen_main_ctrl())
-		self.layout.addWidget(self.gen_main_plot())
+		self.layout.addWidget(self.gen_main_ctrl(), 1)
+		self.layout.addWidget(self.gen_main_plot(), 3)
 		self.setLayout(self.layout)
 
 	#####################################
@@ -589,8 +589,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.plot.set_axes_labels("111", "Voltage (V)", "Current (A)")
 		self.plot.refresh_canvas(supress_warning=True)		
 
-		# Connect plot refresh button to application _reset_data_object method
-		self.plot.set_mpl_refresh_callback( "_reset_data_object" )
+		# Sync plot clear data button with application data
+		self.plot.sync_application_data(True)
 
 		# Return the plot
 		return self.plot
@@ -615,38 +615,15 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 	# Sweep control dynamic update
 	def update_sweep_ctrl(self):
 
-		# If we answer yes to the data clear dialoge
-		if self.plot.refresh_canvas(supress_warning=False):
+		# Switch to voltage sweep page
+		if self.sweep_src.currentText() == "Voltage":
+			self.sweep_pages.setCurrentIndex(0)
+			self.update_meas_params()
 
-			# Switch to voltage sweep page
-			if self.sweep_src.currentText() == "Voltage":
-				self.sweep_pages.setCurrentIndex(0)
-				self.update_meas_params()
-
-			# Switch to current sweep page
-			if self.sweep_src.currentText() == "Current":		
-				self.sweep_pages.setCurrentIndex(1)
-				self.update_meas_params()
-
-		# Otherwise revert sweep_src and block signals to 
-		# prevent update_sweep_ctrl loop
-		else: 		
-
-			if self.sweep_src.currentText() == "Current":
-
-				self.sweep_src.blockSignals(True)
-				self.sweep_src.setCurrentText("Voltage")
-				self.sweep_src.blockSignals(False)
-
-			elif self.sweep_src.currentText() == "Voltage":
-
-				self.sweep_src.blockSignals(True)
-				self.sweep_src.setCurrentText("Current")
-				self.sweep_src.blockSignals(False)
-
-			else:
-				pass	
-
+		# Switch to current sweep page
+		if self.sweep_src.currentText() == "Current":		
+			self.sweep_pages.setCurrentIndex(1)
+			self.update_meas_params()
 
 	# Create Measurement 
 	def update_meas_params(self):
