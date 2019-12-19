@@ -67,19 +67,15 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 		self._icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))
 
 		# Insturment initialization widget
-		self._init_widget = self._gen_init_widget()
-		self._init_widget.set_init_callback("initialize_addr")
+		self._comm_widget = self._gen_comm_widget()
+		self._comm_widget.set_init_callback("init_keithley")
+		self._comm_widget.set_select_callback("update_inst_pages")
 
-		# Generate QVisaInstWidget
-		#self._inst_widget_label = QLabel("<b>Select Instrument</b>")
-		#self._inst_widget = self._gen_inst_widget()
-		#self._init_widget.set_callback("update_inst_pages")
-		
-
+		# QStackedWidget for insturment configurations
 		self._inst_pages = QStackedWidget()
 
-	
-		self._layout.addWidget(self._init_widget)
+		# Add comm widget and inst pages
+		self._layout.addWidget(self._comm_widget)
 		self._layout.addStretch(1)
 		self._layout.addWidget(self._inst_pages)
 
@@ -88,94 +84,29 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 		self.setFixedWidth(350)
 
 
-	
+	# Callback to handle addr initialization
+	def init_keithley(self):
+
+		# Initialize Keithley
+		_inst = self._comm_widget.init( keithley2400.keithley2400 )
+
+		# Build configuration widget for Keithley
+		if _inst is not None:
+			self._inst_pages.addWidget( QKeithleyConfigWidget( self, _inst.name ) )
+
+
 	# This will update the QStackedWidget to show the correct QKeithleyWidget
 	def update_inst_pages(self):
 		
 		# Get current text
-		_name = self._inst_widget.currentText()
-		if _name is not None:
+		_inst = self._comm_widget.get_current_inst()
+		if _inst is not None:
 			
 			# Loop through QStacked widget children
-			for _inst in list( self._inst_pages.findChildren(QKeithleyWidget) ):
+			for _page in list( self._inst_pages.findChildren(QKeithleyWidget) ):
 
-				# If insturment name matches name
-				if _inst._name == _name:
+				# If insturment name matches page name
+				if _page.name == _inst.name:
 
 					# Set widget page
-					self._inst_pages.setCurrentWidget(_inst)
-
-
-	# Callback to handle addr initialization
-	def initialize_addr(self):
-
-		# Build local value and name of insturment
-		_addr = self._init_widget.get_addr()
-		_comm = self._init_widget.get_comm()
-		_name = str("Keithley") 
-
-		# Try to initialize Keithley
-		try: 
-
-			# Check if Keithley has already been initialized at address
-			if self._get_inst_byname(_name) is not None:
-
-				# Message box to display error
-				msg = QMessageBox()
-				msg.setIcon(QMessageBox.Warning)
-				msg.setText("Device %s exists"%(_name))
-				msg.setWindowTitle("pyVISA Error")
-				msg.setWindowIcon(self._icon)
-				msg.setStandardButtons(QMessageBox.Ok)
-				msg.exec_()
-
-			# Otherwise try to add the keithley	
-			else:
-
-				# Initialize insturment driver
-				_inst = keithley2400.keithley2400(_comm, _addr, _name)
-	
-				# Check if insturement is actially a keithley 24xx	
-				if False: #"KEITHLEY INSTRUMENTS INC.,MODEL 24" not in str(_inst.idn()):
-					
-					msg = QMessageBox()
-					msg.setIcon(QMessageBox.Warning)
-					msg.setText("%S is NOT a Keithley"%(_inst.name))
-					msg.setWindowTitle("pyVISA Error")
-					msg.setWindowIcon(self._icon)
-					msg.setStandardButtons(QMessageBox.Ok)
-					msg.exec_()	
-
-				# If so then continure with initialization
-				else: 
-					# Add insturment handles
-					self._add_inst_handle(_inst)
-					self._get_inst_byaddr(_addr).reset()
-
-					# Supress signals to not fire callback on text changed
-					self._init_widget.refresh()					
-					self._inst_pages.addWidget( QKeithleyConfigWidget( self, _name ) )
-
-					# Message box to display success
-					msg = QMessageBox()
-					msg.setIcon(QMessageBox.Information)
-					msg.setText("Initialized device at %s"%(_inst.name))
-					msg.setWindowTitle("pyVISA Connection")
-					msg.setWindowIcon(self._icon)
-					msg.setStandardButtons(QMessageBox.Ok)
-					msg.exec_()
-
-		# Display error message if connection error
-		except pyvisa.VisaIOError:
-
-			# Alias
-			_alias = "ASRL" if _comm == "RS-232" else "GPIB0::"
-
-			# Message box to display error
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("No deivce at %s%s"%(_alias, _addr))
-			msg.setWindowTitle("pyVISA Error")
-			msg.setWindowIcon(self._icon)
-			msg.setStandardButtons(QMessageBox.Ok)
-			msg.exec_()
+					self._inst_pages.setCurrentWidget(_page)

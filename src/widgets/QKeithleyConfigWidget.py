@@ -42,7 +42,7 @@ class QKeithleyConfigWidget(QWidget):
 
 		# Cache a reference to the calling application 
 		self._app  = _app
-		self._name = _name
+		self.name = _name
 
 		# Generate main layout
 		self.gen_main_layout()
@@ -50,7 +50,7 @@ class QKeithleyConfigWidget(QWidget):
 	def gen_main_layout(self):
 	
 		self.layout = QVBoxLayout()
-		self.name_label = QLabel("<b>Configure %s</b>"%str(self._name))
+		self.name_label = QLabel("<b>Configure %s</b>"%str(self.name))
 
 		self.sense_mode_label = QLabel("<b>Sense Mode</b>")
 		self.sense_mode = QComboBox()
@@ -94,24 +94,24 @@ class QKeithleyConfigWidget(QWidget):
 	def update_config(self):
 
 		# Check to see if Keithley has been initilaized
-		if self._app._get_inst_byname(self._name) is not None:
+		if self._app._get_inst_byname(self.name) is not None:
 
 			# Update sense mode
 			if self.sense_mode.currentText() == "2-wire":
-				self._app._get_inst_byname(self._name).four_wire_sense_off()
+				self._app._get_inst_byname(self.name).four_wire_sense_off()
 			
 			if self.sense_mode.currentText() == "4-wire":
-				self._app._get_inst_byname(self._name).four_wire_sense_on()
+				self._app._get_inst_byname(self.name).four_wire_sense_on()
 
 			# Update output route
 			if self.output_route.currentText() == "Front":
-				self._app._get_inst_byname(self._name).output_route_front()
+				self._app._get_inst_byname(self.name).output_route_front()
 			
 			if self.output_route.currentText() == "Rear":
-				self._app._get_inst_byname(self._name).output_route_rear()
+				self._app._get_inst_byname(self.name).output_route_rear()
 
 			# Update integration time
-			self._app._get_inst_byname(self._name).update_nplc(self.config_nplc.value())
+			self._app._get_inst_byname(self.name).update_nplc(self.config_nplc.value())
 
 		# Message box to indicate successful update
 		msg = QMessageBox()

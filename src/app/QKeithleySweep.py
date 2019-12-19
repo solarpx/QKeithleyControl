@@ -122,7 +122,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 		 	# Reverse sweep, zero crossing
 			elif  (start > 0.) and (stop < 0.) and (start > stop):	
-				sp = np.concatenate( ([0.0], neg[::-1], neg[1::], [0.0], pos, pos[-2::-1], [0.0]) )
+				sp = np.concatenate( ([0.0], neg, neg[-2::-1], [0.0], pos[::-1], pos[1::], [0.0]) )
+				print(sp)				
 
 			# If not zero crossing, default to "Reverse-sweep" case
 			else: 	
@@ -360,7 +361,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"unit" 		: "V",
 			"min"		: "u",
 			"max"		: "",
-			"label"		: "Sweep Start (V)",
+			"label"		: "Sweep Stop (V)",
 			"limit"		: 20.0,
 			"signed"	: True,
 			"default"	: [1.0, ""]
