@@ -103,7 +103,7 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 		if _inst is not None:
 			
 			# Loop through QStacked widget children
-			for _page in list( self._inst_pages.findChildren(QKeithleyWidget) ):
+			for _page in list( self._inst_pages.findChildren(QKeithleyConfigWidget) ):
 
 				# If insturment name matches page name
 				if _page.name == _inst.name:

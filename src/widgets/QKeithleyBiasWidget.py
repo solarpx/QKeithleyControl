@@ -155,6 +155,7 @@ class QKeithleyBiasWidget:
 		# Main output and controls
 		self.ctl_layout.addWidget(self._app._gen_hbox_widget([self.src_select, self.src_select_label]))
 		self.ctl_layout.addWidget(self.src_pages)
+		self.ctl_layout.setContentsMargins(0,0,0,0)
 				
 		# Set layouth
 		self.ctl_widget.setLayout(self.ctl_layout)
