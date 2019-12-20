@@ -85,7 +85,6 @@ class QKeithleyConfigWidget(QWidget):
 		self.layout.addWidget(self.config_nplc_note)
 		self.layout.addWidget(self.config_nplc)
 		self.layout.addWidget(self.inst_update)
-		self.layout.setContentsMargins(0,0,0,0)
 
 		# Set layout
 		self.setLayout(self.layout)
@@ -94,24 +93,24 @@ class QKeithleyConfigWidget(QWidget):
 	def update_config(self):
 
 		# Check to see if Keithley has been initilaized
-		if self._app._get_inst_byname(self.name) is not None:
+		if self._app.get_device_by_name(self.name) is not None:
 
 			# Update sense mode
 			if self.sense_mode.currentText() == "2-wire":
-				self._app._get_inst_byname(self.name).four_wire_sense_off()
+				self._app.get_device_by_name(self.name).four_wire_sense_off()
 			
 			if self.sense_mode.currentText() == "4-wire":
-				self._app._get_inst_byname(self.name).four_wire_sense_on()
+				self._app.get_device_by_name(self.name).four_wire_sense_on()
 
 			# Update output route
 			if self.output_route.currentText() == "Front":
-				self._app._get_inst_byname(self.name).output_route_front()
+				self._app.get_device_by_name(self.name).output_route_front()
 			
 			if self.output_route.currentText() == "Rear":
-				self._app._get_inst_byname(self.name).output_route_rear()
+				self._app.get_device_by_name(self.name).output_route_rear()
 
 			# Update integration time
-			self._app._get_inst_byname(self.name).update_nplc(self.config_nplc.value())
+			self._app.get_device_by_name(self.name).update_nplc(self.config_nplc.value())
 
 		# Message box to indicate successful update
 		msg = QMessageBox()

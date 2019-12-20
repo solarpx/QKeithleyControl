@@ -61,12 +61,12 @@ class QKeithleyBiasWidget:
 		# Reset the keithley
 		if self._name != "__none__":
 			
-			self.keithley().reset()
+			self.keithley().rst()
 			self.keithley().set_voltage( self.voltage_bias.value() )
 			self.keithley().current_cmp( self.voltage_cmpl.value() )
 
 	def keithley(self):		
-		return self._app._get_inst_byname( self._name )
+		return self._app.get_device_by_name( self._name )
 
 	#####################################
 	# APPLICATION HELPER METHODS

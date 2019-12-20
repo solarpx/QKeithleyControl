@@ -52,16 +52,16 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 	def refresh(self):
 	
 		# If add insturments have been initialized
-		if self._get_inst_handles() is not None:
+		if self.get_devices() is not None:
 
 			# Get all available insturment names
-			for _name in self._get_inst_names():
+			for _name in self.get_device_names():
 
 				# Check if name has already been registered to inst widget
-				if self.inst_widget.isRegistered(_name) == False:
+				if self.device_select.isRegistered(_name) == False:
 
 					# If not rgister it and add output widget to stack
-					self.inst_widget.registerInst(_name)
+					self.device_select.registerInst(_name)
 
 					# Generate bias widget
 					self.bias_widgets[_name] = QKeithleyBiasWidget(self, _name) 
@@ -78,7 +78,7 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 	def update_bias_pages(self):
 
 		# Get current name
-		_name = self.inst_widget.currentText()
+		_name = self.device_select.currentText()
 
 		# Check if name has been added to bias widgets
 		if _name in self.bias_widgets.keys():
@@ -114,10 +114,10 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 		self.outputs.addWidget(self.bias_widgets["__none__"].get_output_widget())
 
 		# Insturement selector
-		self.inst_label  = QLabel("Select Output")
-		self.inst_widget = self._gen_inst_widget()
-		self.inst_widget.setFixedWidth(200)
-		self.inst_widget.set_callback("update_bias_pages")
+		self.device_select_label  = QLabel("Select Output")
+		self.device_select = self._gen_device_select()
+		self.device_select.setFixedWidth(200)
+		self.device_select.set_callback("update_bias_pages")
 
 		# Controls for source
 		self.ctrls = QStackedWidget()
@@ -126,10 +126,9 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 		# Save widget
 		self.save_widget = self._gen_save_widget()
 
-
 		# Pack widgets
 		self.meas_layout.addWidget(self.outputs)
-		self.meas_layout.addWidget(self._gen_hbox_widget([self.inst_widget, self.inst_label])) 
+		self.meas_layout.addWidget(self._gen_hbox_widget([self.device_select, self.device_select_label])) 
 		self.meas_layout.addWidget(self.ctrls)
 		self.meas_layout.addStretch(1)
 		self.meas_layout.addWidget(self.save_widget)

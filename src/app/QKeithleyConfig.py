@@ -67,17 +67,17 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 		self._icon = QIcon(os.path.join(os.path.dirname(os.path.realpath(__file__)), "python.ico"))
 
 		# Insturment initialization widget
-		self._comm_widget = self._gen_comm_widget()
-		self._comm_widget.set_init_callback("init_keithley")
-		self._comm_widget.set_select_callback("update_inst_pages")
+		self._device_widget = self._gen_device_control()
+		self._device_widget.set_init_callback("init_keithley")
+		self._device_widget.set_select_callback("updatedevice_pages")
 
 		# QStackedWidget for insturment configurations
-		self._inst_pages = QStackedWidget()
+		self.device_pages = QStackedWidget()
 
 		# Add comm widget and inst pages
-		self._layout.addWidget(self._comm_widget)
+		self._layout.addWidget(self._device_widget)
 		self._layout.addStretch(1)
-		self._layout.addWidget(self._inst_pages)
+		self._layout.addWidget(self.device_pages)
 
 		# Set application layout
 		self.setLayout(self._layout)
@@ -88,25 +88,25 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 	def init_keithley(self):
 
 		# Initialize Keithley
-		_inst = self._comm_widget.init( keithley2400.keithley2400 )
+		Device = self._device_widget.init( keithley2400.keithley2400 )
 
 		# Build configuration widget for Keithley
-		if _inst is not None:
-			self._inst_pages.addWidget( QKeithleyConfigWidget( self, _inst.name ) )
+		if Device is not None:
+			self.device_pages.addWidget( QKeithleyConfigWidget( self, Device.get_property("name") ) )
 
 
 	# This will update the QStackedWidget to show the correct QKeithleyWidget
-	def update_inst_pages(self):
+	def update_device_pages(self):
 		
 		# Get current text
-		_inst = self._comm_widget.get_current_inst()
-		if _inst is not None:
+		Device = self._device_widget.get_current_inst()
+		if Device is not None:
 			
 			# Loop through QStacked widget children
-			for _page in list( self._inst_pages.findChildren(QKeithleyConfigWidget) ):
+			for _page in list( self.device_pages.findChildren(QKeithleyConfigWidget) ):
 
 				# If insturment name matches page name
-				if _page.name == _inst.name:
+				if _page.name == Device.get_property("name"):
 
 					# Set widget page
-					self._inst_pages.setCurrentWidget(_page)
+					self.device_pages.setCurrentWidget(_page)

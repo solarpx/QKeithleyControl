@@ -64,13 +64,13 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 	# Wrapper method to get keitley write handle
 	# 	Returns the pyVisaDevice object
 	def keithley(self, __widget__):
-		return self._get_inst_byname( __widget__.currentText() )
+		return self.get_device_by_name( __widget__.currentText() )
 
 	# Method to refresh the widget
 	def refresh(self):
 	
 		# If add insturments have been initialized
-		if self._get_inst_handles() is not None:
+		if self.get_devices() is not None:
 
 			# Reset the widget and add insturments
 			self.sweep_inst.refresh( self )
@@ -265,7 +265,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 		# Insturement selector and save widget
 		self.sweep_inst_label = QLabel("Select Device")
-		self.sweep_inst = self._gen_inst_widget()
+		self.sweep_inst = self._gen_device_select()
 		self.sweep_inst.setFixedWidth(200)
 
 		#####################################
@@ -321,7 +321,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 	
 		# Voltage step instruement selector
 		self.step_inst_label = QLabel("Select Device")
-		self.step_inst = self._gen_inst_widget()
+		self.step_inst = self._gen_device_select()
 		self.step_inst.setFixedWidth(200)
 
 		# Generate voltage and current source widgets

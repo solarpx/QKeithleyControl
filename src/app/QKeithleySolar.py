@@ -64,7 +64,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	# Wrapper method to get keitley write handle
 	# 	Returns the pyVisaDevice object
 	def keithley(self):
-		return self._get_inst_byname( self.inst_widget.currentText() )
+		return self.get_device_by_name( self.device_select.currentText() )
 
 	# Update bias on keithley
 	def update_bias(self, _value):
@@ -75,10 +75,10 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	def refresh(self):
 	
 		# If add insturments have been initialized
-		if self._get_inst_handles() is not None:
+		if self.get_devices() is not None:
 
 			# Reset the widget and add insturments
-			self.inst_widget.refresh( self )
+			self.device_select.refresh( self )
 
 			# Enable measurement buttons
 			self.iv_meas_button.setEnabled(True)
@@ -123,9 +123,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.ctl_layout = QVBoxLayout()
 
 		# Add insturement selector
-		self.inst_widget_label = QLabel("Select Device")
-		self.inst_widget = self._gen_inst_widget()
-		self.inst_widget.setFixedWidth(200)
+		self.device_select_label = QLabel("Select Device")
+		self.device_select = self._gen_device_select()
+		self.device_select.setFixedWidth(200)
 		self.save_widget = self._gen_save_widget()
 
 		# Generate (IV, Voc, MPP) container widgets
@@ -156,7 +156,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Add measurement select and measurement pages
 		self.ctl_layout.addWidget(self.meas_pages)
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.meas_select, self.meas_select_label]))
-		self.ctl_layout.addWidget(self._gen_hbox_widget([self.inst_widget,self.inst_widget_label]))
+		self.ctl_layout.addWidget(self._gen_hbox_widget([self.device_select,self.device_select_label]))
 
 		# Pack the standard save widget
 		self.ctl_layout.addStretch(1)
@@ -627,7 +627,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 			# Disable controls
 			self.save_widget.setEnabled(False)
-			self.inst_widget.setEnabled(False)
+			self.device_select.setEnabled(False)
 			self.meas_select.setEnabled(False)
 			self.iv_plot.mpl_refresh_setEnabled(False)
 			self.voc_plot.mpl_refresh_setEnabled(False)	
@@ -650,7 +650,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			
 			# Enable controls
 			self.save_widget.setEnabled(True)
-			self.inst_widget.setEnabled(True)
+			self.device_select.setEnabled(True)
 			self.meas_select.setEnabled(True)
 			self.iv_plot.mpl_refresh_setEnabled(True)
 			self.voc_plot.mpl_refresh_setEnabled(True)	
@@ -766,7 +766,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			
 			# Disable controls
 			self.save_widget.setEnabled(False)
-			self.inst_widget.setEnabled(False)
+			self.device_select.setEnabled(False)
 			self.meas_select.setEnabled(False)
 			self.voc_bias.setEnabled(False)
 			self.voc_cmpl.setEnabled(False)
@@ -793,7 +793,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Enable controls
 			self.save_widget.setEnabled(True)
 			self.meas_select.setEnabled(True)
-			self.inst_widget.setEnabled(True)
+			self.device_select.setEnabled(True)
 			self.voc_bias.setEnabled(True)
 			self.voc_cmpl.setEnabled(True)
 			self.iv_plot.mpl_refresh_setEnabled(True)
@@ -914,7 +914,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Disable widgets
 			self.save_widget.setEnabled(False)
 			self.meas_select.setEnabled(False)
-			self.inst_widget.setEnabled(False)
+			self.device_select.setEnabled(False)
 			self.mpp_bias.setEnabled(False)
 			self.mpp_cmpl.setEnabled(False)
 			self.iv_plot.mpl_refresh_setEnabled(False)
@@ -939,7 +939,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Enable widgets 
 			self.save_widget.setEnabled(True)
 			self.meas_select.setEnabled(True)
-			self.inst_widget.setEnabled(True)
+			self.device_select.setEnabled(True)
 			self.mpp_bias.setEnabled(True)
 			self.mpp_cmpl.setEnabled(True)
 			self.iv_plot.mpl_refresh_setEnabled(True)

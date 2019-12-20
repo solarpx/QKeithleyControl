@@ -97,7 +97,9 @@ class QKeithleyMain(QMainWindow):
 			self.ui_solar.refresh()
 			self.ui_stack.setCurrentIndex(3)
 
-		if q.text() == "Exit": 
+		if q.text() == "Exit":
+
+	
 			self.app.exit()		
 
 
