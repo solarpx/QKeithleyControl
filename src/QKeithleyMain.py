@@ -98,9 +98,8 @@ class QKeithleyMain(QMainWindow):
 			self.ui_stack.setCurrentIndex(3)
 
 		if q.text() == "Exit":
-
-	
-			self.app.exit()		
+			self.ui_config.close_devices()
+			self.app.exit()	
 
 
 	# Callback to handle help menu actions
