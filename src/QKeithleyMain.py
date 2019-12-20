@@ -118,6 +118,10 @@ class QKeithleyMain(QMainWindow):
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()	
 
+	# Callback to handle x-button 
+	def closeEvent(self, q):
+		self.ui_config.close_devices()		
+	
 	# Generate Menu
 	def _gen_menu(self):
 
@@ -161,6 +165,10 @@ class QKeithleyMain(QMainWindow):
 
 		self.app_about = QAction("About",self)
 		self.help_menu.addAction(self.app_about)
+
+		# Close button cleanup
+		self.finish = QAction("Quit", self)
+		self.finish.triggered.connect(self.closeEvent)
 
 		# Callback Triggered
 		self.main_menu.triggered[QAction].connect(self.main_menu_callback)
