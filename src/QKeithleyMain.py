@@ -118,9 +118,25 @@ class QKeithleyMain(QMainWindow):
 			msg.setStandardButtons(QMessageBox.Ok)
 			msg.exec_()	
 
-	# Callback to handle x-button 
+	# Callback to handle x-button closeEvent
 	def closeEvent(self, q):
-		self.ui_config.close_devices()		
+
+		msg = QMessageBox()
+		msg.setIcon(QMessageBox.Information)
+		msg.setText("Are you sure you want to quit?")
+		msg.setWindowTitle("QKeithleyControl")
+		msg.setWindowIcon(self.icon)
+		msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+		self.msg_quit = msg.exec_()
+
+		if self.msg_quit == QMessageBox.Yes:
+
+			# Clean up pyvisa device sessions
+			self.ui_config.close_devices()		
+			q.accept()
+
+		else:
+			q.ignore()
 	
 	# Generate Menu
 	def _gen_menu(self):
