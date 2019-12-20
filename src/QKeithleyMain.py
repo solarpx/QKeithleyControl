@@ -1,7 +1,8 @@
 # ---------------------------------------------------------------------------------
 # 	QKeithleyControl -> QMainWindow
-# 	Copyright (C) 2019 Michael Winters
-#	mwchalmers@protonmail.com
+#	Copyright (C) 2019 Michael Winters
+#	github: https://github.com/mesoic
+#	email:  mesoic@protonmail.com
 # ---------------------------------------------------------------------------------
 # 
 # 	Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,6 +26,7 @@
 
 #!/usr/bin/env python 
 import os
+import threading 
 
 # Import Keithley control widgets
 from src.app.QKeithleyConfig import QKeithleyConfig
@@ -98,8 +100,25 @@ class QKeithleyMain(QMainWindow):
 			self.ui_stack.setCurrentIndex(3)
 
 		if q.text() == "Exit":
-			self.ui_config.close_devices()
-			self.app.exit()	
+
+			# Check to see if there are any threads running 
+			# other than main thread
+			if len( threading.enumerate() ) > 1:
+
+				# Dialogue to check quit
+				msg = QMessageBox()
+				msg.setIcon(QMessageBox.Warning)
+				msg.setText("Measurement is running")
+				msg.setWindowTitle("QKeithleyControl")
+				msg.setWindowIcon(self.icon)
+				msg.setStandardButtons(QMessageBox.Ok)
+				self.msg_quit = msg.exec_()
+
+			# Otherwise enter the close dialog
+			else:	
+
+				self.ui_config.close_devices()
+				self.app.exit()	
 
 
 	# Callback to handle help menu actions
@@ -121,22 +140,41 @@ class QKeithleyMain(QMainWindow):
 	# Callback to handle x-button closeEvent
 	def closeEvent(self, q):
 
-		msg = QMessageBox()
-		msg.setIcon(QMessageBox.Information)
-		msg.setText("Are you sure you want to quit?")
-		msg.setWindowTitle("QKeithleyControl")
-		msg.setWindowIcon(self.icon)
-		msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-		self.msg_quit = msg.exec_()
+		# Check to see if there are any threads running 
+		# other than main thread
+		if len( threading.enumerate() ) > 1:
 
-		if self.msg_quit == QMessageBox.Yes:
+			# Dialogue to check quit
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Warning)
+			msg.setText("Measurement is running")
+			msg.setWindowTitle("QKeithleyControl")
+			msg.setWindowIcon(self.icon)
+			msg.setStandardButtons(QMessageBox.Ok)
+			self.msg_quit = msg.exec_()
 
-			# Clean up pyvisa device sessions
-			self.ui_config.close_devices()		
-			q.accept()
-
-		else:
 			q.ignore()
+
+		# Otherwise enter the close dialog
+		else:	
+
+			# Dialogue to check quit
+			msg = QMessageBox()
+			msg.setIcon(QMessageBox.Information)
+			msg.setText("Are you sure you want to quit?")
+			msg.setWindowTitle("QKeithleyControl")
+			msg.setWindowIcon(self.icon)
+			msg.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
+			self.msg_quit = msg.exec_()
+
+			if self.msg_quit == QMessageBox.Yes:
+
+				# Clean up pyvisa device sessions
+				self.ui_config.close_devices()		
+				q.accept()
+
+			else:
+				q.ignore()
 	
 	# Generate Menu
 	def _gen_menu(self):

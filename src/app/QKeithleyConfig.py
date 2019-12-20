@@ -1,7 +1,8 @@
 # ---------------------------------------------------------------------------------
 # 	QKeithleyConfigure -> QVisaConfigure
-# 	Copyright (C) 2019 Michael Winters
-#	mwchalmers@protonmail.com
+#	Copyright (C) 2019 Michael Winters
+#	github: https://github.com/mesoic
+#	email:  mesoic@protonmail.com
 # ---------------------------------------------------------------------------------
 # 
 # 	Permission is hereby granted, free of charge, to any person obtaining a copy
