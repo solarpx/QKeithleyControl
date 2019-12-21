@@ -89,6 +89,22 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 			self.ctrls.setCurrentWidget(self.bias_widgets[_name].get_ctrl_widget())
 			self.plots.setCurrentWidget(self.bias_widgets[_name].get_plot_widget())
 
+	
+	# Sync meta widget to data object
+	def _sync_meta_widget_to_data_object(self):
+
+		# Application keys
+		_data_keys = self._get_data_object().keys()
+		_widget_keys = self.meta_widget.get_meta_keys()
+
+		# Check if widget keys are not in data keys
+		for _key in _widget_keys:
+			
+			# If not then delete the key from meta_widget
+			if _key not in _data_keys:
+
+				self.meta_widget.del_meta_key(_key)
+
 	# Main Layout
 	def gen_main_layout(self):	
 
@@ -124,6 +140,11 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 		self.ctrls = QStackedWidget()
 		self.ctrls.addWidget(self.bias_widgets["__none__"].get_ctrl_widget())
 
+		# Meta widget for trace description
+		self.meta_widget_label = QLabel("<b>Trace Description</b>")
+		self.meta_widget = self._gen_meta_widget()
+		self.meta_widget.set_meta_subkey("__desc__")
+
 		# Save widget
 		self.save_widget = self._gen_save_widget()
 
@@ -132,6 +153,8 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 		self.meas_layout.addWidget(self._gen_hbox_widget([self.device_select, self.device_select_label])) 
 		self.meas_layout.addWidget(self.ctrls)
 		self.meas_layout.addStretch(1)
+		self.meas_layout.addWidget(self.meta_widget_label)
+		self.meas_layout.addWidget(self.meta_widget)
 		self.meas_layout.addWidget(self.save_widget)
 
 		#####################################

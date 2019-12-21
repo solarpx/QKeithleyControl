@@ -127,7 +127,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.device_select_label = QLabel("Select Device")
 		self.device_select = self._gen_device_select()
 		self.device_select.setFixedWidth(200)
-		self.save_widget = self._gen_save_widget()
 
 		# Generate (IV, Voc, MPP) container widgets
 		# These methods will pack self.inst_select
@@ -149,6 +148,12 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.meas_select.addItems(["IV", "Voc", "MPP"])
 		self.meas_select.currentTextChanged.connect(self.update_meas_pages)
 
+		# Meta widget for trace description
+		self.meta_widget_label = QLabel("<b>Trace Description</b>")
+		self.meta_widget = self._gen_meta_widget()
+		self.meta_widget.set_meta_subkey("__desc__")
+		self.save_widget = self._gen_save_widget()
+
 
 		#####################################
 		#  ADD CONTROLS
@@ -161,6 +166,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 		# Pack the standard save widget
 		self.ctl_layout.addStretch(1)
+		self.ctl_layout.addWidget(self.meta_widget_label)
+		self.ctl_layout.addWidget(self.meta_widget)
 		self.ctl_layout.addWidget(self.save_widget)
 
 		# Positioning
@@ -509,6 +516,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_plot.sync_application_data(True)
 		self.mpp_plot.sync_application_data(True)
 
+		# Sync meta widget when clearing data from plots
+		self.iv_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
+		self.voc_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
+		self.mpp_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
+
 		# Add QVisaDynamicPlots to QStackedWidget
 		self.plot_stack.addWidget(self.iv_plot)
 		self.plot_stack.addWidget(self.voc_plot)
@@ -517,6 +529,23 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Return the stacked widget
 		self.plot_stack.setCurrentIndex(0);
 		return self.plot_stack
+
+	
+	# Sync meta widget to data object
+	def _sync_meta_widget_to_data_object(self):
+
+		# Application keys
+		_data_keys = self._get_data_object().keys()
+		_widget_keys = self.meta_widget.get_meta_keys()
+
+		# Check if widget keys are not in data keys
+		for _key in _widget_keys:
+			
+			# If not then delete the key from meta_widget
+			if _key not in _data_keys:
+
+				self.meta_widget.del_meta_key(_key)
+
 
 	# Flip between controls when measurement mode selector is updated
 	def update_meas_pages(self):
@@ -566,6 +595,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Add data fields to key
 		data.set_subkeys(key, ["t", "V", "I", "P"])
 		data.set_metadata(key, "__type__", "pv-bias")
+
+		# Add key to meta widget
+		self.meta_widget.add_meta_key(key)
 
 		# Generate colors
 		_c0 = self.iv_plot.gen_next_color()
@@ -675,6 +707,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Add data fields to key
 		data.set_subkeys(key, ["t", "Voc", "Ioc"])
 		data.set_metadata(key, "__type__", "pv-voc")
+
+		# Add key to meta widget
+		self.meta_widget.add_meta_key(key)
 
 		# Generate colors
 		_c0 = self.voc_plot.gen_next_color()
@@ -820,6 +855,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Add data fields to key
 		data.set_subkeys(key, ["t", "Vmpp", "Impp", "Pmpp"])
 		data.set_metadata(key, "__type__", "pv-mpp")
+
+		# Add key to meta widget
+		self.meta_widget.add_meta_key(key)
 
 		# Generate colors
 		_c0 = self.mpp_plot.gen_next_color()

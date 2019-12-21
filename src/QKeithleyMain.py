@@ -112,7 +112,7 @@ class QKeithleyMain(QMainWindow):
 				msg.setWindowTitle("QKeithleyControl")
 				msg.setWindowIcon(self.icon)
 				msg.setStandardButtons(QMessageBox.Ok)
-				self.msg_quit = msg.exec_()
+				msg.exec_()
 
 			# Otherwise enter the close dialog
 			else:	

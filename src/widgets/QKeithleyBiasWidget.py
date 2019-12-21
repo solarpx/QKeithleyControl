@@ -294,6 +294,10 @@ class QKeithleyBiasWidget:
 		self.voltage_plot.sync_application_data(True)
 		self.current_plot.sync_application_data(True)
 
+		# Sync meta widget when clearing data from plots
+		self.voltage_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
+		self.current_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
+
 
 	#####################################
 	#  BIAS CONTROL UPDATE METHODS
@@ -367,6 +371,9 @@ class QKeithleyBiasWidget:
 		# Get QVisaDataObject
 		data = self._app._get_data_object()
 		key  = data.add_hash_key(_type)
+
+		# Add key to meta widget
+		self._app.meta_widget.add_meta_key(key)
 
 		# Add data fields to key
 		data.set_subkeys(key, ["t", "V", "I", "P"])

@@ -209,6 +209,11 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.meas_pages.addWidget(self.gen_sweep_ctrl())
 		self.meas_pages.addWidget(self.gen_step_ctrl())
 
+		# Meta widget for trace description
+		self.meta_widget_label = QLabel("<b>Trace Description</b>")
+		self.meta_widget = self._gen_meta_widget()
+		self.meta_widget.set_meta_subkey("__desc__")
+
 		# Save widget
 		self.save_widget = self._gen_save_widget()
 
@@ -219,6 +224,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 		# Add save widget
 		self.meas_ctrl_layout.addStretch(1)
+		self.meas_ctrl_layout.addWidget(self.meta_widget_label)
+		self.meas_ctrl_layout.addWidget(self.meta_widget)
 		self.meas_ctrl_layout.addWidget(self.save_widget)
 
 		# Set layout and return widget reference
@@ -588,13 +595,34 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.plot = QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.plot.add_subplot(111)
 		self.plot.set_axes_labels("111", "Voltage (V)", "Current (A)")
+		self.plot.add_origin_lines("111", "both")
+
+		# Refresh canvas
 		self.plot.refresh_canvas(supress_warning=True)		
 
 		# Sync plot clear data button with application data
 		self.plot.sync_application_data(True)
 
+		# Sync meta widget when clearing data
+		self.plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
+
 		# Return the plot
 		return self.plot
+
+	# Sync meta widget
+	def _sync_meta_widget_to_data_object(self):
+
+		# Application keys
+		_data_keys = self._get_data_object().keys()
+		_widget_keys = self.meta_widget.get_meta_keys()
+
+		# Check if widget keys are not in data keys
+		for _key in _widget_keys:
+			
+			# If not then delete the key from meta_widget
+			if _key not in _data_keys:
+
+				self.meta_widget.del_meta_key(_key)
 
 
 	#####################################
@@ -750,6 +778,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
 		data.set_metadata(key, "__type__", "iv-sweep-v-step")
 
+		# Add key to meta widget
+		self.meta_widget.add_meta_key(key)
+
 		# Generate function pointer for voltage/current mode
 		if self.sweep_src.currentText() == "Voltage":
 			__func__  = self.keithley(self.sweep_inst).set_voltage
@@ -841,6 +872,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		# Add data fields to key	
 		data.set_subkeys(key, ["t", "V", "I", "P"])
 		data.set_metadata(key, "__type__", "iv-sweep")
+
+		# Add key to meta widget
+		self.meta_widget.add_meta_key(key)
 
 		# Generate function pointer for voltage/current mode
 		if self.sweep_src.currentText() == "Voltage":
