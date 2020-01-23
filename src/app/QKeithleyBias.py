@@ -75,7 +75,6 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 					# Force update bias pages
 					self.update_bias_pages()
 	
-
 	# Update all widgets	
 	def update_bias_pages(self):
 
