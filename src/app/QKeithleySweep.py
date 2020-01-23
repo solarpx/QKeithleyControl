@@ -394,7 +394,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"label"		: "Number of Points",
 			"limit"		: 256.0, 
 			"signed"	: False,
-			"default"	: [11.0]
+			"default"	: [51.0]
 		}
 		self.voltage_sweep_npts = QVisaUnitSelector.QVisaUnitSelector(self.voltage_sweep_npts_config)
 

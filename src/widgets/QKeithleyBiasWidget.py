@@ -241,7 +241,7 @@ class QKeithleyBiasWidget:
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance",
-			"limit"		: 1.0, 
+			"limit"		: 20.0, 
 			"signed"	: False,
 			"default"	: [1, ""]
 		} 

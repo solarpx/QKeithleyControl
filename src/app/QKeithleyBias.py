@@ -74,7 +74,8 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 
 					# Force update bias pages
 					self.update_bias_pages()
-		
+	
+
 	# Update all widgets	
 	def update_bias_pages(self):
 
@@ -87,9 +88,8 @@ class QKeithleyBias(QVisaApplication.QVisaApplication):
 			# Call set current widget method
 			self.outputs.setCurrentWidget(self.bias_widgets[_name].get_output_widget())
 			self.ctrls.setCurrentWidget(self.bias_widgets[_name].get_ctrl_widget())
-			self.plots.setCurrentWidget(self.bias_widgets[_name].get_plot_widget())
+			self.plots.setCurrentWidget(self.bias_widgets[_name].get_plot_widget())						
 
-	
 	# Sync meta widget to data object
 	def _sync_meta_widget_to_data_object(self):
 
