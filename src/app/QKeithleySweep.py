@@ -698,8 +698,10 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			self.voltage_step_stop.value(), 
 			self.voltage_step_npts.value())
 
-		# Set keithley as voltage source
-		if self.keithley(self.step_inst) is not None:
+		# Set step keithley as voltage source. Also ensure that we are not initializing
+		# the the sweep keithely with step params if doubly selected.
+		if ( (self.keithley(self.step_inst) is not None) and 
+			 (self.keithley(self.step_inst) != self.keithley(self.sweep_inst) ) ):
 	
 			self.keithley(self.step_inst).voltage_src()
 			self.keithley(self.step_inst).set_voltage(0.0)
