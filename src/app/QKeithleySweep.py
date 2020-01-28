@@ -246,7 +246,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.meas_config_page_label = QLabel("<b>Configure Parameters</b>")
 		self.meas_config_page = QComboBox()
 		self.meas_config_page.setFixedWidth(200)
-		self.meas_config_page.addItems(["IV-sweep", "V-step"])	
+		self.meas_config_page.addItems(["IV-sweep", "IV-step"])	
 		self.meas_config_page.currentTextChanged.connect(self.update_config_page)
 
 		# Add some space for layout clarity
@@ -281,7 +281,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		#
 		
 		# Current/Voltage Sweep Mode 
-		self.sweep_src_label = QLabel("Source Type")
+		self.sweep_src_label = QLabel("Sweep Type")
 		self.sweep_src = QComboBox()
 		self.sweep_src.setFixedWidth(200)
 		self.sweep_src.addItems(["Voltage", "Current"])	
@@ -332,13 +332,55 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.step_inst = self._gen_device_select()
 		self.step_inst.setFixedWidth(200)
 
+		# Step control mode selector
+		self.step_src_label = QLabel("Step Type")
+		self.step_src = QComboBox()
+		self.step_src.setFixedWidth(200)
+		self.step_src.addItems(["Voltage", "Current"])	
+		self.step_src.currentTextChanged.connect(self.update_step_ctrl)
+
 		# Generate voltage and current source widgets
 		self.gen_voltage_step()		# self.voltage_step
+		self.gen_current_step()		# self.current_step		
+
+		# Add step modes to step_pages widget
+		self.step_pages = QStackedWidget()	
+		self.step_pages.addWidget(self.voltage_step)
+		self.step_pages.addWidget(self.current_step)
+		self.step_pages.setCurrentIndex(0)
+
+		# Step control state machine
+		self.step_state = QStateMachine()
+		self.step_button = QPushButton()
+		self.step_button.setStyleSheet(
+			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
+
+		# Create measurement states
+		self.step_on  = QState()
+		self.step_off = QState()
+
+		# Assign state properties and transitions
+		self.step_on.assignProperty(self.step_button, 'text', 'Step Bias ON')
+		self.step_on.addTransition(self.step_button.clicked, self.step_off)
+		self.step_on.entered.connect(self.exec_step_on)
+
+		self.step_off.assignProperty(self.step_button, 'text', 'Step Bias OFF')
+		self.step_off.addTransition(self.step_button.clicked, self.step_on)
+		self.step_off.entered.connect(self.exec_step_off)
+
+		# Add states, set initial state, and state machine
+		self.step_state.addState(self.step_on)
+		self.step_state.addState(self.step_off)
+		self.step_state.setInitialState(self.step_off)
+		self.step_state.start()
 
 		# Pack widgets
 		self.step_ctrl_layout.addWidget(self.step_ctrl_label)
 		self.step_ctrl_layout.addWidget(self._gen_hbox_widget([self.step_inst,self.step_inst_label]))
-		self.step_ctrl_layout.addWidget(self.voltage_step)
+		self.step_ctrl_layout.addWidget(self._gen_hbox_widget([self.step_src, self.step_src_label]))
+		self.step_ctrl_layout.addWidget(self.step_pages)
+		self.step_ctrl_layout.addWidget(self.step_button)
+		self.step_ctrl_layout.addStretch(1)
 
 		# Set layout and return reference
 		self.step_ctrl.setLayout(self.step_ctrl_layout)		
@@ -502,34 +544,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		# New QWidget
 		self.voltage_step= QWidget()
 		self.voltage_step_layout = QVBoxLayout()
-	
-		# Voltage step control state maching
-		self.voltage_step_state = QStateMachine()
-		self.voltage_step_button = QPushButton()
-		self.voltage_step_button.setStyleSheet(
-			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
 
-		# Create measurement states
-		self.voltage_step_on  = QState()
-		self.voltage_step_off = QState()
-
-		# Assign state properties and transitions
-		self.voltage_step_on.assignProperty(self.voltage_step_button, 'text', 'V-Step ON')
-		self.voltage_step_on.addTransition(self.voltage_step_button.clicked, self.voltage_step_off)
-		self.voltage_step_on.entered.connect(self.exec_voltage_step_on)
-
-		self.voltage_step_off.assignProperty(self.voltage_step_button, 'text', 'V-Step OFF')
-		self.voltage_step_off.addTransition(self.voltage_step_button.clicked, self.voltage_step_on)
-		self.voltage_step_off.entered.connect(self.exec_voltage_step_off)
-
-		# Add states, set initial state, and state machine
-		self.voltage_step_state.addState(self.voltage_step_on)
-		self.voltage_step_state.addState(self.voltage_step_off)
-		self.voltage_step_state.setInitialState(self.voltage_step_off)
-		self.voltage_step_state.start()
-
-
-		# Sweep Start
+		# Step Start
 		self.voltage_step_start_config={
 			"unit" 		: "V",
 			"min"		: "u",
@@ -541,7 +557,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		} 
 		self.voltage_step_start = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_start_config)
 
-		# Sweep Stop
+		# Step Stop
 		self.voltage_step_stop_config={
 			"unit" 		: "V",
 			"min"		: "u",
@@ -553,7 +569,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		} 
 		self.voltage_step_stop = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_stop_config)
 
-		# Compliance Spinbox
+		# Step Compliance Spinbox
 		self.voltage_step_cmpl_config={
 			"unit" 		: "A", 
 			"min"		: "u",
@@ -565,7 +581,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		} 
 		self.voltage_step_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_cmpl_config)	
 
-		# Number of points
+		# Step Number of points
 		self.voltage_step_npts_config={
 			"unit" 		: "__INT__", 
 			"label"		: "Number of Points",
@@ -580,13 +596,74 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.voltage_step_layout.addWidget(self.voltage_step_stop)
 		self.voltage_step_layout.addWidget(self.voltage_step_cmpl)
 		self.voltage_step_layout.addWidget(self.voltage_step_npts)
-		self.voltage_step_layout.addWidget(self.voltage_step_button)
-		self.voltage_step_layout.addStretch(1)
 		self.voltage_step_layout.setContentsMargins(0,0,0,0)
 
 		# Set layout 
 		self.voltage_step.setLayout(self.voltage_step_layout)		
 
+	# Generate current step widget
+	def gen_current_step(self):
+
+		# New QWidget
+		self.current_step = QWidget()
+		self.current_step_layout = QVBoxLayout()
+
+		# Step Start
+		self.current_step_start_config={
+			"unit" 		: "A",
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Step Start (A)",
+			"limit"		: 1.0,
+			"signed"	: True,
+			"default"	: [0.0, "m"]
+		} 
+		self.current_step_start = QVisaUnitSelector.QVisaUnitSelector(self.current_step_start_config)
+
+		# Step Stop
+		self.current_step_stop_config={
+			"unit" 		: "A",
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Step Stop (A)",
+			"limit"		: 1.0,
+			"signed"	: True,
+			"default"	: [1.0, "m"]
+		} 
+		self.current_step_stop = QVisaUnitSelector.QVisaUnitSelector(self.current_step_stop_config)
+
+		# Step Compliance Spinbox
+		self.current_step_cmpl_config={
+			"unit" 		: "V", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Compliance (V)",
+			"limit"		: 20.0, 
+			"signed"	: False,
+			"default"	: [1, ""]
+		} 
+		self.current_step_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.current_step_cmpl_config)	
+
+		# Step Number of points
+		self.current_step_npts_config={
+			"unit" 		: "__INT__", 
+			"label"		: "Number of Points",
+			"limit"		: 256.0, 
+			"signed"	: False,
+			"default"	: [5]
+		}
+		self.current_step_npts = QVisaUnitSelector.QVisaUnitSelector(self.current_step_npts_config)
+
+		# Pack selectors into layout
+		self.current_step_layout.addWidget(self.current_step_start)
+		self.current_step_layout.addWidget(self.current_step_stop)
+		self.current_step_layout.addWidget(self.current_step_cmpl)
+		self.current_step_layout.addWidget(self.current_step_npts)
+		self.current_step_layout.addStretch(1)
+		self.current_step_layout.setContentsMargins(0,0,0,0)
+
+		# Set layout 
+		self.current_step.setLayout(self.current_step_layout)		
 
 	# Ádd dynamic plot
 	def gen_main_plot(self): 		
@@ -633,7 +710,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		if self.meas_config_page.currentText() == "IV-sweep":
 			self.meas_pages.setCurrentIndex(0)
 
-		if self.meas_config_page.currentText() == "V-step":
+		if self.meas_config_page.currentText() == "IV-step":
 			self.meas_pages.setCurrentIndex(1)
 
 
@@ -653,6 +730,20 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		if self.sweep_src.currentText() == "Current":		
 			self.sweep_pages.setCurrentIndex(1)
 			self.update_meas_params()
+
+	# Sweep control dynamic update
+	def update_step_ctrl(self):
+
+		# Switch to voltage sweep page
+		if self.step_src.currentText() == "Voltage":
+			self.step_pages.setCurrentIndex(0)
+			self.update_meas_params()
+
+		# Switch to current sweep page
+		if self.step_src.currentText() == "Current":		
+			self.step_pages.setCurrentIndex(1)
+			self.update_meas_params()
+
 
 	# Create Measurement 
 	def update_meas_params(self):
@@ -692,30 +783,56 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				self.keithley(self.sweep_inst).voltage_cmp(self.current_sweep_cmpl.value())
 
 
-		# Set sweeep paramaters
-		self.set_step_params(
-			self.voltage_step_start.value(), 
-			self.voltage_step_stop.value(), 
-			self.voltage_step_npts.value())
-
 		# Set step keithley as voltage source. Also ensure that we are not initializing
 		# the the sweep keithely with step params if doubly selected.
-		if ( (self.keithley(self.step_inst) is not None) and 
+		if ( ( self.keithley(self.step_inst) is not None) and
 			 (self.keithley(self.step_inst) != self.keithley(self.sweep_inst) ) ):
+
+
+			# Set up v-source(i-compliance) on keithley 
+			if self.step_src.currentText() == "Voltage":
+				
+				# Set sweeep paramaters
+				self.set_step_params(
+					self.voltage_step_start.value(), 
+					self.voltage_step_stop.value(), 
+					self.voltage_step_npts.value())
+
+				# Set keithley as voltage source
+				if self.keithley(self.step_inst) is not None:
+		
+					self.keithley(self.step_inst).voltage_src()
+					self.keithley(self.step_inst).set_voltage(0.0)
+					self.keithley(self.step_inst).current_cmp(self.voltage_step_cmpl.value())
 	
-			self.keithley(self.step_inst).voltage_src()
-			self.keithley(self.step_inst).set_voltage(0.0)
-			self.keithley(self.step_inst).current_cmp(self.voltage_step_cmpl.value())		
+
+			# Set up i-source(v-compliance) on keithley 
+			if self.step_src.currentText() == "Current":
+
+				# Set sweeep paramaters
+				self.set_step_params(
+					self.current_step_start.value(), 
+					self.current_step_stop.value(), 
+					self.current_step_npts.value())
+
+		
+				# Set keithley as voltage source
+				if self.keithley(self.step_inst) is not None:
+				
+					self.keithley(self.step_inst).current_src()
+					self.keithley(self.step_inst).set_current(0.0)
+					self.keithley(self.step_inst).voltage_cmp(self.current_step_cmpl.value())	
+
 
 	#####################################
 	#  MEASUREMENT EXECUTION THREADS
 	#		
 
 	# Function we run when we enter run state
-	def exec_voltage_step_on(self):
+	def exec_step_on(self):
 
 		# Update UI button to abort 
-		self.voltage_step_button.setStyleSheet(
+		self.step_button.setStyleSheet(
 			"background-color: #cce6ff; border-style: solid; border-width: 1px; border-color: #1a75ff; padding: 7px;")
 
 		# Check if no insturments are initialized
@@ -731,8 +848,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			msg.exec_()
 
 			# Set app meta and revert state
-			self._set_app_metadata("__exec_voltage_step__", False)
-			self.voltage_step_button.click()
+			self._set_app_metadata("__exec_step__", False)
+			self.step_button.click()
 
 		# Check if the same insturment is initialized
 		elif self.sweep_inst.currentText() == self.step_inst.currentText():
@@ -749,48 +866,68 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 			# Expose this for testing
 			if self.msg_clear == QMessageBox.Yes:
-				self._set_app_metadata("__exec_voltage_step__", True)
+				self._set_app_metadata("__exec_step__", True)
 
 			else:	
-				self._set_app_metadata("__exec_voltage_step__", False)
-				self.voltage_step_button.click()
+				self._set_app_metadata("__exec_step__", False)
+				self.step_button.click()
 
 		else:
-			self._set_app_metadata("__exec_voltage_step__", True)
+			self._set_app_metadata("__exec_step__", True)
 
 
 	# Function we run when we enter run state
-	def exec_voltage_step_off(self):
+	def exec_step_off(self):
 
 		# Update UI button to abort 
-		self.voltage_step_button.setStyleSheet(
+		self.step_button.setStyleSheet(
 			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
 
-		self._set_app_metadata("__exec_voltage_step__", False)
+		self._set_app_metadata("__exec_step__", False)
 
 	
 	# Execute Sweep-Step Measurement
 	def exec_sweep_step_thread(self):
 
-		# Generate data key 
-		data = self._get_data_object()
-		key  = data.add_hash_key("iv-sweep-v-step")
-
-		# Add data fields to key	
-		data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
-		data.set_metadata(key, "__type__", "iv-sweep-v-step")
-
-		# Add key to meta widget
-		self.meta_widget.add_meta_key(key)
-
-		# Generate function pointer for voltage/current mode
+	
+		# Generate function pointer for sweep voltage/current mode
 		if self.sweep_src.currentText() == "Voltage":
-			__func__  = self.keithley(self.sweep_inst).set_voltage
-			__delay__ = self.voltage_sweep_delay.value()
+			__sweep_func__  = self.keithley(self.sweep_inst).set_voltage
+			__sweep_delay__ = self.voltage_sweep_delay.value()
 
 		if self.sweep_src.currentText() == "Current":
-			__func__ = self.keithley(self.sweep_inst).set_current
-			__delay__ = self.current_sweep_delay.value()
+			__sweep_func__ = self.keithley(self.sweep_inst).set_current
+			__sweep_delay__ = self.current_sweep_delay.value()
+
+		# Generate function pointer for step voltage/current mode
+		if self.step_src.currentText() == "Voltage":
+			__step_func__  = self.keithley(self.step_inst).set_voltage
+
+			# Generate data key and set metadata
+			data = self._get_data_object()
+			key  = data.add_hash_key("iv-sweep-v-step")
+
+			# Add keys and metadata to data object
+			data.set_metadata(key, "__type__", "iv-sweep-v-step")
+			data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
+
+			# Add key to meta widget
+			self.meta_widget.add_meta_key(key)
+
+		if self.step_src.currentText() == "Current":
+			__step_func__  = self.keithley(self.step_inst).set_current
+
+			# Generate data key and set metadata
+			data = self._get_data_object()
+			key  = data.add_hash_key("iv-sweep-i-step")
+
+			# Add keys and metadata to data object
+			data.set_metadata(key, "__type__", "iv-sweep-i-step")
+			data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
+
+			# Add key to meta widget
+			self.meta_widget.add_meta_key(key)
+
 
 		# Clear plot and zero arrays
 		start  = time.time()
@@ -806,13 +943,15 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		# Loop through step variables
 		for _step in self._get_app_metadata("__step__"):
 
-			# Set step voltage
-			self.keithley(self.step_inst).set_voltage(_step)
+			# Set step voltage/current
+			__step_func__(_step)
+
+			# Add axes handle
 			self.plot.add_axes_handle("111", key, _color=_c)
 
 			# Bias settle
-			if __delay__ != 0: 
-				time.sleep(__delay__)
+			if __sweep_delay__ != 0: 
+				time.sleep(__sweep_delay__)
 
 			# Loop through sweep variables
 			for _bias in self._get_app_metadata("__sweep__"):
@@ -821,15 +960,15 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				if self.thread_running:
 
 					# Set voltage/current bias
-					__func__(_bias)			
+					__sweep_func__(_bias)			
 
 					# Get data from buffer
 					_b0 = self.keithley(self.sweep_inst).meas().split(",")	
 					_b1 = self.keithley(self.step_inst).meas().split(",")
 
 
-					if __delay__ != 0: 
-						time.sleep(__delay__)
+					if __sweep_delay__ != 0: 
+						time.sleep(__sweep_delay__)
 
 					# Extract data from buffer
 					_now = float(time.time() - start)
@@ -852,10 +991,11 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 	
 
 		# Reset Keithleys
-		__func__(0.0)
-		self.keithley(self.step_inst).set_voltage(0.0)
-		self.keithley(self.step_inst).output_off()
+		__sweep_func__(0.0)
 		self.keithley(self.sweep_inst).output_off()
+
+		__step_func__(0.0)
+		self.keithley(self.step_inst).output_off()
 		
 		# Reset sweep control and update measurement state to stop. 
 		# Post a button click event to the QStateMachine to trigger 
@@ -880,12 +1020,12 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 		# Generate function pointer for voltage/current mode
 		if self.sweep_src.currentText() == "Voltage":
-			__func__  = self.keithley(self.sweep_inst).set_voltage
-			__delay__ = self.voltage_sweep_delay.value()
+			__sweep_func__  = self.keithley(self.sweep_inst).set_voltage
+			__sweep_delay__ = self.voltage_sweep_delay.value()
 
 		if self.sweep_src.currentText() == "Current":
-			__func__ = self.keithley(self.sweep_inst).set_current
-			__delay__ = self.current_sweep_delay.value()
+			__sweep_func__  = self.keithley(self.sweep_inst).set_current
+			__sweep_delay__ = self.current_sweep_delay.value()
 
 		# Clear plot and zero arrays
 		handle = self.plot.add_axes_handle("111", key)
@@ -901,13 +1041,13 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			if self.thread_running:
 
 				# Set voltage/current bias
-				__func__(_bias)			
+				__sweep_func__(_bias)			
 
 				# Get data from buffer
 				_b = self.keithley(self.sweep_inst).meas().split(",")
 		
-				if __delay__ != 0: 
-					time.sleep(__delay__)
+				if __sweep_delay__ != 0: 
+					time.sleep(__sweep_delay__)
 
 				# Extract data from buffer
 				_now = float(time.time() - start)
@@ -922,7 +1062,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				self.plot.update_canvas()	
 		
 		# Reset Keithley
-		__func__(0.0)
+		__sweep_func__(0.0)
 		self.keithley(self.sweep_inst).output_off()
 		
 		# Reset sweep control and update measurement state to stop. 
@@ -949,10 +1089,10 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			self.sweep_inst.setEnabled(False)
 			self.save_widget.setEnabled(False)
 			self.plot.mpl_refresh_setEnabled(False)
-			self.voltage_step_button.setEnabled(False)
+			self.step_button.setEnabled(False)
 
 	 		# Check app meta and run sweep or sweep-step tread
-			if self._get_app_metadata("__exec_voltage_step__") == True:
+			if self._get_app_metadata("__exec_step__") == True:
 				self.thread = threading.Thread(target=self.exec_sweep_step_thread, args=())
 
 			else:	
@@ -978,7 +1118,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			self.sweep_inst.setEnabled(True)
 			self.save_widget.setEnabled(True)
 			self.plot.mpl_refresh_setEnabled(True)
-			self.voltage_step_button.setEnabled(True)
+			self.step_button.setEnabled(True)
 
 			# Kill measurement thread
 			self.thread_running = False
