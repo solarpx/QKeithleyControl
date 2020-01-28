@@ -70,7 +70,7 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 		# Insturment initialization widget
 		self._device_widget = self._gen_device_control()
 		self._device_widget.set_init_callback("init_keithley")
-		self._device_widget.set_select_callback("updatedevice_pages")
+		self._device_widget.set_select_callback("update_device_pages")
 
 		# QStackedWidget for insturment configurations
 		self.device_pages = QStackedWidget()
@@ -100,7 +100,7 @@ class QKeithleyConfig(QVisaConfigure.QVisaConfigure):
 	def update_device_pages(self):
 		
 		# Get current text
-		Device = self._device_widget.get_current_inst()
+		Device = self._device_widget.get_current_device()
 		if Device is not None:
 			
 			# Loop through QStacked widget children
