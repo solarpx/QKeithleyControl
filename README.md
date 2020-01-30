@@ -2,7 +2,7 @@
 QKeithleyControl is a user interface designed for automation of common laboratory measurement routines using **Keithley 2400 sourcemeters**. QKeithleyControl currently offers three applications which interact with the Keithely: The **IV-bias** application allows one to use the Keithley as a programable variable voltage(current) source, and the **IV-sweep** application allows one to make current/voltage sweeps of electronic devices and test structures. The **PV-characterization** application is oriented towards the characterization of photovoltaic devices. QKeithleyControl also contains a **Hardware Configuration** application which allows one to initialize and configure one or more Keithley sourcemeters for use in other applications.
 
 # Hardware Configuration
-When first running the program, the user will first be greeted with the hardware configuration application. This mode allows one to initialize Keithley sourcemeters. To initialize a device,  simply enter the GPIB address and click on **Initialize Keithley GPIB**. The device will then appear as selectable in the **Select Insturment** dropdown menu. 
+When first running the program, the user will first be greeted with the hardware configuration application. This mode allows one to initialize Keithley sourcemeters. To initialize a device,  simply enter the GPIB address and click on **Initialize Keithley GPIB**. The device will then appear as selectable in the **Select Insturment** dropdown menu. Note that the lists of available insturments is populated dynamically for both GPIB and RS-232 ports. 
 
 ![QKeithleyConfiguration](https://github.com/mwchalmers/QKeithleyControl/blob/master/doc/img/QKeithleyConfiguration.png)
 
@@ -10,7 +10,6 @@ When an insuremnt is selected, the user can modify several of its system paramet
 
 Control          | Input              | Comment  
 ------------     | -------------      | -------------
-GPIB Address     | `0-30`             | The GPIB address *must* be initialized prior to changing other settings. 
 Sense Mode       | `2-wire OR 4-wire` | Configuration option to select 2-wire or 4-wire measurements
 Output Route     | `Front OR Rear`    | Select front or rear output terminals on device
 Integration Time | `0.01-10.0`        | Specified in *Power Line Cycles*(PLCs). 1PLC = 20ms(50Hz) OR 16.7ms(60Hz)  
@@ -77,33 +76,33 @@ Keithley sourcemeters can only supply starcase sweeps in which the voltage(curre
 QKeithleyControl is built upon the [QVisaFramework](https://github.com/mesoic/PyQtVisa). This allows for a unified method of handling data for all application modes. The file below shows an example measurement consisting of two IV-sweeps. The data format is *tab-deliminated* and is designed to be easy to manipulate in commercial software. Data header lines are always preceeded by the `*!` prefix. Measurement header lines will always take the following form `#! <type> <hash>`. The type wiil injected by the calling application (e.g. QKeithleyBias, QKeithleySweep, etc.), and the hash value provides for a cryptographically unique stamp which can be used to identify the data in user built postprocessing applications. 
 
 ```
-*! QVisaDatafile v1.1
-*! Diode Resistor(100Ohm) Series Circuit 
-#! sweep c6bd7f6
-t		V		I		P		
-0.3358933925628662	-1.0	-2.730513e-09	2.730513e-09	
-0.664708137512207	-0.97	-2.702644e-09	2.62156468e-09	
-0.9892799854278564	-0.94	-2.690437e-09	2.52901078e-09	
-1.315497875213623	-0.91	-2.672253e-09	2.43175023e-09	
-1.627976894378662	-0.88	-2.657855e-09	2.3389123999999997e-09	 
-1.9469718933105469	-0.85	-2.637861e-09	2.24218185e-09	
-2.2590084075927734	-0.82	-2.619003e-09	2.14758246e-09	
-2.578735589981079	-0.79	-2.606122e-09	2.05883638e-09	
-2.889404535293579	-0.76	-2.585623e-09	1.9650734800000003e-09	
-3.2051875591278076	-0.73	-2.57089e-09	1.8767497e-09	
+*! QVisaDataObject v1.1
+*! hash d9bf90b
 
-#! sweep 80ae4de
-t		V		I		P		
-0.3355216979980469	-1.0	-2.759639e-09	2.759639e-09	
-0.6530659198760986	-0.97	-2.746253e-09	2.66386541e-09	
-0.9681046009063721	-0.94	-2.716027e-09	2.55306538e-09	
-1.2886137962341309	-0.91	-2.69313e-09	2.4507483000000003e-09	
-1.600466012954712	-0.88	-2.674778e-09	2.35380464e-09	
-1.9178540706634521	-0.85	-2.655414e-09	2.2571019e-09	
-2.231292963027954	-0.82	-2.6443e-09	2.168326e-09	
-2.546135902404785	-0.79	-2.619634e-09	2.06951086e-09	
-2.8595333099365234	-0.76	-2.605027e-09	1.97982052e-09	
-3.1762137413024902	-0.73	-2.594043e-09	1.89365138999999
+#! __data__ d896f10
+#! __type__ i-bias
+#! __desc__ diode-resistor(100OHM)-meas1
+t		        V		I		P		
+0.3202240467071533	0.7315464	0.001000023	0.0007315632255672001	
+0.6902480125427246	0.7315202	0.001000024	0.0007315377564847999	
+1.0602588653564453	0.7314978	0.001000024	0.0007315153559472	
+1.420255184173584	0.7314824	0.001000024	0.0007314999555775999	
+1.7702603340148926	0.7314693	0.001000023	0.0007314861237939	
+2.1302578449249268	0.731465	0.001000024	0.00073148255516	
+2.490250587463379	0.7314622	0.001000023	0.0007314790236306	
+
+
+#! __data__ 308e69d
+#! __type__ i-bias
+#! __desc__ diode-resistor(100OHM)-meas2
+t		        V		I		P		
+0.32025790214538574	0.7315596	0.001000023	0.0007315764258708001	
+0.6802637577056885	0.7315525	0.001000023	0.0007315693257075001	
+1.0402534008026123	0.7315519	0.001000023	0.0007315687256937	
+1.4002594947814941	0.7315536	0.001000023	0.0007315704257328001	
+1.7602622509002686	0.7315568	0.001000023	0.0007315736258064001	
+2.12026047706604	0.731561	0.001000022	0.000731577094342	
+2.4802584648132324	0.7315661	0.001000023	0.0007315829260203001
 
 ```
 
