@@ -97,11 +97,11 @@ class QKeithleyBiasWidget:
 			output_on  = QState()
 
 			# Attach states to output button and define state transitions
-			output_off.assignProperty(self.output_widget[0], 'text', "%s Output On"%self._name.split()[1])
+			output_off.assignProperty(self.output_widget[0], 'text', "%s Output OFF"%self._name.split()[1])
 			output_off.addTransition(self.output_widget[0].clicked, output_on)
 			output_off.entered.connect(self.exec_output_off)
 
-			output_on.assignProperty(self.output_widget[0], 'text','%s Output Off'%self._name.split()[1])
+			output_on.assignProperty(self.output_widget[0], 'text','%s Output ON'%self._name.split()[1])
 			output_on.addTransition(self.output_widget[0].clicked, output_off)
 			output_on.entered.connect(self.exec_output_on)
 				
