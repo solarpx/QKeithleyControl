@@ -55,14 +55,22 @@ Hysteresis Mode    | Bias Operation               |  nPoints
 `Reverse-sweep`    | `start - stop - start`       | `2*n - 1`
 `Zero-centered`    | `0V - start - 0V -stop - 0V` | `2*n + 2`
 
+### Bias step for transistor charachterization
+
+QKeithleyControl offers a bias step mode which is useful for characterizing active devices such as field effect transistors (FETs) and bipolar junction transistors (BJTs). During a typical FET transistor measurement (output charachteristic), a varying voltage bias is applied between the soure-drain terminals of the FET and drain current is measured for a series of gate voltages *(voltage sweep, voltage step)*. In the case of a BJT, varying voltage bias is applied between the emitter-collector terminals and collector current is measured for varying base currents *(voltage sweep, current step)*. When operating in bias step mode, two independent Keithleys should be initialized in the Hardware Configuration setup for the sweep bias supply and step bias supply respectively. To configure a bias step measurement, select the **IV-step** option in the **configure parameters** menu and select the step source mode (voltage/current) and desired step parameters. Note that the QKeithleyControl will not perform the bias step loop unless the **Step Bias** button is in the ON state.
+
+![QKeithleyBiasStep](https://github.com/mesoic/QKeithleyControl/blob/master/doc/img/QKeithleyBiasStep.png)
+
 ### Measuring Unstable Devices
 
 Keithley sourcemeters can only supply starcase sweeps in which the voltage(current) is stepped from value to value in a discrete fashion. In the case of unstable devices, a sudden change in voltage may generate some transient behaviour in the current. However, IV-characterization mode only measures once for each applied bias, leaving integration of unstable currents and voltages up to the hardware itself. In all cases, the software will measure the current as soon as possible (i.e. before applying the measurement dealy cycle) such that the measuremnt settle time is determined by the hardware integration time. To investivate slow transients when quickly changing the bias, it is advised to use IV-bias mode with a short hardware integration time.
 
 # PV-Characterization Mode
 
+
 ### Voc and MPP tracking modes
 
+![QKeithleySolar](https://github.com/mesoic/QKeithleyControl/blob/master/doc/img/QKeithleySolar.png)
 
 
 # Data Format 
