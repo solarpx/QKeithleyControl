@@ -130,22 +130,22 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 		# Generate (IV, Voc, MPP) container widgets
 		# These methods will pack self.inst_select
-		self.gen_iv_ctrl()				# self.iv_ctrl
 		self.gen_voc_ctrl() 			# self.voc_ctrl
 		self.gen_mpp_ctrl()				# self.mpp_ctrl
+		self.gen_iv_ctrl()				# self.iv_ctrl
 
 		# Add measurement widgets to QStackedWidget
 		self.meas_pages = QStackedWidget()
-		self.meas_pages.addWidget(self.iv_ctrl)
 		self.meas_pages.addWidget(self.voc_ctrl)
 		self.meas_pages.addWidget(self.mpp_ctrl)
+		self.meas_pages.addWidget(self.iv_ctrl)
 		self.meas_pages.setCurrentIndex(0);
 	
 		# Measurement select QComboBox
 		self.meas_select_label = QLabel("Measurement Mode")
 		self.meas_select = QComboBox()
 		self.meas_select.setFixedWidth(200)
-		self.meas_select.addItems(["IV", "Voc", "MPP"])
+		self.meas_select.addItems(["Voc", "MPP", "IV"])
 		self.meas_select.currentTextChanged.connect(self.update_meas_pages)
 
 		# Meta widget for trace description
@@ -289,11 +289,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_meas_on  = QState()
 
 		# Attach states to output button and define state transitions
-		self.voc_meas_off.assignProperty(self.voc_meas_button, 'text', 'Voc Monitor Off')
+		self.voc_meas_off.assignProperty(self.voc_meas_button, 'text', 'Voc Monitor OFF')
 		self.voc_meas_off.addTransition(self.voc_meas_button.clicked, self.voc_meas_on)
 		self.voc_meas_off.entered.connect(self.exec_voc_stop)
 
-		self.voc_meas_on.assignProperty(self.voc_meas_button, 'text', 'Voc Monitor On')
+		self.voc_meas_on.assignProperty(self.voc_meas_button, 'text', 'Voc Monitor ON')
 		self.voc_meas_on.addTransition(self.voc_meas_button.clicked, self.voc_meas_off)
 		self.voc_meas_on.entered.connect(self.exec_voc_run)
 		
@@ -328,6 +328,18 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"default"	: [100, "m"]
 		} 
 		self.voc_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voc_cmpl_config)	
+
+		# Tracking mode convergence
+		self.voc_ampl_config={
+			"unit" 		: "V", 
+			"min"		: "u",
+			"max"		: "m",
+			"label"		: "Sense amplitude (mV)",
+			"limit"		: 0.1, 
+			"signed"	: False,
+			"default"	: [1.0,"m"]
+		} 
+		self.voc_ampl = QVisaUnitSelector.QVisaUnitSelector(self.voc_ampl_config)
 
 		# Tracking mode convergence
 		self.voc_conv_config={
@@ -366,6 +378,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_ctrl_layout.addWidget(self.voc_meas_button)
 		self.voc_ctrl_layout.addWidget(self.voc_bias)
 		self.voc_ctrl_layout.addWidget(self.voc_cmpl)
+		self.voc_ctrl_layout.addWidget(self.voc_ampl)
 		self.voc_ctrl_layout.addWidget(self.voc_conv)
 		self.voc_ctrl_layout.addWidget(self.voc_gain)
 		self.voc_ctrl_layout.addWidget(self.voc_delay)
@@ -396,11 +409,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_meas_on  = QState()
 
 		# Attach states to output button and define state transitions
-		self.mpp_meas_off.assignProperty(self.mpp_meas_button, 'text', 'MPP Monitor Off')
+		self.mpp_meas_off.assignProperty(self.mpp_meas_button, 'text', 'MPP Monitor OFF')
 		self.mpp_meas_off.addTransition(self.mpp_meas_button.clicked, self.mpp_meas_on)
 		self.mpp_meas_off.entered.connect(self.exec_mpp_stop)
 
-		self.mpp_meas_on.assignProperty(self.mpp_meas_button, 'text', 'MPP Monitor On')
+		self.mpp_meas_on.assignProperty(self.mpp_meas_button, 'text', 'MPP Monitor ON')
 		self.mpp_meas_on.addTransition(self.mpp_meas_button.clicked, self.mpp_meas_off)
 		self.mpp_meas_on.entered.connect(self.exec_mpp_run)
 		
@@ -452,7 +465,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_gain_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: html.unescape("Proportional Gain (&permil;)"),
-			"limit"		: 1000, 
+			"limit"		: 10000, 
 			"signed"	: False,
 			"default"	: [30.0]
 		}
@@ -522,9 +535,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
 
 		# Add QVisaDynamicPlots to QStackedWidget
-		self.plot_stack.addWidget(self.iv_plot)
 		self.plot_stack.addWidget(self.voc_plot)
 		self.plot_stack.addWidget(self.mpp_plot)
+		self.plot_stack.addWidget(self.iv_plot)
 
 		# Return the stacked widget
 		self.plot_stack.setCurrentIndex(0);
@@ -550,17 +563,18 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	# Flip between controls when measurement mode selector is updated
 	def update_meas_pages(self):
 		
-		if self.meas_select.currentText() == "IV":		
+		if self.meas_select.currentText() == "Voc":
 			self.meas_pages.setCurrentIndex(0)
 			self.plot_stack.setCurrentIndex(0)
 
-		if self.meas_select.currentText() == "Voc":
+		if self.meas_select.currentText() == "MPP":
 			self.meas_pages.setCurrentIndex(1)
 			self.plot_stack.setCurrentIndex(1)
 
-		if self.meas_select.currentText() == "MPP":
+		if self.meas_select.currentText() == "IV":		
 			self.meas_pages.setCurrentIndex(2)
 			self.plot_stack.setCurrentIndex(2)
+
 
 	# Callback method to delete data when traces are cleared
 	def sync_mpl_clear(self):
@@ -752,24 +766,28 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 				else:
 
 					# Create 1mV sense amplitude
-					_v, _i = np.add(float(_buffer[0]), np.linspace(-0.0005, 0.0005, 3)), []
+					_amplitude = self.voc_ampl.value()
+					_v, _i = np.add(float(_buffer[0]), np.linspace(-0.5 * _amplitude, 0.5 * _amplitude, 3)), []
 					
 					# Measure current over sense amplitude array
 					for _ in _v:
 						self.keithley().set_voltage(_)
 						_b = self.keithley().meas().split(",")
-						_i.append( -1.0 * float( _b[1] ) )
+						_i.append( float( _b[1] ) )
 
 					# Reset the voltage
 					self.keithley().set_voltage( float(_buffer[0] ) )
-
-					# Adjust bias in direction of lower current
-					# If current is positive (photo-current) increase voltage
+					
+					# Ambipolar tracking algorithm (zero-crossing)
+					# Need to adjust bias in direction of lower current
+					# Solar cell current is positive: bias is above Voc
 					if np.mean(_i) >= 0.0:
-						self.update_bias( float(_buffer[0]) * float( 1.0 + self.voc_gain.value()/1000. ) ) 
+						self.update_bias( float(_buffer[0]) - abs( float(_buffer[1]) ) * self.voc_gain.value() / 1000. ) 
 
+					# Solar cell current is negative: bias is below Voc
 					else:
-						self.update_bias( float(_buffer[0]) * float( 1.0 - self.voc_gain.value()/1000. ) )	
+						self.update_bias( float(_buffer[0]) + abs( float(_buffer[1]) ) * self.voc_gain.value() / 1000. )
+
 
 			# Extract data from buffer
 			_now = float(time.time() - start)
@@ -870,7 +888,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Thread start time
 		start  = float(time.time())
 
-		# Set bias to initial value in voltas and turn output ON
+		# Set bias to initial value in volts and turn output ON
 		self.keithley().set_voltage( self.mpp_bias.value() )
 		self.keithley().current_cmp( self.mpp_cmpl.value() )
 		self.keithley().output_on()
@@ -881,7 +899,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Iteration timer
 			_iter_start = float(time.time())
 
-			# Covvergence loop
+			# Covergence loop
 			_d = [] 
 			while True:
 				
@@ -897,7 +915,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 					# Create 1mV sense amplitude
 					_amplitude = self.mpp_ampl.value()
-					_v, _i = np.add(float(_buffer[0]), np.linspace(-1.0 * _amplitude, _amplitude, 5)), []
+					_v, _i = np.add(float(_buffer[0]), np.linspace(-0.5 * _amplitude, 0.5 * _amplitude, 5)), []
 
 					# Measure current over sense amplitude array
 					for _ in _v:
@@ -908,17 +926,18 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 					# Reset the voltage
 					self.keithley().set_voltage( float(_buffer[0] ) )
 
-					# Calculate derivative
-					_p = np.multiply(_i, _v)
-					_d = np.gradient(np.multiply(_i, _v))
-					_d = np.divide(_d, _amplitude)
+					# Calculate derivative of current and power
+					_p  = np.multiply(_i, _v)
+					_dp = np.divide( np.gradient(np.multiply(_i, _v)) , _amplitude)
 
-					# Differntial gain controller
-					if np.mean(_d) <= 0.0:
-						self.update_bias( float(_buffer[0]) * float( 1.0 - self.mpp_gain.value()/1000. ) )  
+					# Ambipolar tracking algorithm
+					if np.mean(_dp) <= 0.0:
+						self.update_bias( float(_buffer[0]) - abs( np.mean(_dp) ) * self.voc_gain.value() / 1000. ) 
 
+					# Solar cell current is negative: bias is below Voc
 					else:
-						self.update_bias( float(_buffer[0]) * float( 1.0 + self.mpp_gain.value()/1000. ) )
+						self.update_bias( float(_buffer[0]) + abs( np.mean(_dp) ) * self.voc_gain.value() / 1000. )
+
 
 			# Extract data from buffer
 			_now = float(time.time() - start)
