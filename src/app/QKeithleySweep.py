@@ -426,7 +426,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"label"		: "Compliance (A)",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: [100, "m"]
+			"default"	: [150, "m"]
 		} 
 		self.voltage_sweep_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_sweep_cmpl_config)	
 
@@ -577,7 +577,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"label"		: "Compliance (A)",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: [100, "m"]
+			"default"	: [150, "m"]
 		} 
 		self.voltage_step_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_cmpl_config)	
 

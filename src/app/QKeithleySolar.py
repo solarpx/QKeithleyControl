@@ -325,7 +325,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"label"		: "Compliance (A)",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: [100, "m"]
+			"default"	: [150, "m"]
 		} 
 		self.voc_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voc_cmpl_config)	
 
@@ -340,18 +340,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"default"	: [1.0,"m"]
 		} 
 		self.voc_ampl = QVisaUnitSelector.QVisaUnitSelector(self.voc_ampl_config)
-
-		# Tracking mode convergence
-		self.voc_conv_config={
-			"unit" 		: "A", 
-			"min"		: "n",
-			"max"		: "m",
-			"label"		: "Voc Convergence (A)",
-			"limit"		: 0.05, 
-			"signed"	: False,
-			"default"	: [0.05,"u"]
-		} 
-		self.voc_conv = QVisaUnitSelector.QVisaUnitSelector(self.voc_conv_config)
 
 		# Delay
 		self.voc_gain_config={
@@ -370,7 +358,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"label"		: "Measurement Interval (s)",
 			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: [1.0]
+			"default"	: [0.1]
 		}
 		self.voc_delay = QVisaUnitSelector.QVisaUnitSelector(self.voc_delay_config)
 
@@ -379,7 +367,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_ctrl_layout.addWidget(self.voc_bias)
 		self.voc_ctrl_layout.addWidget(self.voc_cmpl)
 		self.voc_ctrl_layout.addWidget(self.voc_ampl)
-		self.voc_ctrl_layout.addWidget(self.voc_conv)
 		self.voc_ctrl_layout.addWidget(self.voc_gain)
 		self.voc_ctrl_layout.addWidget(self.voc_delay)
 		self.voc_ctrl_layout.setContentsMargins(0,0,0,0)
@@ -445,7 +432,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"label"		: "Compliance (A)",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: [100, "m"]
+			"default"	: [150, "m"]
 		} 
 		self.mpp_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.mpp_cmpl_config)	
 
@@ -741,52 +728,42 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.keithley().current_cmp( self.voc_cmpl.value() )
 		self.keithley().output_on()
 
-		# Thread loop
+		# Iteration timer
+		_iter_start = float(time.time())
+
+		# Initialize dynamic current normalization
+		_Inorm = 0.0
+
+		# Ambipolar tracking algorithm (zero-crossing).	
+		# Need to adjust bias in direction of lower current. 
 		while self.voc_thread_running is True:
 
-			# Iteration timer
-			_iter_start = float(time.time())
+			# Get data from buffer
+			_buffer = self.keithley().meas().split(",")
+			
+			# Create 1mV sense amplitude
+			_amplitude = self.voc_ampl.value()
+			_v, _i = np.add(float(_buffer[0]), np.linspace(-0.5 * _amplitude, 0.5 * _amplitude, 3)), []
+			
+			# Measure current over sense amplitude array
+			for _ in _v:
+				self.keithley().set_voltage(_)
+				_b = self.keithley().meas().split(",")
+				_i.append( float( _b[1] ) )
 
-			# Covvergence loop
-			while True:
-				
-				# Get data from buffer
-				_buffer = self.keithley().meas().split(",")
-				
-				# Check if current is below convergence value
-				# note that convergence is specified in mA 
-				if (abs(float( _buffer[1]))) <= float(self.voc_conv.value()):					
-					break
-				
-				# If convergence takes too long paint a value (10s)
-				elif  float( time.time() - _iter_start ) >= 3.0:
-					break
+			# Reset the voltage
+			self.keithley().set_voltage( float(_buffer[0] ) )
+			
+			# Normalization
+			_Inorm = max(_Inorm, abs( float(_buffer[1]) ) )
 
-				# Otherwise, adjust the voltage proportionally
-				else:
+			# Solar cell current is positive: bias is above Voc
+			if np.mean(_i) >= 0.0:
+				self.update_bias( float(_buffer[0]) - abs( float(_buffer[1]) / _Inorm ) * self.voc_gain.value() / 1000. ) 
 
-					# Create 1mV sense amplitude
-					_amplitude = self.voc_ampl.value()
-					_v, _i = np.add(float(_buffer[0]), np.linspace(-0.5 * _amplitude, 0.5 * _amplitude, 3)), []
-					
-					# Measure current over sense amplitude array
-					for _ in _v:
-						self.keithley().set_voltage(_)
-						_b = self.keithley().meas().split(",")
-						_i.append( float( _b[1] ) )
-
-					# Reset the voltage
-					self.keithley().set_voltage( float(_buffer[0] ) )
-					
-					# Ambipolar tracking algorithm (zero-crossing)
-					# Need to adjust bias in direction of lower current
-					# Solar cell current is positive: bias is above Voc
-					if np.mean(_i) >= 0.0:
-						self.update_bias( float(_buffer[0]) - abs( float(_buffer[1]) ) * self.voc_gain.value() / 1000. ) 
-
-					# Solar cell current is negative: bias is below Voc
-					else:
-						self.update_bias( float(_buffer[0]) + abs( float(_buffer[1]) ) * self.voc_gain.value() / 1000. )
+			# Solar cell current is negative: bias is below Voc
+			else:
+				self.update_bias( float(_buffer[0]) + abs( float(_buffer[1]) / _Inorm ) * self.voc_gain.value() / 1000. )
 
 
 			# Extract data from buffer
@@ -893,51 +870,45 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.keithley().current_cmp( self.mpp_cmpl.value() )
 		self.keithley().output_on()
 
+		# Iteration timer
+		_iter_start = float(time.time())
+
+		# Initialize dynamic current normalization
+		_dPnorm = 0.0
+
 		# Thread loop
 		while self.mpp_thread_running is True:
 
-			# Iteration timer
-			_iter_start = float(time.time())
+			# Get data from buffer
+			_buffer = self.keithley().meas().split(",")
+			
+			# Create 1mV sense amplitude
+			_amplitude = self.mpp_ampl.value()
+			_v, _i = np.add(float(_buffer[0]), np.linspace(-0.5 * _amplitude, 0.5 * _amplitude, 5)), []
 
-			# Covergence loop
-			_d = [] 
-			while True:
-				
-				# Get data from buffer
-				_buffer = self.keithley().meas().split(",")
-				
-				# If convergence takes too long paint a value (10s)
-				if  float( time.time() - _iter_start ) >= 3.0:
-					break
+			# Measure current over sense amplitude array
+			for _ in _v:
+				self.keithley().set_voltage(_)
+				_b = self.keithley().meas().split(",")
+				_i.append( -1.0 * float( _b[1] ) )
 
-				# Otherwise, adjust the voltage proportionally
-				else:
+			# Reset the voltage
+			self.keithley().set_voltage( float(_buffer[0] ) )
 
-					# Create 1mV sense amplitude
-					_amplitude = self.mpp_ampl.value()
-					_v, _i = np.add(float(_buffer[0]), np.linspace(-0.5 * _amplitude, 0.5 * _amplitude, 5)), []
+			# Calculate derivative of current and power
+			_p  = np.multiply(_i, _v)
+			_dp = np.divide( np.gradient(np.multiply(_i, _v)) , _amplitude)
 
-					# Measure current over sense amplitude array
-					for _ in _v:
-						self.keithley().set_voltage(_)
-						_b = self.keithley().meas().split(",")
-						_i.append( -1.0 * float( _b[1] ) )
+			# Calculate dP norm
+			_dPnorm = max( _dPnorm, abs( np.mean(_dp) ) )
 
-					# Reset the voltage
-					self.keithley().set_voltage( float(_buffer[0] ) )
+			# Ambipolar tracking algorithm
+			if np.mean(_dp) <= 0.0:
+				self.update_bias( float(_buffer[0]) - abs( np.mean(_dp) / _dPnorm ) * self.voc_gain.value() / 1000. ) 
 
-					# Calculate derivative of current and power
-					_p  = np.multiply(_i, _v)
-					_dp = np.divide( np.gradient(np.multiply(_i, _v)) , _amplitude)
-
-					# Ambipolar tracking algorithm
-					if np.mean(_dp) <= 0.0:
-						self.update_bias( float(_buffer[0]) - abs( np.mean(_dp) ) * self.voc_gain.value() / 1000. ) 
-
-					# Solar cell current is negative: bias is below Voc
-					else:
-						self.update_bias( float(_buffer[0]) + abs( np.mean(_dp) ) * self.voc_gain.value() / 1000. )
-
+			# Solar cell current is negative: bias is below Voc
+			else:
+				self.update_bias( float(_buffer[0]) + abs( np.mean(_dp) / _dPnorm ) * self.voc_gain.value() / 1000. )
 
 			# Extract data from buffer
 			_now = float(time.time() - start)

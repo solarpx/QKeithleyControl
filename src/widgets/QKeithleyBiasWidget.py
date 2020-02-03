@@ -190,7 +190,7 @@ class QKeithleyBiasWidget:
 			"label"		: "Compliance",
 			"limit"		: 1.0, 
 			"signed"	: False,
-			"default"	: [100, "m"]
+			"default"	: [150, "m"]
 		} 
 		self.voltage_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_cmpl_config)	
 		self.voltage_cmpl.unit_value.valueChanged.connect(self.update_cmpl)
