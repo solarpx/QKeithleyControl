@@ -17,13 +17,13 @@ if __name__ == "__main__":
 	if ref_cell == "Si":
 
 		# Path to reference data file
-		data_path = "../data/Si/si-ref-tracking.dat"
+		data_path = "../dat/Si/si-ref-tracking.dat"
 
 
 	if ref_cell == "GaAs":
 	
 		# Path to reference data file
-		data_path = "../data/GaAs/gaas-ref-tracking.dat"
+		data_path = "../dat/GaAs/gaas-ref-tracking.dat"
 
 
 	# Build data object
@@ -87,5 +87,5 @@ if __name__ == "__main__":
 			# Axes title
 			ax0.set_title("%s Reference : MPP Tracking : $AM1.5G$ : $T = 25^{\\circ}C$"%(ref_cell))
 
-
 	plt.show()
+	

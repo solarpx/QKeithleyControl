@@ -400,9 +400,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Sweep Start (V)",
-			"limit"		: 20.0,
 			"signed"	: True,
-			"default"	: [-1.0, ""]
+			"limit"		: [20.0, ""],
+			"default"	: [0.00, ""]
 		} 
 		self.voltage_sweep_start = QVisaUnitSelector.QVisaUnitSelector(self.voltage_sweep_start_config)
 
@@ -412,9 +412,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Sweep Stop (V)",
-			"limit"		: 20.0,
 			"signed"	: True,
-			"default"	: [1.0, ""]
+			"limit"		: [20.0, ""],
+			"default"	: [1.00, ""]
 		} 
 		self.voltage_sweep_stop = QVisaUnitSelector.QVisaUnitSelector(self.voltage_sweep_stop_config)
 
@@ -424,8 +424,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance (A)",
-			"limit"		: 1.0, 
 			"signed"	: False,
+			"limit"		: [1.0, "" ], 
 			"default"	: [150, "m"]
 		} 
 		self.voltage_sweep_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_sweep_cmpl_config)	
@@ -434,9 +434,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.voltage_sweep_npts_config={
 			"unit" 		: "__INT__", 
 			"label"		: "Number of Points",
-			"limit"		: 256.0, 
 			"signed"	: False,
-			"default"	: [51.0]
+			"limit"		: [512],
+			"default"	: [51]
 		}
 		self.voltage_sweep_npts = QVisaUnitSelector.QVisaUnitSelector(self.voltage_sweep_npts_config)
 
@@ -444,9 +444,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.voltage_sweep_delay_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: [0.1]
+			"limit"		: [60.0], 
+			"default"	: [0.10]
 		}
 		self.voltage_sweep_delay = QVisaUnitSelector.QVisaUnitSelector(self.voltage_sweep_delay_config)
 
@@ -476,8 +476,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Sweep Start (A)",
-			"limit"		: 1.0,
 			"signed"	: True,
+			"limit"		: [1.0, "" ],
 			"default"	: [0.0, "m"]
 		} 
 		self.current_sweep_start = QVisaUnitSelector.QVisaUnitSelector(self.current_sweep_start_config)
@@ -488,8 +488,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Sweep Stop (A)",
-			"limit"		: 1.0,
 			"signed"	: True,
+			"limit"		: [1.0, "" ],
 			"default"	: [100, "m"]
 		} 
 		self.current_sweep_stop = QVisaUnitSelector.QVisaUnitSelector(self.current_sweep_stop_config)
@@ -500,8 +500,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance (V)",
-			"limit"		: 20, 
 			"signed"	: False,
+			"limit"		: [20., ""],
 			"default"	: [1.0, ""]
 		} 
 		self.current_sweep_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.current_sweep_cmpl_config)
@@ -510,9 +510,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.current_sweep_npts_config={
 			"unit" 		: "__INT__", 
 			"label"		: "Number of Points",
-			"limit"		: 256.0, 
 			"signed"	: False,
-			"default"	: [11.0]
+			"limit"		: [256],
+			"default"	: [11]
 		}
 		self.current_sweep_npts = QVisaUnitSelector.QVisaUnitSelector(self.current_sweep_npts_config)
 
@@ -520,8 +520,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.current_sweep_delay_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
 			"signed"	: False,
+			"limit"		: [60.0],
 			"default"	: [0.1]
 		}
 		self.current_sweep_delay = QVisaUnitSelector.QVisaUnitSelector(self.current_sweep_delay_config)			
@@ -551,9 +551,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Step Start (V)",
-			"limit"		: 20.0,
 			"signed"	: True,
-			"default"	: [0.0, ""]
+			"limit"		: [20.0, ""],
+			"default"	: [0.00, ""]
 		} 
 		self.voltage_step_start = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_start_config)
 
@@ -563,9 +563,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Step Stop (V)",
-			"limit"		: 20.0,
 			"signed"	: True,
-			"default"	: [1.0, ""]
+			"limit"		: [20.0, ""],
+			"default"	: [1.00, ""]
 		} 
 		self.voltage_step_stop = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_stop_config)
 
@@ -575,8 +575,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance (A)",
-			"limit"		: 1.0, 
 			"signed"	: False,
+			"limit"		: [1.0, "" ], 
 			"default"	: [150, "m"]
 		} 
 		self.voltage_step_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_cmpl_config)	
@@ -585,8 +585,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.voltage_step_npts_config={
 			"unit" 		: "__INT__", 
 			"label"		: "Number of Points",
-			"limit"		: 256.0, 
 			"signed"	: False,
+			"limit"		: [256], 
 			"default"	: [5]
 		}
 		self.voltage_step_npts = QVisaUnitSelector.QVisaUnitSelector(self.voltage_step_npts_config)
@@ -614,8 +614,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Step Start (A)",
-			"limit"		: 1.0,
 			"signed"	: True,
+			"limit"		: [1.0, "" ],
 			"default"	: [0.0, "m"]
 		} 
 		self.current_step_start = QVisaUnitSelector.QVisaUnitSelector(self.current_step_start_config)
@@ -626,8 +626,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Step Stop (A)",
-			"limit"		: 1.0,
 			"signed"	: True,
+			"limit"		: [1.0, "" ],
 			"default"	: [1.0, "m"]
 		} 
 		self.current_step_stop = QVisaUnitSelector.QVisaUnitSelector(self.current_step_stop_config)
@@ -638,9 +638,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance (V)",
-			"limit"		: 20.0, 
 			"signed"	: False,
-			"default"	: [1, ""]
+			"limit"		: [20.0, ""],
+			"default"	: [1.00, ""]
 		} 
 		self.current_step_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.current_step_cmpl_config)	
 
@@ -648,8 +648,8 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.current_step_npts_config={
 			"unit" 		: "__INT__", 
 			"label"		: "Number of Points",
-			"limit"		: 256.0, 
 			"signed"	: False,
+			"limit"		: [256],
 			"default"	: [5]
 		}
 		self.current_step_npts = QVisaUnitSelector.QVisaUnitSelector(self.current_step_npts_config)
@@ -899,36 +899,6 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			__sweep_func__ = self.keithley(self.sweep_inst).set_current
 			__sweep_delay__ = self.current_sweep_delay.value()
 
-		# Generate function pointer for step voltage/current mode
-		if self.step_src.currentText() == "Voltage":
-			__step_func__  = self.keithley(self.step_inst).set_voltage
-
-			# Generate data key and set metadata
-			data = self._get_data_object()
-			key  = data.add_hash_key("iv-sweep-v-step")
-
-			# Add keys and metadata to data object
-			data.set_metadata(key, "__type__", "iv-sweep-v-step")
-			data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
-
-			# Add key to meta widget
-			self.meta_widget.add_meta_key(key)
-
-		if self.step_src.currentText() == "Current":
-			__step_func__  = self.keithley(self.step_inst).set_current
-
-			# Generate data key and set metadata
-			data = self._get_data_object()
-			key  = data.add_hash_key("iv-sweep-i-step")
-
-			# Add keys and metadata to data object
-			data.set_metadata(key, "__type__", "iv-sweep-i-step")
-			data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
-
-			# Add key to meta widget
-			self.meta_widget.add_meta_key(key)
-
-
 		# Clear plot and zero arrays
 		start  = time.time()
 
@@ -940,55 +910,100 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		_c = self.plot.gen_next_color()
 		_handle_index = 0 
 
-		# Loop through step variables
+		# Get data object
+		data = self._get_data_object()
+
+		# Master key
+		_root = data.add_hash_key("iv-sweep-v-step")
+
+		# Set metatata for root
+		if self.step_src.currentText() == "Voltage":
+			
+			data.set_metadata(_root, "__type__", "iv-sweep-v-step")
+
+		if self.step_src.currentText() == "Current":
+			
+			data.set_metadata(_root, "__type__", "iv-sweep-v-step")
+
+		# Add key to meta widget
+		self.meta_widget.add_meta_key(_root)
+
+		# Loop through step variables and generate subkeys
 		for _step in self._get_app_metadata("__step__"):
 
-			# Set step voltage/current
-			__step_func__(_step)
+			# If thread is running
+			if self.thread_running:
 
-			# Add axes handle
-			self.plot.add_axes_handle("111", key, _color=_c)
+				# A hash is generated for each voltage/current step for ease of data processing
+				# Generate function pointer for step voltage/current mode
+				if self.step_src.currentText() == "Voltage":
+				
+					__step_func__  = self.keithley(self.step_inst).set_voltage
 
-			# Bias settle
-			if __sweep_delay__ != 0: 
-				time.sleep(__sweep_delay__)
+					# Generate data key and set metadata
+					data 	= self._get_data_object()
+					key  = data.add_hash_key("iv-sweep-v-step%s"%_step)
 
-			# Loop through sweep variables
-			for _bias in self._get_app_metadata("__sweep__"):
+					# Add keys and metadata to data object
+					data.set_metadata(key, "__root__", _root)
+					data.set_metadata(key, "__step__", _step)
+					data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
 
-				# If thread is running
-				if self.thread_running:
+				# Current Mode
+				if self.step_src.currentText() == "Current":
 
-					# Set voltage/current bias
-					__sweep_func__(_bias)			
+					__step_func__  = self.keithley(self.step_inst).set_current
 
-					# Get data from buffer
-					_b0 = self.keithley(self.sweep_inst).meas().split(",")	
-					_b1 = self.keithley(self.step_inst).meas().split(",")
+					key  = data.add_hash_key("iv-sweep-i-step%s"%_step)
+
+					# Add keys and metadata to data object
+					data.set_metadata(key, "__root__", _root)
+					data.set_metadata(key, "__step__", _step)
+					data.set_subkeys(key, ["t", "V0", "I0", "P0", "V1", "I1", "P1"])
 
 
-					if __sweep_delay__ != 0: 
-						time.sleep(__sweep_delay__)
+				# Set step voltage/current
+				__step_func__(_step)
 
-					# Extract data from buffer
-					_now = float(time.time() - start)
+				# Add axes handle to root
+				self.plot.add_axes_handle("111", _root, _color=_c)
 
-					# Append measured values to data arrays	
-					data.append_subkey_data(key,"t", _now )
-					data.append_subkey_data(key,"V0", float(_b0[0]) )
-					data.append_subkey_data(key,"I0", float(_b0[1]) )
-					data.append_subkey_data(key,"P0", float(_b0[0]) * float(_b0[1]) )
-					data.append_subkey_data(key,"V1", float(_b1[0]) )
-					data.append_subkey_data(key,"I1", float(_b1[1]) )
-					data.append_subkey_data(key,"P1", float(_b1[0]) * float(_b1[1]) )
+				# Bias settle
+				if __sweep_delay__ != 0: 
+					time.sleep(__sweep_delay__)
 
-					# Add data to plot
-					self.plot.append_handle_data("111", key, float(_b0[0]), float(_b0[1]), _handle_index)
-					self.plot.update_canvas()
-			
-			# Increment handle index
-			_handle_index += 1
-	
+				# Loop through sweep variables
+				for _bias in self._get_app_metadata("__sweep__"):
+
+						# Set voltage/current bias
+						__sweep_func__(_bias)			
+
+						# Get data from buffer
+						_b0 = self.keithley(self.sweep_inst).meas().split(",")	
+						_b1 = self.keithley(self.step_inst).meas().split(",")
+
+
+						if __sweep_delay__ != 0: 
+							time.sleep(__sweep_delay__)
+
+						# Extract data from buffer
+						_now = float(time.time() - start)
+
+						# Append measured values to data arrays	
+						data.append_subkey_data(key,"t", _now )
+						data.append_subkey_data(key,"V0", float(_b0[0]) )
+						data.append_subkey_data(key,"I0", float(_b0[1]) )
+						data.append_subkey_data(key,"P0", float(_b0[0]) * float(_b0[1]) )
+						data.append_subkey_data(key,"V1", float(_b1[0]) )
+						data.append_subkey_data(key,"I1", float(_b1[1]) )
+						data.append_subkey_data(key,"P1", float(_b1[0]) * float(_b1[1]) )
+
+						# Add data to plot
+						self.plot.append_handle_data("111", _root, float(_b0[0]), float(_b0[1]), _handle_index)
+						self.plot.update_canvas()
+				
+				# Increment handle index
+				_handle_index += 1
 
 		# Reset Keithleys
 		__sweep_func__(0.0)

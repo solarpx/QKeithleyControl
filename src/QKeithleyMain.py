@@ -78,48 +78,63 @@ class QKeithleyMain(QMainWindow):
 		# Set window central widget to stacked widget
 		self.setCentralWidget(self.ui_stack)
 
-	# Callback to handle main menu actions
+	# Callback to handle main menu actions. For each menu action, need 
+	# to check to see if there are any application threads running 
+	# other than main thread (i.e. if there are ongoing measurements). 
 	def main_menu_callback(self, q):
 
 		if q.text() == "Hardware Config" and self.ui_stack.currentIndex() != 0: 
-			self.ui_stack.setCurrentIndex(0)
+
+			if len( threading.enumerate() ) > 1:
+				self.thread_running_msg()
+			else:
+				self.ui_stack.setCurrentIndex(0)
 
 		if q.text() == "IV-Bias Control" and self.ui_stack.currentIndex() != 1: 		
-			
-			self.ui_bias.refresh()
-			self.ui_stack.setCurrentIndex(1)
+		
+			if len( threading.enumerate() ) > 1:
+				self.thread_running_msg()
+			else:		
+				self.ui_bias.refresh()
+				self.ui_stack.setCurrentIndex(1)
 
 		if q.text() == "IV-Sweep Control" and self.ui_stack.currentIndex() != 2:
-			
-			self.ui_sweep.refresh()
-			self.ui_stack.setCurrentIndex(2)
 
-		if q.text() == "PV-Characterization" and self.ui_stack.currentIndex() != 3:
+			if len( threading.enumerate() ) > 1:
+				self.thread_running_msg()
+			else:					
+				self.ui_sweep.refresh()
+				self.ui_stack.setCurrentIndex(2)
 
-			self.ui_solar.refresh()
-			self.ui_stack.setCurrentIndex(3)
+		if q.text() == "PV-Tracking" and self.ui_stack.currentIndex() != 3:
+
+			if len( threading.enumerate() ) > 1:
+				self.thread_running_msg()
+			else: 	
+				self.ui_solar.refresh()
+				self.ui_stack.setCurrentIndex(3)
 
 		if q.text() == "Exit":
 
-			# Check to see if there are any threads running 
-			# other than main thread
 			if len( threading.enumerate() ) > 1:
-
-				# Dialogue to check quit
-				msg = QMessageBox()
-				msg.setIcon(QMessageBox.Warning)
-				msg.setText("Measurement is running")
-				msg.setWindowTitle("QKeithleyControl")
-				msg.setWindowIcon(self.icon)
-				msg.setStandardButtons(QMessageBox.Ok)
-				msg.exec_()
+				self.thread_running_msg()
 
 			# Otherwise enter the close dialog
 			else:	
-
 				self.ui_config.close_devices()
 				self.app.exit()	
 
+	# Message box for thread running
+	def thread_running_msg(self):
+
+		# Dialogue to check quit
+		msg = QMessageBox()
+		msg.setIcon(QMessageBox.Warning)
+		msg.setText("Measurement is running")
+		msg.setWindowTitle("QKeithleyControl")
+		msg.setWindowIcon(self.icon)
+		msg.setStandardButtons(QMessageBox.Ok)
+		msg.exec_()
 
 	# Callback to handle help menu actions
 	def help_menu_callback(self, q):
@@ -197,7 +212,7 @@ class QKeithleyMain(QMainWindow):
 		self.app_submenu.addAction(self.app_sweep)
 
 		# Solar Mode
-		self.app_solar = QAction("PV-Characterization")
+		self.app_solar = QAction("PV-Tracking")
 		self.app_submenu.addAction(self.app_solar)
 
 		# Add app submenu to main menu

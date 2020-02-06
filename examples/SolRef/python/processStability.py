@@ -12,8 +12,8 @@ if __name__ == "__main__":
 
 	# Path to data files
 	paths = [
-		"../data/Si/si-ref-stability.dat", 
-		"../data/GaAs/gaas-ref-stability.dat"
+		"../dat/Si/si-ref-stability.dat", 
+		"../dat/GaAs/gaas-ref-stability.dat"
 	]
 
 	# Set up mpl figure

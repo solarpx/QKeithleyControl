@@ -174,9 +174,9 @@ class QKeithleyBiasWidget:
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Bias Level",
-			"limit"		: 20.0, 
 			"signed"	: True,
-			"default"	: [0.0, ""]
+			"limit"		: [20.0, ""], 
+			"default"	: [00.0, ""]
 		} 
 		self.voltage_bias = QVisaUnitSelector.QVisaUnitSelector(self.voltage_bias_config)
 		self.voltage_bias.unit_value.valueChanged.connect(self.update_bias)
@@ -188,8 +188,8 @@ class QKeithleyBiasWidget:
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance",
-			"limit"		: 1.0, 
 			"signed"	: False,
+			"limit"		: [1.0, ""], 
 			"default"	: [150, "m"]
 		} 
 		self.voltage_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voltage_cmpl_config)	
@@ -200,9 +200,9 @@ class QKeithleyBiasWidget:
 		self.voltage_delay_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: [0.1]
+			"limit"		: [60.0], 
+			"default"	: [0.10]
 		}
 		self.voltage_delay = QVisaUnitSelector.QVisaUnitSelector(self.voltage_delay_config)
 
@@ -227,8 +227,8 @@ class QKeithleyBiasWidget:
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Bias Level",
-			"limit"		: 1.0,
 			"signed"	: True,
+			"limit"		: [1.0, ""],
 			"default" 	: [1.0, "m"]
 		} 
 		self.current_bias = QVisaUnitSelector.QVisaUnitSelector(self.current_bias_config)
@@ -241,9 +241,9 @@ class QKeithleyBiasWidget:
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance",
-			"limit"		: 20.0, 
 			"signed"	: False,
-			"default"	: [1, ""]
+			"limit"		: [20.0, ""], 
+			"default"	: [1.00, ""]
 		} 
 		self.current_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.current_cmpl_config)	
 		self.current_cmpl.unit_value.valueChanged.connect(self.update_cmpl)
@@ -253,9 +253,9 @@ class QKeithleyBiasWidget:
 		self.current_delay_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: [0.1]
+			"limit"		: [60.0], 
+			"default"	: [0.10]
 		}
 		self.current_delay = QVisaUnitSelector.QVisaUnitSelector(self.current_delay_config)
 

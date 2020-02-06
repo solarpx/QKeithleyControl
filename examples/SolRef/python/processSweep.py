@@ -17,18 +17,18 @@ if __name__ == "__main__":
 	if ref_cell == "Si":
 
 		# Path to reference data file
-		data_path = "../data/Si/si-ref-sweep.dat"
+		data_path = "../dat/Si/si-ref-sweep.dat"
 
 		# Path to dump extracted measurement parameters
-		extract_path = "../data/Si/si-ref-extract.dat"
+		extract_path = "../dat/Si/si-ref-extract.dat"
 
 	if ref_cell == "GaAs":
 	
 		# Path to reference data file
-		data_path = "../data/GaAs/gaas-ref-sweep.dat"
+		data_path = "../dat/GaAs/gaas-ref-sweep.dat"
 
 		# Path to dump extracted measurement parameters
-		extract_path = "../data/GaAs/gaas-ref-extract.dat"
+		extract_path = "../dat/GaAs/gaas-ref-extract.dat"
 
 	# Build data object
 	data = QVisaDataObject.QVisaDataObject()

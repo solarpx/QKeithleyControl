@@ -82,14 +82,12 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			self.device_select.refresh( self )
 
 			# Enable measurement buttons
-			self.iv_meas_button.setEnabled(True)
 			self.voc_meas_button.setEnabled(True)
 			self.mpp_meas_button.setEnabled(True)
 
 		else:
 			
 			# Disable measurement buttons
-			self.iv_meas_button.setEnabled(False)
 			self.voc_meas_button.setEnabled(False)
 			self.mpp_meas_button.setEnabled(False)
 
@@ -99,9 +97,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	#
 	# *) gen_main_layout()
 	# 	1) gen_solar_ctrl()
-	# 		a) gen_sweep_ctrl()
-	#		b) gen_voc_ctrl()
-	# 		c) gen_mpp_crtl()
+	#		a) gen_voc_ctrl()
+	# 		b) gen_mpp_crtl()
 	#	2) gen_solar_plot()
 	#		
 
@@ -132,20 +129,18 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# These methods will pack self.inst_select
 		self.gen_voc_ctrl() 			# self.voc_ctrl
 		self.gen_mpp_ctrl()				# self.mpp_ctrl
-		self.gen_iv_ctrl()				# self.iv_ctrl
 
 		# Add measurement widgets to QStackedWidget
 		self.meas_pages = QStackedWidget()
 		self.meas_pages.addWidget(self.voc_ctrl)
 		self.meas_pages.addWidget(self.mpp_ctrl)
-		self.meas_pages.addWidget(self.iv_ctrl)
 		self.meas_pages.setCurrentIndex(0);
 	
 		# Measurement select QComboBox
 		self.meas_select_label = QLabel("Measurement Mode")
 		self.meas_select = QComboBox()
 		self.meas_select.setFixedWidth(200)
-		self.meas_select.addItems(["Voc", "MPP", "IV"])
+		self.meas_select.addItems(["Voc", "MPP"])
 		self.meas_select.currentTextChanged.connect(self.update_meas_pages)
 
 		# Meta widget for trace description
@@ -178,98 +173,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 	#####################################
 	# MEASUREMENT MODE CONTROLS
 	#		
-	
-	# Method to generate sweep controls
-	def gen_iv_ctrl(self):
-
-		# Sweep control layout
-		self.iv_ctrl = QWidget()
-		self.iv_ctrl_layout = QVBoxLayout()
- 		
-		# Sweep measurement Button. This will be a state machine which 
-		# alternates between 'measure' and 'abort' states
-		self.iv_meas_state  = QStateMachine()
-		self.iv_meas_button = QPushButton()
-		self.iv_meas_button.setStyleSheet(
-			"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-
-		# Create measurement states
-		self.iv_meas_run  = QState()
-		self.iv_meas_stop = QState()
-
-		# Assign state properties and transitions
-		self.iv_meas_run.assignProperty(self.iv_meas_button, 'text', 'Abort Sweep')
-		self.iv_meas_run.addTransition(self.iv_meas_button.clicked, self.iv_meas_stop)
-		self.iv_meas_run.entered.connect(self.exec_iv_run)
-
-		self.iv_meas_stop.assignProperty(self.iv_meas_button, 'text', 'Measure Sweep')
-		self.iv_meas_stop.addTransition(self.iv_meas_button.clicked, self.iv_meas_run)
-		self.iv_meas_stop.entered.connect(self.exec_iv_stop)
-
-		# Add states, set initial state, and state machine
-		self.iv_meas_state.addState(self.iv_meas_run)
-		self.iv_meas_state.addState(self.iv_meas_stop)
-		self.iv_meas_state.setInitialState(self.iv_meas_stop)
-		self.iv_meas_state.start()		
-
-		# Sweep start
-		self.iv_start_config={
-			"unit" 		: "V", 
-			"min"		: "m",
-			"max"		: "",
-			"label"		: "Sweep Start (V)",
-			"limit"		: 2.0, 
-			"signed"	: True,
-			"default"	: [-0.5, ""]
-		} 
-		self.iv_start = QVisaUnitSelector.QVisaUnitSelector(self.iv_start_config)
-
-		# Sweep stop
-		self.iv_stop_config={
-			"unit" 		: "V", 
-			"min"		: "m",
-			"max"		: "",
-			"label"		: "Sweep Stop (V)",
-			"limit"		: 2.0, 
-			"signed"	: True,
-			"default"	: [0.5, ""]
-		} 
-		self.iv_stop = QVisaUnitSelector.QVisaUnitSelector(self.iv_stop_config)
-
-		
-		# Compliance Spinbox
-		self.iv_cmpl_config={
-			"unit" 		: "A", 
-			"min"		: "u",
-			"max"		: "",
-			"label"		: "Compliance (A)",
-			"limit"		: 1.0, 
-			"signed"	: False,
-			"default"	: [100, "m"]
-		} 
-		self.iv_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.iv_cmpl_config)	
-
-		# Compliance
-		self.iv_npts_config={
-			"unit" 		: "__INT__", 
-			"label"		: "Number of Points",
-			"limit"		: 256.0, 
-			"signed"	: False,
-			"default"	: [51.0]
-		}
-		self.iv_npts = QVisaUnitSelector.QVisaUnitSelector(self.iv_npts_config)		
-
-		# Add sweep widgets to layout
-		self.iv_ctrl_layout.addWidget(self.iv_meas_button)
-		self.iv_ctrl_layout.addWidget(self.iv_start)
-		self.iv_ctrl_layout.addWidget(self.iv_stop)
-		self.iv_ctrl_layout.addWidget(self.iv_cmpl)
-		self.iv_ctrl_layout.addWidget(self.iv_npts)
-		self.iv_ctrl_layout.setContentsMargins(0,0,0,0)
-	
-		# Set widget layout
-		self.iv_ctrl.setLayout(self.iv_ctrl_layout)
-
 
 	# Method to generate Voc controls
 	def gen_voc_ctrl(self):
@@ -310,9 +213,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"min"		: "m",
 			"max"		: "",
 			"label"		: "Voc Initialization (V)",
-			"limit"		: 2.0, 
 			"signed"	: True,
-			"default"	: [0.3,""]
+			"limit"		: [2.0, ""], 
+			"default"	: [0.0, ""]
 		} 
 		self.voc_bias = QVisaUnitSelector.QVisaUnitSelector(self.voc_bias_config)
 		self.voc_bias.unit_value.valueChanged.connect(lambda arg=self.voc_bias.value(): self.update_bias(arg))
@@ -323,8 +226,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance (A)",
-			"limit"		: 1.0, 
 			"signed"	: False,
+			"limit"		: [1.0, "" ],
 			"default"	: [150, "m"]
 		} 
 		self.voc_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.voc_cmpl_config)	
@@ -335,9 +238,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "m",
 			"label"		: "Sense amplitude (mV)",
-			"limit"		: 0.1, 
 			"signed"	: False,
-			"default"	: [1.0,"m"]
+			"limit"		: [100.,"m"], 
+			"default"	: [1.0 ,"m"]
 		} 
 		self.voc_ampl = QVisaUnitSelector.QVisaUnitSelector(self.voc_ampl_config)
 
@@ -345,8 +248,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_gain_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: html.unescape("Proportional Gain (&permil;)"),
-			"limit"		: 1000, 
 			"signed"	: False,
+			"limit"		: [1000], 
 			"default"	: [30.0]
 		}
 		self.voc_gain = QVisaUnitSelector.QVisaUnitSelector(self.voc_gain_config)
@@ -356,9 +259,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_delay_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: [0.1]
+			"limit"		: [60.0], 
+			"default"	: [0.10]
 		}
 		self.voc_delay = QVisaUnitSelector.QVisaUnitSelector(self.voc_delay_config)
 
@@ -417,9 +320,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"min"		: "m",
 			"max"		: "",
 			"label"		: "MPP Initialization (V)",
-			"limit"		: 2.0, 
 			"signed"	: True,
-			"default"	: [0.30,""]
+			"limit"		: [2.00, ""], 
+			"default"	: [0.00, ""]
 		} 
 		self.mpp_bias = QVisaUnitSelector.QVisaUnitSelector(self.mpp_bias_config)
 		self.mpp_bias.unit_value.valueChanged.connect(lambda arg=self.mpp_bias.value(): self.update_bias(arg))
@@ -430,8 +333,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "",
 			"label"		: "Compliance (A)",
-			"limit"		: 1.0, 
 			"signed"	: False,
+			"limit"		: [1.0, "" ],
 			"default"	: [150, "m"]
 		} 
 		self.mpp_cmpl = QVisaUnitSelector.QVisaUnitSelector(self.mpp_cmpl_config)	
@@ -442,9 +345,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"min"		: "u",
 			"max"		: "m",
 			"label"		: "Sense amplitude (mV)",
-			"limit"		: 100, 
 			"signed"	: False,
-			"default"	: [20.0,"m"]
+			"limit"		: [100., "m"],
+			"default"	: [10.0, "m"]
 		} 
 		self.mpp_ampl = QVisaUnitSelector.QVisaUnitSelector(self.mpp_ampl_config)
 
@@ -452,8 +355,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_gain_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: html.unescape("Proportional Gain (&permil;)"),
-			"limit"		: 10000, 
 			"signed"	: False,
+			"limit"		: [1000], 
 			"default"	: [30.0]
 		}
 		self.mpp_gain = QVisaUnitSelector.QVisaUnitSelector(self.mpp_gain_config)
@@ -463,9 +366,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_delay_config={
 			"unit" 		: "__DOUBLE__", 
 			"label"		: "Measurement Interval (s)",
-			"limit"		: 60.0, 
 			"signed"	: False,
-			"default"	: [0.1]
+			"limit"		: [60.0], 
+			"default"	: [0.10]
 		}
 		self.mpp_delay = QVisaUnitSelector.QVisaUnitSelector(self.mpp_delay_config)
 
@@ -489,14 +392,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Call QStackedWidget constructor
 		self.plot_stack = QStackedWidget()
 
-		# Plot IV-Sweep mode
-		self.iv_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
-		self.iv_plot.add_subplot(111, twinx=True)
-		self.iv_plot.set_axes_labels("111" , "Voltage (V)", "Current (mA)")
-		self.iv_plot.set_axes_labels("111t", "Voltage (V)", "Power (mW)")
-		self.iv_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
-		self.iv_plot.refresh_canvas(supress_warning=True)
-
+		# Voc tracking plot
 		self.voc_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.voc_plot.add_subplot(111, twinx=True)
 		self.voc_plot.set_axes_labels("111", "Time (s)", "Voc (V)")
@@ -504,6 +400,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.voc_plot.set_axes_adjust(_left=0.15, _right=0.85, _top=0.9, _bottom=0.1)
 		self.voc_plot.refresh_canvas(supress_warning=True)		
 
+		# MPP tracking plot
 		self.mpp_plot =  QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.mpp_plot.add_subplot(111, twinx=True)
 		self.mpp_plot.set_axes_labels("111", "Time (s)", "Vmpp (V)")
@@ -512,19 +409,16 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_plot.refresh_canvas(supress_warning=True)		
 
 		# Sync plot clear data buttons with application data
-		self.iv_plot.sync_application_data(True)
 		self.voc_plot.sync_application_data(True)
 		self.mpp_plot.sync_application_data(True)
 
 		# Sync meta widget when clearing data from plots
-		self.iv_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
 		self.voc_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
 		self.mpp_plot.set_mpl_refresh_callback("_sync_meta_widget_to_data_object")
 
 		# Add QVisaDynamicPlots to QStackedWidget
 		self.plot_stack.addWidget(self.voc_plot)
 		self.plot_stack.addWidget(self.mpp_plot)
-		self.plot_stack.addWidget(self.iv_plot)
 
 		# Return the stacked widget
 		self.plot_stack.setCurrentIndex(0);
@@ -558,10 +452,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			self.meas_pages.setCurrentIndex(1)
 			self.plot_stack.setCurrentIndex(1)
 
-		if self.meas_select.currentText() == "IV":		
-			self.meas_pages.setCurrentIndex(2)
-			self.plot_stack.setCurrentIndex(2)
-
 
 	# Callback method to delete data when traces are cleared
 	def sync_mpl_clear(self):
@@ -574,130 +464,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		for _subkey in _plot.get_axes_handles().subkeys("111"):
 			_data.del_key(_subkey)
 
-	#####################################
-	#  IV-SWEEP MEASUREMENT MODE
-	#	
-
-	# Sweep measurement EXECUTION
-	def exec_iv_thread(self):
-		
-		# Set sweep parameters as simple linspace
-		_params = np.linspace( 
-			float( self.iv_start.value() ), 
-			float( self.iv_stop.value() ), 
-			int( self.iv_npts.value() ) 
-		)
-
-
-		# Get QVisaDataObject
-		data = self._get_data_object()
-		key  = data.add_hash_key("pv-bias")
-
-		# Add data fields to key
-		data.set_subkeys(key, ["t", "V", "I", "P"])
-		data.set_metadata(key, "__type__", "pv-bias")
-
-		# Add key to meta widget
-		self.meta_widget.add_meta_key(key)
-
-		# Generate colors
-		_c0 = self.iv_plot.gen_next_color()
-		_c1 = self.iv_plot.gen_next_color()
-
-		# Clear plot and zero arrays
-		self.iv_plot.add_axes_handle('111' , key, _color=_c0)
-		self.iv_plot.add_axes_handle('111t', key, _color=_c1)
-		
-		# Thread start time
-		start  = float(time.time())
-		
-		# Output on
-		self.keithley().voltage_src()
-		self.keithley().current_cmp(self.iv_cmpl.value())
-		self.keithley().output_on()
-
-		# Loop through sweep parameters
-		for _bias in _params: 
-
-			# If thread is running
-			if self.iv_thread_running:
-
-				# Set bias
-				self.keithley().set_voltage(_bias)
-
-				# Get data from buffer
-				_buffer = self.keithley().meas().split(",")
-
-				# Extract data from buffer
-				_now = float(time.time() - start)
-
-				# Append measured values to data arrays
-				data.append_subkey_data(key, "t", _now )
-				data.append_subkey_data(key, "V", float(_buffer[0]) )
-				data.append_subkey_data(key, "I", -1.0 * float(_buffer[1]) )
-				data.append_subkey_data(key, "P", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
-
-				self.iv_plot.append_handle_data( "111" , key, float(_buffer[0]), -1.0 * float(_buffer[1]))
-				self.iv_plot.append_handle_data( "111t", key, float(_buffer[0]), -1.0 * float(_buffer[0]) * float(_buffer[1]))
-				self.iv_plot.update_canvas()	
-
-		self.keithley().set_voltage(0.0)
-		self.keithley().output_off()	
-
-		# Reset sweep control and update measurement state to stop. 
-		# Post a button click event to the QStateMachine to trigger 
-		# a state transition if thread is still running (not aborted)
-		if self.iv_thread_running:
-			self.iv_meas_button.click()
-
-	# Sweep measurement ON
-	def exec_iv_run(self):
-	
-		if self.keithley() is not None:
-
-			# Put measurement button in abort state
-			self.iv_meas_button.setStyleSheet(
-				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
-
-			# Disable controls
-			self.save_widget.setEnabled(False)
-			self.device_select.setEnabled(False)
-			self.meas_select.setEnabled(False)
-			self.iv_plot.mpl_refresh_setEnabled(False)
-			self.voc_plot.mpl_refresh_setEnabled(False)	
-			self.mpp_plot.mpl_refresh_setEnabled(False)
-				
-			# Run the measurement thread function
-			self.iv_thread = threading.Thread(target=self.exec_iv_thread, args=())
-			self.iv_thread.daemon = True				# Daemonize thread
-			self.iv_thread.start()         				# Start the execution
-			self.iv_thread_running = True
-
-	# Sweep measurement OFF
-	def exec_iv_stop(self):
-		
-		if self.keithley() is not None:
-
-			# Put measurement button in measure state
-			self.iv_meas_button.setStyleSheet(
-				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
-			
-			# Enable controls
-			self.save_widget.setEnabled(True)
-			self.device_select.setEnabled(True)
-			self.meas_select.setEnabled(True)
-			self.iv_plot.mpl_refresh_setEnabled(True)
-			self.voc_plot.mpl_refresh_setEnabled(True)	
-			self.mpp_plot.mpl_refresh_setEnabled(True)
-
-			# Set thread running to False. This will break the sweep measurements
-			# execution loop on next iteration.  
-			self.iv_thread_running = False
-			self.iv_thread.join()  # Waits for thread to complete
-
 
 	#####################################
-	#  VOC-MONITOR MEASUREMENT MODE
+	#  Voc-TRACKING MEASUREMENT MODE
 	#	
 	def exec_voc_thread(self):
 		
@@ -838,7 +607,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 	
 	#####################################
-	#  MPP-MONITOR MEASUREMENT MODE
+	#  MPP-TRACKING MEASUREMENT MODE
 	#	
 
 	def exec_mpp_thread(self):
