@@ -77,6 +77,10 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			self.sweep_inst.refresh( self )
 			self.step_inst.refresh( self )
 
+			# Plot control widgets
+			self.plot_voltage_inst.refresh( self )
+			self.plot_current_inst.refresh( self )
+
 			# Update sweep parameters and enable output button
 			self.meas_button.setEnabled(True)
 			self.update_meas_params()
@@ -208,6 +212,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.meas_pages = QStackedWidget()
 		self.meas_pages.addWidget(self.gen_sweep_ctrl())
 		self.meas_pages.addWidget(self.gen_step_ctrl())
+		self.meas_pages.addWidget(self.gen_plot_ctrl())
 
 		# Meta widget for trace description
 		self.meta_widget_label = QLabel("<b>Trace Description</b>")
@@ -246,7 +251,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.meas_config_page_label = QLabel("<b>Configure Parameters</b>")
 		self.meas_config_page = QComboBox()
 		self.meas_config_page.setFixedWidth(200)
-		self.meas_config_page.addItems(["IV-sweep", "IV-step"])	
+		self.meas_config_page.addItems(["IV-sweep", "IV-step", "IV-plot"])	
 		self.meas_config_page.currentTextChanged.connect(self.update_config_page)
 
 		# Add some space for layout clarity
@@ -386,6 +391,33 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		self.step_ctrl.setLayout(self.step_ctrl_layout)		
 		return self.step_ctrl	
 
+	# Plot control layout	
+	def gen_plot_ctrl(self):
+
+		self.plot_ctrl = QWidget()
+		self.plot_ctrl_layout = QVBoxLayout()
+
+		# Voltage step instruement selector
+		self.plot_voltage_inst_label = QLabel("Voltage Axis")
+		self.plot_voltage_inst = self._gen_device_select()
+		self.plot_voltage_inst.setFixedWidth(200)
+		self.plot_voltage_inst.set_callback("update_plot_ctrl")
+
+
+		# Voltage step instruement selector
+		self.plot_current_inst_label = QLabel("Current Axis")
+		self.plot_current_inst = self._gen_device_select()
+		self.plot_current_inst.setFixedWidth(200)
+		self.plot_current_inst.set_callback("update_plot_ctrl")
+
+		# Add widgets
+		self.plot_ctrl_layout.addWidget( self._gen_hbox_widget( [self.plot_voltage_inst,self.plot_voltage_inst_label]) )
+		self.plot_ctrl_layout.addWidget( self._gen_hbox_widget( [self.plot_current_inst,self.plot_current_inst_label]) )
+		self.plot_ctrl_layout.addStretch(1)
+
+		# Set layout and return reference
+		self.plot_ctrl.setLayout(self.plot_ctrl_layout)		
+		return self.plot_ctrl
 
 	# Generate voltage sweep widget
 	def gen_voltage_sweep(self):
@@ -671,9 +703,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		# Create QVisaDynamicPlot object (inherits QWidget) 
 		self.plot = QVisaDynamicPlot.QVisaDynamicPlot(self)
 		self.plot.add_subplot(111)
-		self.plot.set_axes_labels("111", "Voltage (V)", "Current (A)")
 		self.plot.add_origin_lines("111", "both")
-
+		self.plot.set_axes_labels("111", "Voltage (V)", "Current (A)")
+		
 		# Refresh canvas
 		self.plot.refresh_canvas(supress_warning=True)		
 
@@ -713,6 +745,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		if self.meas_config_page.currentText() == "IV-step":
 			self.meas_pages.setCurrentIndex(1)
 
+		if self.meas_config_page.currentText() == "IV-plot":
+			self.meas_pages.setCurrentIndex(2)
+
 
 	#####################################
 	#  SWEEP CONTROL UPDATE METHODS
@@ -744,6 +779,15 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			self.step_pages.setCurrentIndex(1)
 			self.update_meas_params()
 
+	# Update plot axes when we change configuration		
+	def update_plot_ctrl(self):		
+
+		self.plot.set_axes_labels("111", 
+			"Voltage (V) : %s"%self.plot_voltage_inst.currentText(), 
+			"Current (A) : %s"%self.plot_current_inst.currentText()
+		)
+
+		self.plot.update_canvas()
 
 	# Create Measurement 
 	def update_meas_params(self):
@@ -888,7 +932,6 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 	
 	# Execute Sweep-Step Measurement
 	def exec_sweep_step_thread(self):
-
 	
 		# Generate function pointer for sweep voltage/current mode
 		if self.sweep_src.currentText() == "Voltage":
@@ -927,6 +970,24 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 		# Add key to meta widget
 		self.meta_widget.add_meta_key(_root)
+
+		# Sync plot to insturments (to save an integration time)
+		# Measuring Output Characteristic
+		if ( self.plot_voltage_inst.currentText() == self.sweep_inst.currentText() and 
+			 self.plot_current_inst.currentText() == self.sweep_inst.currentText() ):
+
+				sync = "output"
+
+		# Measuring Output Characteristic
+		elif ( self.plot_voltage_inst.currentText() == self.sweep_inst.currentText() and 
+			 self.plot_current_inst.currentText() == self.step_inst.currentText() ):
+
+				sync = "transfer"
+
+		else: 
+		
+				sync = None		
+
 
 		# Loop through step variables and generate subkeys
 		for _step in self._get_app_metadata("__step__"):
@@ -975,6 +1036,9 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				# Loop through sweep variables
 				for _bias in self._get_app_metadata("__sweep__"):
 
+					# If thread is running
+					if self.thread_running:
+
 						# Set voltage/current bias
 						__sweep_func__(_bias)			
 
@@ -998,12 +1062,38 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 						data.append_subkey_data(key,"I1", float(_b1[1]) )
 						data.append_subkey_data(key,"P1", float(_b1[0]) * float(_b1[1]) )
 
-						# Add data to plot
-						self.plot.append_handle_data("111", _root, float(_b0[0]), float(_b0[1]), _handle_index)
+						# Output characteristic
+						if sync == "output":
+
+							p0 = float(_b0[0])
+							p1 = float(_b0[1])
+
+						# Transfer characteristic
+						elif sync == "transfer":
+
+							p0 = float(_b0[0])
+							p1 = float(_b1[1])
+
+						# Default case
+						else:
+
+							p0 = self.keithley(self.plot_voltage_inst).meas().split(",")[0]
+							p1 = self.keithley(self.plot_current_inst).meas().split(",")[1]
+						
+						# Update plot
+						self.plot.append_handle_data("111", _root, float(p0), float(p1), _handle_index)
 						self.plot.update_canvas()
 				
+					else: 
+
+						break 
+
 				# Increment handle index
 				_handle_index += 1
+
+			else:
+
+				break
 
 		# Reset Keithleys
 		__sweep_func__(0.0)
@@ -1011,7 +1101,11 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 
 		__step_func__(0.0)
 		self.keithley(self.step_inst).output_off()
-		
+
+		# Reset plot Keithleys (if on)
+		self.keithley(self.plot_voltage_inst).output_off()
+		self.keithley(self.plot_current_inst).output_off()
+
 		# Reset sweep control and update measurement state to stop. 
 		# Post a button click event to the QStateMachine to trigger 
 		# a state transition if thread is still running (not aborted)
@@ -1046,6 +1140,22 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		handle = self.plot.add_axes_handle("111", key)
 		start  = time.time()
 		
+		# Sync plot to insturments (to save an integration time) : Voltage
+		if self.sweep_inst.currentText() == self.plot_voltage_inst.currentText():
+			sync_p0 = True
+
+		else:
+			sync_p0 = False
+			self.keithley(self.plot_voltage_inst).output_on()
+		
+		# Sync plot to insturments (to save an integration time) : Current
+		if self.sweep_inst.currentText() == self.plot_current_inst.currentText():
+			sync_p1 = True
+
+		else:
+			sync_p1 = False 
+			self.keithley(self.plot_current_inst).output_on()
+		
 		# Output on
 		self.keithley(self.sweep_inst).output_on()
 
@@ -1073,13 +1183,22 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				data.append_subkey_data(key,"I", float(_b[1]) )
 				data.append_subkey_data(key,"P", float(_b[0]) * float(_b[1]) )
 
-				self.plot.append_handle_data("111", key, float(_b[0]), float(_b[1]))
-				self.plot.update_canvas()	
+				# Sync voltage data
+				p0 = _b[0] if sync_p0 else self.keithley(self.plot_voltage_inst).meas().split(",")[0]
+				p1 = _b[1] if sync_p1 else self.keithley(self.plot_current_inst).meas().split(",")[1]
+
+				# Update the data
+				self.plot.append_handle_data("111", key, float(p0), float(p1))
+				self.plot.update_canvas()
 		
 		# Reset Keithley
 		__sweep_func__(0.0)
 		self.keithley(self.sweep_inst).output_off()
 		
+		# Reset plot insturments (if on)
+		self.keithley(self.plot_voltage_inst).output_off()
+		self.keithley(self.plot_current_inst).output_off()
+
 		# Reset sweep control and update measurement state to stop. 
 		# Post a button click event to the QStateMachine to trigger 
 		# a state transition if thread is still running (not aborted)
@@ -1099,12 +1218,22 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			self.meas_button.setStyleSheet(
 				"background-color: #ffcccc; border-style: solid; border-width: 1px; border-color: #800000; padding: 7px;")
 
-			# Disable controls
+			# Disable controls (sweep)
 			self.sweep_src.setEnabled(False)
 			self.sweep_inst.setEnabled(False)
-			self.save_widget.setEnabled(False)
-			self.plot.mpl_refresh_setEnabled(False)
+			
+			# Disable controls (step)
+			self.step_src.setEnabled(False)
+			self.step_inst.setEnabled(False)
 			self.step_button.setEnabled(False)
+
+			# Disable controls (save)
+			self.save_widget.setEnabled(False)
+			
+			# Plot contollers (plots)
+			self.plot.mpl_refresh_setEnabled(False)
+			self.plot_voltage_inst.setEnabled(False)
+			self.plot_current_inst.setEnabled(False)
 
 	 		# Check app meta and run sweep or sweep-step tread
 			if self._get_app_metadata("__exec_step__") == True:
@@ -1128,13 +1257,23 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 			self.meas_button.setStyleSheet(
 				"background-color: #dddddd; border-style: solid; border-width: 1px; border-color: #aaaaaa; padding: 7px;" )
 
-			# Enable controls
+			# Enable controls (sweep)
 			self.sweep_src.setEnabled(True)
 			self.sweep_inst.setEnabled(True)
-			self.save_widget.setEnabled(True)
-			self.plot.mpl_refresh_setEnabled(True)
+
+			# Enable controls (step)
+			self.step_src.setEnabled(True)
+			self.step_inst.setEnabled(True)
 			self.step_button.setEnabled(True)
 
+			# Enable controls (save)
+			self.save_widget.setEnabled(True)
+	
+			# Plot contollers
+			self.plot.mpl_refresh_setEnabled(True)
+			self.plot_voltage_inst.setEnabled(True)
+			self.plot_current_inst.setEnabled(True)
+			
 			# Kill measurement thread
 			self.thread_running = False
 			self.thread.join()  # Waits for thread to complete
