@@ -143,6 +143,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.meas_select.addItems(["Voc", "MPP"])
 		self.meas_select.currentTextChanged.connect(self.update_meas_pages)
 
+		# Include convergence data checkbox
+		self.meas_conv = QCheckBox("Include Convergence Data")
+
 		# Meta widget for trace description
 		self.meta_widget_label = QLabel("<b>Trace Description</b>")
 		self.meta_widget = self._gen_meta_widget()
@@ -158,7 +161,8 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.ctl_layout.addWidget(self.meas_pages)
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.meas_select, self.meas_select_label]))
 		self.ctl_layout.addWidget(self._gen_hbox_widget([self.device_select,self.device_select_label]))
-
+		self.ctl_layout.addWidget(self.meas_conv)
+	
 		# Pack the standard save widget
 		self.ctl_layout.addStretch(1)
 		self.ctl_layout.addWidget(self.meta_widget_label)
@@ -244,6 +248,18 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		} 
 		self.voc_ampl = QVisaUnitSelector.QVisaUnitSelector(self.voc_ampl_config)
 
+		# Convergence value
+		self.voc_conv_config={	
+			"unit" 		: "", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Convergence",
+			"signed"	: False,
+			"limit"		: [10., "" ],
+			"default"	: [1.0, "m"]
+		}
+		self.voc_conv = QVisaUnitSelector.QVisaUnitSelector(self.voc_conv_config)
+
 		# Delay
 		self.voc_gain_config={
 			"unit" 		: "__DOUBLE__", 
@@ -254,7 +270,6 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		}
 		self.voc_gain = QVisaUnitSelector.QVisaUnitSelector(self.voc_gain_config)
 
-
 		# Delay
 		self.voc_delay_config={
 			"unit" 		: "__DOUBLE__", 
@@ -263,15 +278,17 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			"limit"		: [60.0], 
 			"default"	: [0.10]
 		}
-		self.voc_delay = QVisaUnitSelector.QVisaUnitSelector(self.voc_delay_config)
+		self.voc_delay = QVisaUnitSelector.QVisaUnitSelector(self.voc_delay_config)			
 
 		# Add voc widgets to layout
 		self.voc_ctrl_layout.addWidget(self.voc_meas_button)
 		self.voc_ctrl_layout.addWidget(self.voc_bias)
 		self.voc_ctrl_layout.addWidget(self.voc_cmpl)
 		self.voc_ctrl_layout.addWidget(self.voc_ampl)
+		self.voc_ctrl_layout.addWidget(self.voc_conv)
 		self.voc_ctrl_layout.addWidget(self.voc_gain)
 		self.voc_ctrl_layout.addWidget(self.voc_delay)
+
 		self.voc_ctrl_layout.setContentsMargins(0,0,0,0)
 	
 		# Set widget layout
@@ -351,6 +368,18 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		} 
 		self.mpp_ampl = QVisaUnitSelector.QVisaUnitSelector(self.mpp_ampl_config)
 
+		# Convergence value
+		self.mpp_conv_config ={	
+			"unit" 		: "", 
+			"min"		: "u",
+			"max"		: "",
+			"label"		: "Convergence",
+			"signed"	: False,
+			"limit"		: [10., "" ],
+			"default"	: [10., "m"]
+		}
+		self.mpp_conv = QVisaUnitSelector.QVisaUnitSelector(self.mpp_conv_config)
+
 		# Delay
 		self.mpp_gain_config={
 			"unit" 		: "__DOUBLE__", 
@@ -377,6 +406,7 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		self.mpp_ctrl_layout.addWidget(self.mpp_bias)
 		self.mpp_ctrl_layout.addWidget(self.mpp_cmpl)
 		self.mpp_ctrl_layout.addWidget(self.mpp_ampl)
+		self.mpp_ctrl_layout.addWidget(self.mpp_conv)
 		self.mpp_ctrl_layout.addWidget(self.mpp_gain)
 		self.mpp_ctrl_layout.addWidget(self.mpp_delay)
 		self.mpp_ctrl_layout.setContentsMargins(0,0,0,0)
@@ -503,6 +533,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Initialize dynamic current normalization
 		_Inorm = 0.0
 
+		# Initialize convergence
+		converged = False 
+
 		# Ambipolar tracking algorithm (zero-crossing).	
 		# Need to adjust bias in direction of lower current. 
 		while self.voc_thread_running is True:
@@ -534,18 +567,36 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			else:
 				self.update_bias( float(_buffer[0]) + abs( float(_buffer[1]) / _Inorm ) * self.voc_gain.value() / 1000. )
 
-
-			# Extract data from buffer
 			_now = float(time.time() - start)
 
-			data.append_subkey_data(key, "t"  , _now)
-			data.append_subkey_data(key, "Voc",  1.0 * float(_buffer[0]) )
-			data.append_subkey_data(key, "Ioc", -1.0 * float(_buffer[1]) ) # Sanity check
+			# Check convergence condition
+			if abs( float(_buffer[1]) / _Inorm ) < self.voc_conv.value():
 
-			# Append handle data and update canvas
-			self.voc_plot.append_handle_data("111" , key, _now,  1.0 * float(_buffer[0]) )
-			self.voc_plot.append_handle_data("111t", key, _now, -1.0 * float(_buffer[1]) )
-			self.voc_plot.update_canvas()	
+				converged = True
+
+			# Case of excluding convergence data
+			if ( self.meas_conv.isChecked() == False ) and converged:
+
+				data.append_subkey_data(key, "t"  , _now)
+				data.append_subkey_data(key, "Voc",  1.0 * float(_buffer[0]) )
+				data.append_subkey_data(key, "Ioc", -1.0 * float(_buffer[1]) ) # Sanity check
+
+				# Append handle data and update canvas
+				self.voc_plot.append_handle_data("111" , key, _now,  1.0 * float(_buffer[0]) )
+				self.voc_plot.append_handle_data("111t", key, _now, -1.0 * float(_buffer[1]) )
+				self.voc_plot.update_canvas()	
+
+			# Case of including convergence data
+			if ( self.meas_conv.isChecked() == True ):
+
+				data.append_subkey_data(key, "t"  , _now)
+				data.append_subkey_data(key, "Voc",  1.0 * float(_buffer[0]) )
+				data.append_subkey_data(key, "Ioc", -1.0 * float(_buffer[1]) ) # Sanity check
+
+				# Append handle data and update canvas
+				self.voc_plot.append_handle_data("111" , key, _now,  1.0 * float(_buffer[0]) )
+				self.voc_plot.append_handle_data("111t", key, _now, -1.0 * float(_buffer[1]) )
+				self.voc_plot.update_canvas()	
 
 			# Measurement delay	
 			if self.voc_delay.value() != 0: 
@@ -568,9 +619,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			self.save_widget.setEnabled(False)
 			self.device_select.setEnabled(False)
 			self.meas_select.setEnabled(False)
+			self.meas_conv.setEnabled(False)
 			self.voc_bias.setEnabled(False)
 			self.voc_cmpl.setEnabled(False)
-			self.iv_plot.mpl_refresh_setEnabled(False)
 			self.voc_plot.mpl_refresh_setEnabled(False)	
 			self.mpp_plot.mpl_refresh_setEnabled(False)
 
@@ -592,11 +643,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 
 			# Enable controls
 			self.save_widget.setEnabled(True)
-			self.meas_select.setEnabled(True)
 			self.device_select.setEnabled(True)
+			self.meas_select.setEnabled(True)
+			self.meas_conv.setEnabled(True)
 			self.voc_bias.setEnabled(True)
 			self.voc_cmpl.setEnabled(True)
-			self.iv_plot.mpl_refresh_setEnabled(True)
 			self.voc_plot.mpl_refresh_setEnabled(True)	
 			self.mpp_plot.mpl_refresh_setEnabled(True)
 	
@@ -645,6 +696,9 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 		# Initialize dynamic current normalization
 		_dPnorm = 0.0
 
+		# Initialize convergence
+		converged = False 
+
 		# Thread loop
 		while self.mpp_thread_running is True:
 
@@ -682,15 +736,37 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			# Extract data from buffer
 			_now = float(time.time() - start)
 
-			data.append_subkey_data(key, "t"	, _now)
-			data.append_subkey_data(key, "Vmpp",  1.0 * float(_buffer[0]) )
-			data.append_subkey_data(key, "Impp", -1.0 * float(_buffer[1]) ) 
-			data.append_subkey_data(key, "Pmpp", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+			# Check convergence condition
+			if abs( np.mean(_dp) / _dPnorm ) < self.mpp_conv.value():
 
-			# Append handle data and update canvas
-			self.mpp_plot.append_handle_data("111" , key, _now, float(_buffer[0]))
-			self.mpp_plot.append_handle_data("111t", key, _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
-			self.mpp_plot.update_canvas()	
+				converged = True
+
+			# Case of excluding convergence data
+			if ( self.meas_conv.isChecked() == False ) and converged:
+
+				data.append_subkey_data(key, "t"	, _now)
+				data.append_subkey_data(key, "Vmpp",  1.0 * float(_buffer[0]) )
+				data.append_subkey_data(key, "Impp", -1.0 * float(_buffer[1]) ) 
+				data.append_subkey_data(key, "Pmpp", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+
+				# Append handle data and update canvas
+				self.mpp_plot.append_handle_data("111" , key, _now, float(_buffer[0]))
+				self.mpp_plot.append_handle_data("111t", key, _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
+				self.mpp_plot.update_canvas()	
+
+			# Case of including convergence data		
+			if ( self.meas_conv.isChecked() == True ):
+
+				data.append_subkey_data(key, "t"	, _now)
+				data.append_subkey_data(key, "Vmpp",  1.0 * float(_buffer[0]) )
+				data.append_subkey_data(key, "Impp", -1.0 * float(_buffer[1]) ) 
+				data.append_subkey_data(key, "Pmpp", -1.0 * float(_buffer[1]) * float(_buffer[0]) )
+
+				# Append handle data and update canvas
+				self.mpp_plot.append_handle_data("111" , key, _now, float(_buffer[0]))
+				self.mpp_plot.append_handle_data("111t", key, _now, float(_buffer[0]) * -1.0 * float(_buffer[1]) * 1000.)
+				self.mpp_plot.update_canvas()	
+
 
 			# Measurement delay	
 			if self.mpp_delay.value() != 0: 
@@ -711,11 +787,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			
 			# Disable widgets
 			self.save_widget.setEnabled(False)
-			self.meas_select.setEnabled(False)
 			self.device_select.setEnabled(False)
+			self.meas_select.setEnabled(False)
+			self.meas_conv.setEnabled(False)
 			self.mpp_bias.setEnabled(False)
 			self.mpp_cmpl.setEnabled(False)
-			self.iv_plot.mpl_refresh_setEnabled(False)
 			self.voc_plot.mpl_refresh_setEnabled(False)	
 			self.mpp_plot.mpl_refresh_setEnabled(False)
 			
@@ -736,11 +812,11 @@ class QKeithleySolar(QVisaApplication.QVisaApplication):
 			
 			# Enable widgets 
 			self.save_widget.setEnabled(True)
-			self.meas_select.setEnabled(True)
 			self.device_select.setEnabled(True)
+			self.meas_select.setEnabled(True)
+			self.meas_conv.setEnabled(True)
 			self.mpp_bias.setEnabled(True)
 			self.mpp_cmpl.setEnabled(True)
-			self.iv_plot.mpl_refresh_setEnabled(True)
 			self.voc_plot.mpl_refresh_setEnabled(True)	
 			self.mpp_plot.mpl_refresh_setEnabled(True)
 
