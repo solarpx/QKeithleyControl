@@ -12,25 +12,25 @@ if __name__ == "__main__":
 
 	# Path to data files
 	#path = "../dat/BJT-BC547C-CE(npn).dat"
-	path = "../dat/BJT-BC177B-CE(pnp).dat"
+	path = "../dat/2N7000-Q4(nMOS)-OC.dat"
 
 	# Read data object
 	data = QVisaDataObject.QVisaDataObject()
 	data.read_from_file( path )
 
 	# Extract current bias steps
-	base_currents, bc_unit, cc_unit = [], 1e6, 1e3
-	
+	vgs_step = []
+
 	for _key in data.keys():
 	
 		if data.get_key_data(_key) != {}:
 
-			base_currents.append( bc_unit * float( data.get_metadata(_key, "__step__") ) )
+			vgs_step.append( float( data.get_metadata(_key, "__step__") ) )
 
 
 	# Use the base current to create a colormap for traces. Normalize 
 	# colobar values to minimum and maximum base current
-	norm = mpl.colors.Normalize( vmin=min(base_currents), vmax=max(base_currents) )
+	norm = mpl.colors.Normalize( vmin=min(vgs_step), vmax=max(vgs_step) )
 	cmap = mpl.cm.ScalarMappable( norm=norm, cmap=mpl.cm.cividis )
 	cmap.set_array([])
 
@@ -38,32 +38,31 @@ if __name__ == "__main__":
 	fig = plt.figure()
 	ax0 = fig.add_subplot(111)
 
-	# Loop through data keys and plot traces
+	# # Loop through data keys and plot traces
 	for _key in data.keys():
 
 		if data.get_key_data(_key) != {}:
 
 			# Extract current bias step
-			base_current = ( bc_unit * float( data.get_metadata(_key, "__step__") ) )
+			vgs = ( float( data.get_metadata(_key, "__step__") ) )
 
 			# Extract voltage and current
-			voltage = data.get_subkey_data(_key, "V0")
-			current = data.get_subkey_data(_key, "I0")
+			vds = data.get_subkey_data(_key, "V0")
+			ids = data.get_subkey_data(_key, "I0")
 
 			# plot the data
-			ax0.plot( voltage[1:], [ cc_unit * _ for _ in current[1:] ], color = cmap.to_rgba(base_current) )
+			ax0.plot( vds[1:], [ 1e3 * _ for _ in ids[1:] ], color = cmap.to_rgba(vgs) )
 
 
 	# Add axes lables and show plot
-	#ax0.set_title("BJT BC547C(npn) : Common Emitter")
-	ax0.set_title("BJT BC177B(pnp) : Common Emitter")
-	ax0.set_xlabel("$V_{CE}$ $(V)$")
-	ax0.set_ylabel("$I_{CE}$ $(mA)$")
+	ax0.set_title("2N7000-Q4(nMOS) : Output Characteristics")
+	ax0.set_xlabel("$V_{ds}$ $(V)$")
+	ax0.set_ylabel("$I_{ds}$ $(mA)$")
 
 	# Add the colorbar			
-	cbar = fig.colorbar(cmap, ticks=base_currents)
+	cbar = fig.colorbar(cmap, ticks=vgs_step)
 	cbar.ax.get_yaxis().labelpad = 20
-	cbar.ax.set_ylabel("$I_{BE}$ $(\\mu A)$", rotation=270)
+	cbar.ax.set_ylabel("$V_{gs}$ $(V)$", rotation=270)
 
 	# Show plot
 	plt.tight_layout()
