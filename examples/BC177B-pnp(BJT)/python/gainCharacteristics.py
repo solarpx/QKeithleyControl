@@ -11,26 +11,25 @@ import matplotlib as mpl
 if __name__ == "__main__":
 
 	# Path to data files
-	#path = "../dat/BJT-BC547C-CE(npn).dat"
-	path = "../dat/BJT-BC177B-CE(pnp).dat"
+	path = "../dat/BJT-BC177B(pnp)-CE-ice(ibe).dat"
 
 	# Read data object
 	data = QVisaDataObject.QVisaDataObject()
 	data.read_from_file( path )
 
-	# Extract current bias steps
-	base_currents, bc_unit, cc_unit = [], 1e6, 1e3
+	# Extract voltage bias steps
+	vce_step, ibe_unit, ice_unit = [], 1e6, 1e3
 	
 	for _key in data.keys():
 	
 		if data.get_key_data(_key) != {}:
 
-			base_currents.append( bc_unit * float( data.get_metadata(_key, "__step__") ) )
+			vce_step.append( float( data.get_metadata(_key, "__step__") ) )
 
 
 	# Use the base current to create a colormap for traces. Normalize 
 	# colobar values to minimum and maximum base current
-	norm = mpl.colors.Normalize( vmin=min(base_currents), vmax=max(base_currents) )
+	norm = mpl.colors.Normalize( vmin=min(vce_step), vmax=max(vce_step) )
 	cmap = mpl.cm.ScalarMappable( norm=norm, cmap=mpl.cm.cividis )
 	cmap.set_array([])
 
@@ -44,26 +43,29 @@ if __name__ == "__main__":
 		if data.get_key_data(_key) != {}:
 
 			# Extract current bias step
-			base_current = ( bc_unit * float( data.get_metadata(_key, "__step__") ) )
+			vce = ( float( data.get_metadata(_key, "__step__") ) )
 
 			# Extract voltage and current
-			voltage = data.get_subkey_data(_key, "V0")
-			current = data.get_subkey_data(_key, "I0")
+			ibe = data.get_subkey_data(_key, "I0")
+			ice = data.get_subkey_data(_key, "I1")
+
+			# Calculate gain
+			beta = [ _ice/_ibe for _ice, _ibe in zip(ice, ibe) ]
 
 			# plot the data
-			ax0.plot( voltage[1:], [ cc_unit * _ for _ in current[1:] ], color = cmap.to_rgba(base_current) )
+			ax0.plot( [ ibe_unit * _ for _ in ibe[70:] ], beta[70:], color = cmap.to_rgba(vce) )
 
 
 	# Add axes lables and show plot
 	#ax0.set_title("BJT BC547C(npn) : Common Emitter")
-	ax0.set_title("BJT BC177B(pnp) : Common Emitter")
-	ax0.set_xlabel("$V_{CE}$ $(V)$")
-	ax0.set_ylabel("$I_{CE}$ $(mA)$")
+	ax0.set_title("BJT BC177B(pnp) : Gain  Characteristics")
+	ax0.set_xlabel("$I_{be}$ $(\\mu A)$")
+	ax0.set_ylabel("$\\beta $")
 
 	# Add the colorbar			
-	cbar = fig.colorbar(cmap, ticks=base_currents)
+	cbar = fig.colorbar(cmap, ticks=vce_step)
 	cbar.ax.get_yaxis().labelpad = 20
-	cbar.ax.set_ylabel("$I_{BE}$ $(\\mu A)$", rotation=270)
+	cbar.ax.set_ylabel("$V_{ce}$ $(V)$", rotation=270)
 
 	# Show plot
 	plt.tight_layout()
