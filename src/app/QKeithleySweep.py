@@ -1166,7 +1166,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 		key  = data.add_hash_key("iv-sweep")
 
 		# Add data fields to key	
-		data.set_subkeys(key, ["t", "V", "I", "P"])
+		data.set_subkeys(key, ["t", "V", "I", "I2","P"])
 		data.set_metadata(key, "__type__", "iv-sweep")
 
 		# Add key to meta widget
@@ -1245,6 +1245,7 @@ class QKeithleySweep(QVisaApplication.QVisaApplication):
 				data.append_subkey_data(key,"t", _now )
 				data.append_subkey_data(key,"V", float( buffers["__sweep__"]["data"][0]) )
 				data.append_subkey_data(key,"I", float( buffers["__sweep__"]["data"][1]) )
+				data.append_subkey_data(key,"I2", float( buffers["__ploty__"]["data"][1]) )
 				data.append_subkey_data(key,"P", float( buffers["__sweep__"]["data"][0]) * float(buffers["__sweep__"]["data"][1]) )
 
 				# Sync x-axis data
